@@ -1,0 +1,7 @@
+id: ou
+icon: folder
+objectClasses: [top, organizationalUnit]
+rdn: ou
+fields:
+  - name: ou
+  - name: description

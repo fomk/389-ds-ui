@@ -8,6 +8,7 @@ import (
 
 	"github.com/fomk/389-ds-ui/internal/entries"
 	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
+	"github.com/fomk/389-ds-ui/internal/templates"
 )
 
 type schemaInput struct {
@@ -223,5 +224,48 @@ func registerBrowserWrites(api huma.API, d Deps) {
 			return nil, toHTTPError(err)
 		}
 		return &passwordOutput{Body: res}, nil
+	})
+}
+
+type templatesOutput struct {
+	Body []templates.Template
+}
+
+type nextNumberInput struct {
+	Base string `query:"base" required:"true" doc:"Subtree to scan, usually the suffix"`
+	Attr string `query:"attr" required:"true" example:"uidNumber"`
+}
+
+type nextNumberOutput struct {
+	Body struct {
+		Value int `json:"value"`
+	}
+}
+
+func registerTemplates(api huma.API, d Deps) {
+	huma.Register(api, huma.Operation{
+		OperationID: "listTemplates",
+		Method:      http.MethodGet,
+		Path:        apiPrefix + "/templates",
+		Summary:     "Entry templates for the create form",
+		Tags:        []string{"entries"},
+	}, func(context.Context, *struct{}) (*templatesOutput, error) {
+		return &templatesOutput{Body: d.Templates}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "nextNumber",
+		Method:      http.MethodGet,
+		Path:        apiPrefix + "/entries/next-number",
+		Summary:     "Suggest the next free value of a numeric attribute (e.g. uidNumber)",
+		Tags:        []string{"entries"},
+	}, func(ctx context.Context, in *nextNumberInput) (*nextNumberOutput, error) {
+		v, err := d.Entries.NextNumber(ctx, in.Base, in.Attr, 1000)
+		if err != nil {
+			return nil, toHTTPError(err)
+		}
+		out := &nextNumberOutput{}
+		out.Body.Value = v
+		return out, nil
 	})
 }

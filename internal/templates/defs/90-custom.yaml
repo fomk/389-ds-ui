@@ -1,0 +1,7 @@
+# Arbitrary entry: the user chooses object classes and the RDN attribute.
+id: custom
+icon: entry
+custom: true
+objectClasses: [top]
+rdn: cn
+fields: []

@@ -1,0 +1,19 @@
+# Entry templates for the LDAP editor. Titles and descriptions are not here:
+# they live in the UI locale files under templates.<id> (docs/i18n.md).
+# Defaults may reference other fields as {attr}; {next:attr} is replaced with
+# the next free number of that attribute in the suffix.
+id: user
+icon: user
+objectClasses: [top, person, organizationalPerson, inetOrgPerson]
+rdn: uid
+password: true
+fields:
+  - name: uid
+  - name: givenName
+  - name: sn
+  - name: cn
+    default: "{givenName} {sn}"
+  - name: displayName
+    default: "{givenName} {sn}"
+  - name: mail
+  - name: telephoneNumber

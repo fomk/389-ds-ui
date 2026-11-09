@@ -54,6 +54,15 @@ for (const file of walk(join(root, 'src'))) {
   }
 }
 
+// Every entry template (internal/templates/defs/*.yaml) needs its texts.
+const templatesDir = join(root, '../internal/templates/defs')
+for (const f of readdirSync(templatesDir).filter((f) => f.endsWith('.yaml'))) {
+  const id = /^id:\s*([\w-]+)/m.exec(readFileSync(join(templatesDir, f), 'utf8'))?.[1]
+  for (const k of ['title', 'description']) {
+    if (id && !ref.has(`templates.${id}.${k}`)) errors.push(`template ${id} (${f}): templates.${id}.${k} missing in en.json`)
+  }
+}
+
 if (errors.length) {
   console.error('Locale check failed:\n  ' + errors.join('\n  '))
   process.exit(1)

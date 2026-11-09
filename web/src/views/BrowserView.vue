@@ -4,7 +4,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NCard, NEmpty, NSplit } from 'naive-ui'
 import EntryTree from '@/components/browser/EntryTree.vue'
+import CreateEntry from '@/components/browser/CreateEntry.vue'
 import EntryView from '@/components/browser/EntryView.vue'
+import type { Entry } from '@/api/client'
 import { splitRDN } from '@/ldap/dn'
 
 const { t } = useI18n()
@@ -15,9 +17,17 @@ const router = useRouter()
 const dn = computed(() => (typeof route.query.dn === 'string' ? route.query.dn : undefined))
 
 const tree = ref<InstanceType<typeof EntryTree>>()
+/** Parent DN while the create panel is open. */
+const creatingUnder = ref<string>()
 
 function select(next: string) {
+  creatingUnder.value = undefined
   router.push({ path: '/browser', query: { dn: next } })
+}
+
+async function onCreated(e: Entry) {
+  await tree.value?.refresh(parentOf(e.dn))
+  select(e.dn)
 }
 
 const parentOf = (dn: string) => splitRDN(dn)[1]
@@ -50,7 +60,21 @@ async function onRenamed(oldDN: string, newDN: string) {
     </template>
     <template #2>
       <div class="detail">
-        <EntryView v-if="dn" :dn="dn" @changed="onChanged" @deleted="onDeleted" @renamed="onRenamed" />
+        <CreateEntry
+          v-if="creatingUnder"
+          :key="creatingUnder"
+          :parent="creatingUnder"
+          @created="onCreated"
+          @cancel="creatingUnder = undefined"
+        />
+        <EntryView
+          v-else-if="dn"
+          :dn="dn"
+          @changed="onChanged"
+          @deleted="onDeleted"
+          @renamed="onRenamed"
+          @create="(p) => (creatingUnder = p)"
+        />
         <NCard v-else size="small">
           <NEmpty :description="t('browser.selectEntry')" class="empty" />
         </NCard>

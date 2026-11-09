@@ -2,6 +2,7 @@ package entries
 
 import (
 	"context"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -209,3 +210,34 @@ func (c *childCache) drop(key string) {
 	delete(c.items, key)
 	c.mu.Unlock()
 }
+
+// NextNumber returns one more than the largest integer value of attr under
+// base (at least floor). Used to suggest uidNumber/gidNumber for new entries;
+// it is a suggestion, not a reservation (use the DNA plugin for guarantees).
+func (s *Service) NextNumber(ctx context.Context, base, attr string, floor int) (int, error) {
+	if !ldapx.ValidDN(base) || base == "" {
+		return 0, ErrInvalidDN
+	}
+	if !attrNameRE.MatchString(attr) {
+		return 0, ErrInvalidChange
+	}
+	maxV := floor - 1
+	err := s.ldap.Do(ctx, func(c *ldap.Conn) error {
+		res, err := c.SearchWithPaging(ldap.NewSearchRequest(base, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
+			0, 0, false, "("+attr+"=*)", []string{attr}, nil), 1000)
+		if err != nil {
+			return err
+		}
+		for _, e := range res.Entries {
+			for _, v := range e.GetAttributeValues(attr) {
+				if n, err := strconv.Atoi(strings.TrimSpace(v)); err == nil && n > maxV {
+					maxV = n
+				}
+			}
+		}
+		return nil
+	})
+	return maxV + 1, err
+}
+
+var attrNameRE = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]*$`)

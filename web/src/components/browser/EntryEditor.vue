@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   NAlert,
@@ -19,17 +19,31 @@ import { CircleAlert, Minus, Plus, Trash2, Upload } from '@lucide/vue'
 import { api, ApiError, call, type Entry } from '@/api/client'
 import { currentLocale } from '@/i18n'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
+import { ancestorsUnder, escapeRDNValue } from '@/ldap/dn'
 import { diffEntry, ensureRequired, toEditAttrs, validateRows, type EditAttr, type RowProblem } from '@/ldap/edit'
+import { applyDefaults, nextNumberAttrs } from '@/ldap/templates'
 import { base64Size, formatBytes } from '@/ldap/values'
 import { useSchemaStore } from '@/stores/schema'
+import { useServerStore } from '@/stores/server'
 
-const props = defineProps<{ entry: Entry }>()
-const emit = defineEmits<{ saved: [entry: Entry]; cancel: []; reload: [] }>()
+/** Create mode: a new entry under parent, pre-filled from a template. */
+export interface CreateSpec {
+  parent: string
+  objectClasses: string[]
+  rdn: string
+  custom: boolean
+  password: boolean
+  fields: Array<{ name: string; default?: string }>
+}
+
+const props = defineProps<{ entry?: Entry; create?: CreateSpec }>()
+const emit = defineEmits<{ saved: [entry: Entry]; created: [entry: Entry]; cancel: []; reload: [] }>()
 
 const { t } = useI18n()
 const message = useMessage()
 const vars = useThemeVars()
 const schema = useSchemaStore()
+const server = useServerStore()
 
 const isBinaryKind = (name: string) => schema.attr(name)?.kind === 'binary'
 const editable = (name: string) => {
@@ -37,20 +51,44 @@ const editable = (name: string) => {
   return !a || (!a.noUserModification && a.kind !== 'password')
 }
 
-const original = computed(() => toEditAttrs(props.entry.attributes, (a) => editable(a.name)))
+const original = computed(() => (props.entry ? toEditAttrs(props.entry.attributes, (a) => editable(a.name)) : []))
 const classes = ref<string[]>([])
 const rows = ref<EditAttr[]>([])
 const problems = ref<RowProblem[]>([])
 const saving = ref(false)
 const error = ref<LocalizedError & { conflict?: boolean }>()
 
+// Create-mode state.
+const parent = ref('')
+const rdnAttr = ref('')
+const password = ref('')
+const password2 = ref('')
+const nextNumbers = ref<Record<string, number>>({})
+let autoFilled: Record<string, string> = {}
+const defaults = computed(() =>
+  Object.fromEntries((props.create?.fields ?? []).filter((f) => f.default).map((f) => [f.name, f.default!])),
+)
+
 function reset() {
-  classes.value = [...props.entry.objectClasses]
-  rows.value = ensureRequired(
-    original.value.map((r) => ({ ...r, values: [...r.values] })),
-    allowed.value.must,
-    isBinaryKind,
-  )
+  if (props.create) {
+    classes.value = [...props.create.objectClasses]
+    parent.value = props.create.parent
+    rdnAttr.value = props.create.rdn
+    password.value = password2.value = ''
+    autoFilled = {}
+    const fields = props.create.fields.map((f) => ({ name: f.name, values: [''], binary: isBinaryKind(f.name) }))
+    if (!fields.some((f) => f.name.toLowerCase() === props.create!.rdn.toLowerCase())) {
+      fields.unshift({ name: props.create.rdn, values: [''], binary: false })
+    }
+    rows.value = ensureRequired(fields, allowed.value.must, isBinaryKind)
+  } else if (props.entry) {
+    classes.value = [...props.entry.objectClasses]
+    rows.value = ensureRequired(
+      original.value.map((r) => ({ ...r, values: [...r.values] })),
+      allowed.value.must,
+      isBinaryKind,
+    )
+  }
   problems.value = []
   error.value = undefined
 }
@@ -63,7 +101,49 @@ const isAllowed = (name: string) =>
   mustSet.value.has(name.toLowerCase()) ||
   allowed.value.may.some((m) => m.toLowerCase() === name.toLowerCase())
 
-watch(() => props.entry, reset, { immediate: true })
+watch(() => props.entry ?? props.create, reset, { immediate: true })
+
+// Template defaults follow the fields they reference until the user edits them.
+watch(
+  [rows, nextNumbers],
+  () => {
+    if (props.create) autoFilled = applyDefaults(rows.value, defaults.value, autoFilled, (a) => nextNumbers.value[a])
+  },
+  { deep: true },
+)
+
+/** The naming context that contains the parent: scope for next-number suggestions. */
+const suffixOfParent = computed(() => {
+  const ncs = server.info?.server.namingContexts ?? []
+  return ncs.find((nc) => ancestorsUnder(parent.value, nc) !== null) ?? parent.value
+})
+
+onMounted(async () => {
+  if (!props.create) return
+  for (const attr of nextNumberAttrs(Object.values(defaults.value))) {
+    try {
+      const res = await call(api.GET('/api/v1/entries/next-number', { params: { query: { base: suffixOfParent.value, attr } } }))
+      nextNumbers.value = { ...nextNumbers.value, [attr]: res.value }
+    } catch {
+      // A suggestion only: the field simply stays empty.
+    }
+  }
+})
+
+const rdnValue = computed(() => rows.value.find((r) => r.name.toLowerCase() === rdnAttr.value.toLowerCase())?.values[0] ?? '')
+const newDN = computed(() => `${rdnAttr.value}=${escapeRDNValue(rdnValue.value)}${parent.value ? ',' + parent.value : ''}`)
+const rdnOptions = computed<SelectOption[]>(() =>
+  [...allowed.value.must, ...allowed.value.may]
+    .filter((n) => n.toLowerCase() !== 'objectclass' && editable(n) && !isBinaryKind(n))
+    .map((n) => ({ label: n, value: n })),
+)
+
+// Choosing another naming attribute adds its row if needed.
+watch(rdnAttr, (a) => {
+  if (a && !rows.value.some((r) => r.name.toLowerCase() === a.toLowerCase())) {
+    rows.value.unshift({ name: a, values: [''], binary: false })
+  }
+})
 
 // New object classes may bring new required attributes.
 watch(
@@ -141,10 +221,13 @@ function upload(row: EditAttr, index: number) {
   input.click()
 }
 
+const passwordMismatch = computed(() => password2.value !== '' && password.value !== password2.value)
+
 async function save() {
   problems.value = validateRows(rows.value, allowed.value.must, isAllowed, (n) => schema.attr(n))
   if (problems.value.length) return
-  const changes = diffEntry(props.entry.objectClasses, classes.value, original.value, rows.value)
+  if (props.create) return createEntry()
+  const changes = diffEntry(props.entry!.objectClasses, classes.value, original.value, rows.value)
   if (!changes.length) {
     message.info(t('edit.noChanges'))
     emit('cancel')
@@ -155,7 +238,7 @@ async function save() {
   try {
     const updated = await call(
       api.PATCH('/api/v1/entries', {
-        params: { query: { dn: props.entry.dn }, header: { 'If-Match': props.entry.etag } },
+        params: { query: { dn: props.entry!.dn }, header: { 'If-Match': props.entry!.etag } },
         body: { changes },
       }),
     )
@@ -163,6 +246,36 @@ async function save() {
     emit('saved', updated)
   } catch (e) {
     error.value = { ...localizeError(e), conflict: e instanceof ApiError && e.status === 412 }
+  } finally {
+    saving.value = false
+  }
+}
+
+async function createEntry() {
+  if (!rdnValue.value) {
+    error.value = { summary: t('create.rdnRequired', { attr: rdnAttr.value }) }
+    return
+  }
+  if (!classes.value.some((c) => schema.objectClass(c)?.kind === 'structural')) {
+    error.value = { summary: t('create.classesRequired') }
+    return
+  }
+  if (passwordMismatch.value) return
+  const attributes = [
+    { name: 'objectClass', values: classes.value },
+    ...rows.value
+      .map((r) => ({ name: r.name, values: r.values.filter((v) => v !== ''), binary: r.binary || undefined }))
+      .filter((r) => r.values.length),
+  ]
+  if (props.create?.password && password.value) attributes.push({ name: 'userPassword', values: [password.value] })
+  saving.value = true
+  error.value = undefined
+  try {
+    const created = await call(api.POST('/api/v1/entries', { body: { dn: newDN.value, attributes } }))
+    message.success(t('create.created', { dn: created.dn }))
+    emit('created', created)
+  } catch (e) {
+    error.value = localizeError(e)
   } finally {
     saving.value = false
   }
@@ -181,6 +294,15 @@ async function save() {
         <div v-if="error.detail" class="mono muted">{{ error.detail }}</div>
       </template>
     </NAlert>
+
+    <div v-if="create" class="create-head">
+      <label>{{ t('create.parent') }}</label>
+      <NInput v-model:value="parent" size="small" :input-props="{ class: 'mono', spellcheck: false }" />
+      <label>{{ t('create.rdnAttribute') }}</label>
+      <NSelect v-model:value="rdnAttr" size="small" filterable :options="rdnOptions" class="rdn-select" />
+      <label>{{ t('create.dnPreview') }}</label>
+      <code class="dn-preview">{{ newDN }}</code>
+    </div>
 
     <div class="classes">
       <NTag
@@ -287,6 +409,21 @@ async function save() {
       </tbody>
     </NTable>
 
+    <div v-if="create?.password" class="create-head password">
+      <label>{{ t('create.password') }}</label>
+      <NInput v-model:value="password" size="small" type="password" show-password-on="click" :input-props="{ autocomplete: 'new-password' }" />
+      <label>{{ t('create.passwordConfirm') }}</label>
+      <NInput
+        v-model:value="password2"
+        size="small"
+        type="password"
+        show-password-on="click"
+        :status="passwordMismatch ? 'error' : undefined"
+        :input-props="{ autocomplete: 'new-password' }"
+      />
+      <span v-if="passwordMismatch" class="problem span2">{{ t('password.mismatch') }}</span>
+    </div>
+
     <div class="footer">
       <NSelect
         class="add-attr"
@@ -299,7 +436,7 @@ async function save() {
       />
       <NSpace>
         <NButton @click="emit('cancel')">{{ t('edit.cancel') }}</NButton>
-        <NButton type="primary" :loading="saving" @click="save">{{ t('edit.save') }}</NButton>
+        <NButton type="primary" :loading="saving" @click="save">{{ create ? t('create.create') : t('edit.save') }}</NButton>
       </NSpace>
     </div>
   </div>
@@ -308,6 +445,35 @@ async function save() {
 <style scoped>
 .block {
   margin-bottom: 12px;
+}
+
+.create-head {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 14px;
+}
+
+.create-head label {
+  color: v-bind('vars.textColor2');
+  font-size: 13px;
+}
+
+.create-head.password {
+  margin-top: 14px;
+}
+
+.rdn-select {
+  max-width: 280px;
+}
+
+.dn-preview {
+  overflow-wrap: anywhere;
+}
+
+.span2 {
+  grid-column: 2;
 }
 
 .reload {

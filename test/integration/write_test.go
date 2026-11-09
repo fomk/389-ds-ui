@@ -216,3 +216,22 @@ func TestDelete(t *testing.T) {
 		t.Errorf("branch still exists: %v", err)
 	}
 }
+
+func TestNextNumber(t *testing.T) {
+	svc, _ := newEntries(t)
+	ctx := context.Background()
+	// Fixtures use uidNumber 10001..10006.
+	n, err := svc.NextNumber(ctx, suffix, "uidNumber", 1000)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n < 10007 {
+		t.Errorf("next uidNumber = %d, want >= 10007", n)
+	}
+	if n, _ := svc.NextNumber(ctx, suffix, "employeeNumber", 1000); n != 1000 {
+		t.Errorf("unused attribute must start at the floor, got %d", n)
+	}
+	if _, err := svc.NextNumber(ctx, suffix, "uid=*)(x", 1000); !errors.Is(err, entries.ErrInvalidChange) {
+		t.Errorf("filter injection must be rejected: %v", err)
+	}
+}

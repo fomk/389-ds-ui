@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ancestorsUnder, dnKey, splitRDN } from './dn'
+import { ancestorsUnder, dnKey, escapeRDNValue, splitRDN } from './dn'
 
 describe('splitRDN', () => {
   it('splits at the first unescaped comma', () => {
@@ -25,5 +25,18 @@ describe('ancestorsUnder', () => {
   it('returns [] for the root itself and null outside it', () => {
     expect(ancestorsUnder('dc=example,dc=com', 'DC=Example,DC=com')).toEqual([])
     expect(ancestorsUnder('cn=config', 'dc=example,dc=com')).toBeNull()
+  })
+})
+
+describe('escapeRDNValue', () => {
+  it('escapes special characters and leading/trailing markers', () => {
+    expect(escapeRDNValue('Doe, John')).toBe('Doe\\, John')
+    expect(escapeRDNValue('a+b=c')).toBe('a\\+b\\=c')
+    expect(escapeRDNValue('#1 ')).toBe('\\#1\\ ')
+    expect(escapeRDNValue('Иван')).toBe('Иван')
+  })
+  it('round-trips through splitRDN', () => {
+    const rdn = 'cn=' + escapeRDNValue('Doe, John')
+    expect(splitRDN(rdn + ',ou=People')).toEqual([rdn, 'ou=People'])
   })
 })

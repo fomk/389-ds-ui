@@ -171,6 +171,48 @@
     "copy": "Скопировать",
     "error": "Не удалось задать пароль"
   },
+  "create": {
+    "new": "Новая запись",
+    "title": "Новая запись в {parent}",
+    "chooseTemplate": "Что создать?",
+    "back": "К выбору шаблона",
+    "parent": "Родительский DN",
+    "rdnAttribute": "Атрибут имени (RDN)",
+    "dnPreview": "DN",
+    "password": "Начальный пароль",
+    "passwordConfirm": "Повторите пароль",
+    "create": "Создать",
+    "created": "Создана запись {dn}",
+    "error": "Не удалось создать запись",
+    "rdnRequired": "Укажите значение атрибута имени {attr}",
+    "classesRequired": "Выберите хотя бы один структурный objectClass"
+  },
+  "templates": {
+    "user": {
+      "title": "Пользователь",
+      "description": "Человек с логином и почтой (inetOrgPerson)"
+    },
+    "posix-user": {
+      "title": "POSIX-пользователь",
+      "description": "Пользователь с UID, домашним каталогом и оболочкой (inetOrgPerson + posixAccount)"
+    },
+    "group": {
+      "title": "Группа",
+      "description": "Группа записей по DN (groupOfNames)"
+    },
+    "posix-group": {
+      "title": "POSIX-группа",
+      "description": "Группа с номером GID (groupOfNames + posixGroup)"
+    },
+    "ou": {
+      "title": "Подразделение",
+      "description": "Контейнер для других записей (organizationalUnit)"
+    },
+    "custom": {
+      "title": "Произвольная запись",
+      "description": "objectClass и атрибуты выбираете сами"
+    }
+  },
   "errors": {
     "network": "API ds-ui недоступен",
     "http": {

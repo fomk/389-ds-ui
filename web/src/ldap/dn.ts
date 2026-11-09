@@ -46,3 +46,11 @@ export function ancestorsUnder(dn: string, root: string): string[] | null {
   }
   return null
 }
+
+/** Escapes an attribute value for use in an RDN (RFC 4514 §2.4). */
+export function escapeRDNValue(v: string): string {
+  let out = v.replace(/[\\,+"<>;=]/g, (c) => '\\' + c)
+  if (out.startsWith('#') || out.startsWith(' ')) out = '\\' + out
+  if (out.endsWith(' ') && !out.endsWith('\\ ')) out = out.slice(0, -1) + '\\ '
+  return out
+}

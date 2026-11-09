@@ -18,6 +18,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/entries"
 	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
 	"github.com/fomk/389-ds-ui/internal/providers"
+	"github.com/fomk/389-ds-ui/internal/templates"
 )
 
 // LDAP is the subset of ldapx.Client the API needs.
@@ -30,6 +31,7 @@ type Deps struct {
 	LDAP           LDAP
 	Schemas        *schema.Cache
 	Entries        *entries.Service
+	Templates      []templates.Template
 	Lifecycle      providers.Lifecycle
 	Capabilities   providers.Capabilities
 	Instance       string
@@ -104,6 +106,7 @@ func register(api huma.API, d Deps) {
 	registerSystem(api, d)
 	registerBrowser(api, d)
 	registerBrowserWrites(api, d)
+	registerTemplates(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

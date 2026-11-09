@@ -1,0 +1,7 @@
+id: group
+icon: group
+objectClasses: [top, groupOfNames]
+rdn: cn
+fields:
+  - name: cn
+  - name: description

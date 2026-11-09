@@ -41,6 +41,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/entries/next-number": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Suggest the next free value of a numeric attribute (e.g. uidNumber) */
+        get: operations["nextNumber"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/entries/password": {
         parameters: {
             query?: never;
@@ -152,6 +169,23 @@ export interface paths {
         };
         /** Live server state */
         get: operations["getSystemState"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Entry templates for the create form */
+        get: operations["listTemplates"];
         put?: never;
         post?: never;
         delete?: never;
@@ -291,6 +325,11 @@ export interface components {
              */
             type: string;
         };
+        Field: {
+            /** @description May reference other fields as {attr}; {next:attr} is the next free number */
+            default?: string;
+            name: string;
+        };
         ModifyInputBody: {
             changes: components["schemas"]["Change"][];
         };
@@ -302,6 +341,10 @@ export interface components {
             binary?: boolean;
             name: string;
             values: string[];
+        };
+        NextNumberOutputBody: {
+            /** Format: int64 */
+            value: number;
         };
         ObjectClass: {
             desc?: string;
@@ -395,6 +438,20 @@ export interface components {
              * @enum {string}
              */
             server: "running" | "stopped" | "restarting" | "unknown";
+        };
+        Template: {
+            /** @description The user chooses object classes and the RDN attribute */
+            custom?: boolean;
+            fields: components["schemas"]["Field"][];
+            /** @enum {string} */
+            icon: "user" | "group" | "folder" | "entry";
+            /** @description Stable identifier; UI texts live under templates.<id> in the locale files */
+            id: string;
+            objectClasses: string[];
+            /** @description Ask for an initial userPassword */
+            password?: boolean;
+            /** @description Naming attribute */
+            rdn: string;
         };
     };
     responses: never;
@@ -568,6 +625,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChildrenPage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    nextNumber: {
+        parameters: {
+            query: {
+                /** @description Subtree to scan, usually the suffix */
+                base: string;
+                attr: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NextNumberOutputBody"];
                 };
             };
             /** @description Error */
@@ -786,6 +876,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SystemState"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Template"][];
                 };
             };
             /** @description Error */

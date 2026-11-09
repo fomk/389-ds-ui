@@ -1,0 +1,10 @@
+# posixGroup is AUXILIARY in 389-ds (RFC 2307bis), so it is combined with groupOfNames.
+id: posix-group
+icon: group
+objectClasses: [top, groupOfNames, posixGroup]
+rdn: cn
+fields:
+  - name: cn
+  - name: gidNumber
+    default: "{next:gidNumber}"
+  - name: description

@@ -171,6 +171,48 @@
     "copy": "Copy",
     "error": "Could not set the password"
   },
+  "create": {
+    "new": "New entry",
+    "title": "New entry under {parent}",
+    "chooseTemplate": "What do you want to create?",
+    "back": "Back to templates",
+    "parent": "Parent DN",
+    "rdnAttribute": "Naming attribute (RDN)",
+    "dnPreview": "DN",
+    "password": "Initial password",
+    "passwordConfirm": "Repeat password",
+    "create": "Create",
+    "created": "Created {dn}",
+    "error": "Could not create the entry",
+    "rdnRequired": "Enter a value for the naming attribute {attr}",
+    "classesRequired": "Choose at least one structural object class"
+  },
+  "templates": {
+    "user": {
+      "title": "User",
+      "description": "Person with login and email (inetOrgPerson)"
+    },
+    "posix-user": {
+      "title": "POSIX user",
+      "description": "User with UID, home directory and shell (inetOrgPerson + posixAccount)"
+    },
+    "group": {
+      "title": "Group",
+      "description": "Group of entries referenced by DN (groupOfNames)"
+    },
+    "posix-group": {
+      "title": "POSIX group",
+      "description": "Group with a GID number (groupOfNames + posixGroup)"
+    },
+    "ou": {
+      "title": "Organizational unit",
+      "description": "Container for other entries (organizationalUnit)"
+    },
+    "custom": {
+      "title": "Custom entry",
+      "description": "Choose object classes and attributes yourself"
+    }
+  },
   "errors": {
     "network": "Cannot reach the ds-ui API",
     "http": {

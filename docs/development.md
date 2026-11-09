@@ -10,6 +10,8 @@
 │  ├─ ldapx/                  LDAP client (ldapi/ldap/ldaps, EXTERNAL/simple, reconnect)
 │  ├─ ds/                     389-ds knowledge (currently: root DSE, version, DB implementation)
 │  ├─ providers/              Lifecycle (docker, none), Files/Certs detection, Capabilities
+│  ├─ entries/                LDAP editor operations: read, children, modify, create, delete, rename, password
+│  ├─ templates/              entry templates for the create form (defs/*.yaml, go:embed)
 │  ├─ api/                    huma handlers, error mapping, CSRF, SPA serving
 │  └─ webui/                  go:embed of the built SPA (dist/ is generated, only .gitkeep in git)
 ├─ api/openapi.json           OpenAPI contract (generated: make gen, checked in CI)
@@ -31,7 +33,7 @@
 └─ docs/
 ```
 
-Planned by stage: `pages/` (YAML pages, stage 3), `templates/` (entry templates, stage 1), `deploy/aio/` (stage 7), `test/e2e/` (Playwright, stage 7).
+Planned by stage: `pages/` (YAML pages, stage 3), `deploy/aio/` (stage 7), `test/e2e/` (Playwright, stage 7).
 
 ## Tools
 

@@ -16,7 +16,7 @@ import {
   useMessage,
   useThemeVars,
 } from 'naive-ui'
-import { Copy, EllipsisVertical, Pencil, RefreshCw } from '@lucide/vue'
+import { Copy, EllipsisVertical, Pencil, Plus, RefreshCw } from '@lucide/vue'
 import { api, call, type Entry, type EntryAttribute } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { useSchemaStore } from '@/stores/schema'
@@ -27,7 +27,12 @@ import PasswordDialog from './PasswordDialog.vue'
 import RenameDialog from './RenameDialog.vue'
 
 const props = defineProps<{ dn: string }>()
-const emit = defineEmits<{ changed: [dn: string]; deleted: [dn: string]; renamed: [oldDN: string, newDN: string] }>()
+const emit = defineEmits<{
+  changed: [dn: string]
+  deleted: [dn: string]
+  renamed: [oldDN: string, newDN: string]
+  create: [parent: string]
+}>()
 
 const { t } = useI18n()
 const message = useMessage()
@@ -139,6 +144,10 @@ defineExpose({ reload: load })
         <NButton size="small" @click="editing = true">
           <template #icon><NIcon><Pencil /></NIcon></template>
           {{ t('edit.edit') }}
+        </NButton>
+        <NButton size="small" @click="emit('create', entry.dn)">
+          <template #icon><NIcon><Plus /></NIcon></template>
+          {{ t('create.new') }}
         </NButton>
         <NDropdown trigger="click" :options="actionOptions" @select="onAction">
           <NButton size="small" quaternary :title="t('actions.more')" :aria-label="t('actions.more')">

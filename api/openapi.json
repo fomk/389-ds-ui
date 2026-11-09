@@ -354,6 +354,22 @@
         },
         "type": "object"
       },
+      "Field": {
+        "additionalProperties": false,
+        "properties": {
+          "default": {
+            "description": "May reference other fields as {attr}; {next:attr} is the next free number",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
       "ModifyInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -412,6 +428,19 @@
         "required": [
           "name",
           "values"
+        ],
+        "type": "object"
+      },
+      "NextNumberOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "value"
         ],
         "type": "object"
       },
@@ -752,6 +781,56 @@
           "restartRequired"
         ],
         "type": "object"
+      },
+      "Template": {
+        "additionalProperties": false,
+        "properties": {
+          "custom": {
+            "description": "The user chooses object classes and the RDN attribute",
+            "type": "boolean"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/Field"
+            },
+            "type": "array"
+          },
+          "icon": {
+            "enum": [
+              "user",
+              "group",
+              "folder",
+              "entry"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "description": "Stable identifier; UI texts live under templates.\u003cid\u003e in the locale files",
+            "type": "string"
+          },
+          "objectClasses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "password": {
+            "description": "Ask for an initial userPassword",
+            "type": "boolean"
+          },
+          "rdn": {
+            "description": "Naming attribute",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "icon",
+          "objectClasses",
+          "rdn",
+          "fields"
+        ],
+        "type": "object"
       }
     }
   },
@@ -1051,6 +1130,62 @@
         ]
       }
     },
+    "/api/v1/entries/next-number": {
+      "get": {
+        "operationId": "nextNumber",
+        "parameters": [
+          {
+            "description": "Subtree to scan, usually the suffix",
+            "explode": false,
+            "in": "query",
+            "name": "base",
+            "required": true,
+            "schema": {
+              "description": "Subtree to scan, usually the suffix",
+              "type": "string"
+            }
+          },
+          {
+            "explode": false,
+            "in": "query",
+            "name": "attr",
+            "required": true,
+            "schema": {
+              "examples": [
+                "uidNumber"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NextNumberOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Suggest the next free value of a numeric attribute (e.g. uidNumber)",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
     "/api/v1/entries/password": {
       "post": {
         "operationId": "setPassword",
@@ -1321,6 +1456,40 @@
         "summary": "Live server state",
         "tags": [
           "system"
+        ]
+      }
+    },
+    "/api/v1/templates": {
+      "get": {
+        "operationId": "listTemplates",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Template"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Entry templates for the create form",
+        "tags": [
+          "entries"
         ]
       }
     }

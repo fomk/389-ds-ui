@@ -21,6 +21,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
 	"github.com/fomk/389-ds-ui/internal/providers"
+	"github.com/fomk/389-ds-ui/internal/templates"
 	"github.com/fomk/389-ds-ui/internal/webui"
 )
 
@@ -115,11 +116,16 @@ func serve() error {
 		log.Warn("binary was built without the web UI; only the API is served")
 	}
 
+	tpls, err := templates.Load()
+	if err != nil {
+		return fmt.Errorf("entry templates: %w", err)
+	}
 	schemas := schema.NewCache(time.Minute, log)
 	handler := api.NewHandler(api.Deps{
 		LDAP:           client,
 		Schemas:        schemas,
 		Entries:        entries.New(client, schemas, log),
+		Templates:      tpls,
 		Lifecycle:      lifecycle,
 		Capabilities:   caps,
 		Instance:       cfg.Instance,

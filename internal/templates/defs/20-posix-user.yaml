@@ -1,0 +1,21 @@
+id: posix-user
+icon: user
+objectClasses: [top, person, organizationalPerson, inetOrgPerson, posixAccount]
+rdn: uid
+password: true
+fields:
+  - name: uid
+  - name: givenName
+  - name: sn
+  - name: cn
+    default: "{givenName} {sn}"
+  - name: mail
+  - name: uidNumber
+    default: "{next:uidNumber}"
+  - name: gidNumber
+  - name: homeDirectory
+    default: "/home/{uid}"
+  - name: loginShell
+    default: /bin/bash
+  - name: gecos
+    default: "{cn}"
