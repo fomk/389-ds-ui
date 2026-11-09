@@ -1,0 +1,82 @@
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+GO      ?= go
+NPM     ?= npm
+DS_IMAGE ?= 389-ds-ui/ds:dev
+
+.PHONY: help
+help: ## Show targets
+	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-12s %s\n", $$1, $$2}'
+
+web/node_modules: web/package-lock.json
+	cd web && $(NPM) ci --no-fund --no-audit
+	@touch $@
+
+.PHONY: gen
+gen: web/node_modules ## Regenerate OpenAPI spec and the TS API client
+	$(GO) run ./cmd/ds-ui openapi > api/openapi.json
+	cd web && $(NPM) run gen:api
+
+.PHONY: web
+web: web/node_modules ## Build the SPA into internal/webui/dist
+	cd web && $(NPM) run build
+
+.PHONY: build
+build: web ## Build bin/ds-ui with the embedded SPA
+	CGO_ENABLED=0 $(GO) build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" -o bin/ds-ui ./cmd/ds-ui
+
+.PHONY: lint
+lint: web/node_modules ## go vet + gofmt check + golangci-lint (if installed) + vue-tsc
+	$(GO) vet ./...
+	@test -z "$$(gofmt -l cmd internal test)" || (gofmt -l cmd internal test; exit 1)
+	@if command -v golangci-lint >/dev/null; then golangci-lint run; else echo "golangci-lint not installed, skipped"; fi
+	cd web && $(NPM) run typecheck && $(NPM) run -s check:locales && $(NPM) run -s check:licenses
+
+.PHONY: check-gen
+check-gen: gen ## Fail if generated files are out of date
+	git diff --exit-code -- api/openapi.json web/src/api/schema.d.ts
+
+.PHONY: test
+test: ## Unit tests
+	$(GO) test ./...
+
+.PHONY: ds-image
+ds-image: ## Build the 389-ds image used by integration tests
+	docker build -t $(DS_IMAGE) deploy/ds
+
+.PHONY: itest
+itest: ds-image ## Integration tests against a real 389-ds container
+	DS_IMAGE=$(DS_IMAGE) $(GO) test -tags integration -count=1 -timeout 10m ./test/integration/...
+
+.PHONY: secrets
+secrets: secrets/dm_password ## Create secrets/dm_password if missing
+
+secrets/dm_password:
+	@head -c 24 /dev/urandom | base64 | tr -d '/+=' > $@
+	@chmod 0644 $@   # bind-mounted into containers running as uid 389
+	@echo "created $@"
+
+.PHONY: images
+images: ## Build all images
+	docker compose build
+	docker build -f deploy/ui/Dockerfile --target static --build-arg VERSION=$(VERSION) -t 389-ds-ui/ui:dev-static .
+
+.PHONY: up
+up: secrets ## Start ds + ui (sidecar mode)
+	DOCKER_GID=$$(stat -c %g /var/run/docker.sock) docker compose up -d --build
+
+.PHONY: down
+down: ## Stop the stack (keeps the data volume)
+	docker compose down
+
+.PHONY: dev
+dev: secrets ## Run ds in docker, ds-ui from source in remote mode; then: cd web && npm run dev
+	docker compose up -d ds
+	DSUI_MODE=remote DSUI_LDAP_URL=ldap://127.0.0.1:$${DS_LDAP_PORT:-389} \
+	DSUI_LDAP_BIND_DN="cn=Directory Manager" DSUI_LDAP_BIND_PASSWORD_FILE=secrets/dm_password \
+	DSUI_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173 \
+	DSUI_LOG_LEVEL=debug $(GO) run ./cmd/ds-ui
+
+.PHONY: clean
+clean: ## Remove build artefacts
+	rm -rf bin
+	find internal/webui/dist -mindepth 1 ! -name .gitkeep -exec rm -rf {} +

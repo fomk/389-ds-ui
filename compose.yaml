@@ -1,0 +1,69 @@
+# Mode C (sidecar): ds + ds-ui sharing the /data volume.
+# Before the first start: make secrets   (creates secrets/dm_password)
+name: 389-ds-ui
+
+services:
+  ds:
+    build: deploy/ds
+    image: 389-ds-ui/ds:dev
+    environment:
+      DS_SUFFIX: ${DS_SUFFIX:-dc=example,dc=com}
+      DS_DM_PASSWORD_FILE: /run/secrets/dm_password
+    secrets:
+      - source: dm_password
+        uid: "389"
+        mode: 0400
+    volumes:
+      - ds-data:/data
+    ports:
+      - "${DS_LDAP_PORT:-389}:3389"
+      - "${DS_LDAPS_PORT:-636}:3636"
+    restart: unless-stopped
+
+  ui:
+    build:
+      context: .
+      dockerfile: deploy/ui/Dockerfile
+      target: sidecar
+    image: 389-ds-ui/ui:dev
+    environment:
+      DSUI_MODE: sidecar
+      DSUI_INSTANCE: localhost
+      DSUI_DATA_DIR: /data
+      DSUI_DOCKER_HOST: tcp://docker-proxy:2375
+      DSUI_DS_CONTAINER: 389-ds-ui-ds-1
+      DSUI_ALLOWED_ORIGINS: http://127.0.0.1:${DSUI_PORT:-8080},http://localhost:${DSUI_PORT:-8080}
+    volumes:
+      - ds-data:/data
+    ports:
+      # No authentication: localhost only. Use an SSH tunnel for remote access.
+      - "127.0.0.1:${DSUI_PORT:-8080}:8080"
+    depends_on:
+      - ds
+      - docker-proxy
+    restart: unless-stopped
+
+  # Docker API proxy that lets ds-ui see and restart exactly one container.
+  # Everything else (create, exec, other containers) is rejected.
+  docker-proxy:
+    image: wollomatic/socket-proxy:1
+    command:
+      - -listenip=0.0.0.0
+      - -allowfrom=ui
+      - -allowGET=(/v[0-9.]+)?/containers/389-ds-ui-ds-1/json
+      - -allowPOST=(/v[0-9.]+)?/containers/389-ds-ui-ds-1/(restart|stop|start)
+    # gid of /var/run/docker.sock on the host (make up sets it; 0 fits Docker Desktop)
+    user: "65534:${DOCKER_GID:-0}"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+volumes:
+  ds-data:
+
+secrets:
+  dm_password:
+    file: ./secrets/dm_password

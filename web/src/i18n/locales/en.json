@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "name": "English"
+  },
+  "app": {
+    "title": "389 DS Admin",
+    "language": "Language",
+    "noAuthWarning": "This interface has no authentication and acts as Directory Manager. Do not expose it outside a trusted network."
+  },
+  "nav": {
+    "overview": "Overview",
+    "browser": "LDAP browser",
+    "monitor": "Monitoring",
+    "databases": "Databases",
+    "logs": "Logs",
+    "settings": "Server settings",
+    "plugins": "Plugins",
+    "schema": "Schema",
+    "policies": "Password policies",
+    "replication": "Replication",
+    "security": "TLS & certificates",
+    "comingInStage": "Coming in stage {stage}"
+  },
+  "status": {
+    "checking": "checking…",
+    "running": "running",
+    "restarting": "restarting",
+    "stopped": "stopped",
+    "unreachable": "unreachable",
+    "error": "error",
+    "apiDown": "The ds-ui API is not reachable"
+  },
+  "placeholder": {
+    "comingInStage": "This section arrives in stage {stage} (see docs/roadmap.md)."
+  },
+  "overview": {
+    "title": "Overview",
+    "infoError": "Could not load server information",
+    "server": {
+      "title": "Server",
+      "version": "Version",
+      "instance": "Instance",
+      "storage": "Storage",
+      "connection": "Connection",
+      "uiVersion": "ds-ui"
+    },
+    "suffixes": {
+      "title": "Suffixes",
+      "count": "{n} suffix | {n} suffixes",
+      "default": "default",
+      "none": "No suffixes."
+    },
+    "deployment": {
+      "title": "Deployment",
+      "mode": "Mode",
+      "modes": {
+        "sidecar": "sidecar (shared volume)",
+        "remote": "remote (LDAP only)",
+        "aio": "all-in-one"
+      },
+      "features": {
+        "lifecycle": "Process control",
+        "files": "Logs, LDIF and backups (files)",
+        "certs": "Certificates (NSS DB)",
+        "offline": "Offline operations"
+      }
+    },
+    "ldap": {
+      "title": "LDAP capabilities",
+      "controls": "Controls",
+      "extensions": "Extensions",
+      "sasl": "SASL"
+    },
+    "auth": {
+      "saslExternal": "LDAPI autobind (SASL EXTERNAL)",
+      "simple": "simple bind",
+      "anonymous": "anonymous"
+    },
+    "db": {
+      "mdb": "LMDB",
+      "bdb": "Berkeley DB"
+    }
+  },
+  "errors": {
+    "network": "Cannot reach the ds-ui API",
+    "http": {
+      "generic": "Request failed (HTTP {status})",
+      "notImplemented": "Not supported in this deployment",
+      "unavailable": "The directory server is unreachable"
+    },
+    "ldap": {
+      "noSuchObject": "Entry does not exist",
+      "invalidCredentials": "Invalid credentials",
+      "insufficientAccessRights": "Insufficient access rights",
+      "busy": "The server is busy",
+      "unavailable": "The server is unavailable",
+      "unwillingToPerform": "The server is unwilling to perform the operation",
+      "constraintViolation": "Constraint violation",
+      "invalidAttributeSyntax": "Invalid attribute syntax",
+      "objectClassViolation": "Object class violation",
+      "namingViolation": "Naming violation",
+      "invalidDNSyntax": "Invalid DN syntax",
+      "entryAlreadyExists": "Entry already exists",
+      "notAllowedOnNonLeaf": "The entry has children"
+    }
+  }
+}

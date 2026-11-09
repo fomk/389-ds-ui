@@ -1,0 +1,8 @@
+.git
+**/node_modules
+internal/webui/dist
+bin
+secrets
+*.md
+docs
+test

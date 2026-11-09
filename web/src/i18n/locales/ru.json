@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "name": "Русский"
+  },
+  "app": {
+    "title": "389 DS Admin",
+    "language": "Язык",
+    "noAuthWarning": "Интерфейс работает без аутентификации с правами Directory Manager. Не публикуйте его за пределы доверенной сети."
+  },
+  "nav": {
+    "overview": "Обзор",
+    "browser": "LDAP-браузер",
+    "monitor": "Мониторинг",
+    "databases": "Базы данных",
+    "logs": "Логи",
+    "settings": "Настройки сервера",
+    "plugins": "Плагины",
+    "schema": "Схема",
+    "policies": "Политики паролей",
+    "replication": "Репликация",
+    "security": "TLS и сертификаты",
+    "comingInStage": "Появится на этапе {stage}"
+  },
+  "status": {
+    "checking": "проверка…",
+    "running": "работает",
+    "restarting": "перезапуск",
+    "stopped": "остановлен",
+    "unreachable": "недоступен",
+    "error": "ошибка",
+    "apiDown": "API ds-ui недоступен"
+  },
+  "placeholder": {
+    "comingInStage": "Раздел появится на этапе {stage} (см. docs/roadmap.md)."
+  },
+  "overview": {
+    "title": "Обзор",
+    "infoError": "Не удалось получить сведения о сервере",
+    "server": {
+      "title": "Сервер",
+      "version": "Версия",
+      "instance": "Инстанс",
+      "storage": "Хранилище",
+      "connection": "Подключение",
+      "uiVersion": "ds-ui"
+    },
+    "suffixes": {
+      "title": "Суффиксы",
+      "count": "{n} суффикс | {n} суффикса | {n} суффиксов | {n} суффикса",
+      "default": "по умолчанию",
+      "none": "Суффиксов нет."
+    },
+    "deployment": {
+      "title": "Развёртывание",
+      "mode": "Режим",
+      "modes": {
+        "sidecar": "sidecar (общий volume)",
+        "remote": "remote (только LDAP)",
+        "aio": "all-in-one"
+      },
+      "features": {
+        "lifecycle": "Управление процессом",
+        "files": "Логи, LDIF и бэкапы (файлы)",
+        "certs": "Сертификаты (NSS DB)",
+        "offline": "Офлайн-операции"
+      }
+    },
+    "ldap": {
+      "title": "Возможности LDAP",
+      "controls": "Контролы",
+      "extensions": "Расширения",
+      "sasl": "SASL"
+    },
+    "auth": {
+      "saslExternal": "LDAPI autobind (SASL EXTERNAL)",
+      "simple": "simple bind",
+      "anonymous": "анонимно"
+    },
+    "db": {
+      "mdb": "LMDB",
+      "bdb": "Berkeley DB"
+    }
+  },
+  "errors": {
+    "network": "API ds-ui недоступен",
+    "http": {
+      "generic": "Ошибка запроса (HTTP {status})",
+      "notImplemented": "Не поддерживается в этом варианте развёртывания",
+      "unavailable": "Сервер каталога недоступен"
+    },
+    "ldap": {
+      "noSuchObject": "Запись не существует",
+      "invalidCredentials": "Неверные учётные данные",
+      "insufficientAccessRights": "Недостаточно прав доступа",
+      "busy": "Сервер занят",
+      "unavailable": "Сервер недоступен",
+      "unwillingToPerform": "Сервер отказывается выполнять операцию",
+      "constraintViolation": "Нарушение ограничения",
+      "invalidAttributeSyntax": "Недопустимый синтаксис атрибута",
+      "objectClassViolation": "Нарушение правил objectClass",
+      "namingViolation": "Нарушение правил именования",
+      "invalidDNSyntax": "Недопустимый синтаксис DN",
+      "entryAlreadyExists": "Запись уже существует",
+      "notAllowedOnNonLeaf": "У записи есть дочерние записи"
+    }
+  }
+}

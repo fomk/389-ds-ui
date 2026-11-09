@@ -1,0 +1,355 @@
+{
+  "components": {
+    "schemas": {
+      "Capabilities": {
+        "additionalProperties": false,
+        "properties": {
+          "certs": {
+            "description": "Management of the NSS certificate database",
+            "type": "boolean"
+          },
+          "files": {
+            "description": "Access to logs, LDIF and backup files",
+            "type": "boolean"
+          },
+          "ldapAuth": {
+            "description": "How ds-ui authenticates to the server",
+            "enum": [
+              "sasl-external",
+              "simple",
+              "anonymous"
+            ],
+            "type": "string"
+          },
+          "lifecycle": {
+            "description": "Server process control (restart/stop/start)",
+            "enum": [
+              "docker",
+              "s6",
+              "none"
+            ],
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "sidecar",
+              "remote",
+              "aio"
+            ],
+            "type": "string"
+          },
+          "offline": {
+            "description": "Offline database operations (dsctl)",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mode",
+          "ldapAuth",
+          "lifecycle",
+          "files",
+          "certs",
+          "offline"
+        ],
+        "type": "object"
+      },
+      "ErrorDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "location": {
+            "description": "Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id'",
+            "type": "string"
+          },
+          "message": {
+            "description": "Error message text",
+            "type": "string"
+          },
+          "value": {
+            "description": "The value at the given location"
+          }
+        },
+        "type": "object"
+      },
+      "ErrorModel": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "description": "A human-readable explanation specific to this occurrence of the problem.",
+            "examples": [
+              "Property foo is required but is missing."
+            ],
+            "type": "string"
+          },
+          "errors": {
+            "description": "Optional list of individual error details",
+            "items": {
+              "$ref": "#/components/schemas/ErrorDetail"
+            },
+            "type": "array"
+          },
+          "instance": {
+            "description": "A URI reference that identifies the specific occurrence of the problem.",
+            "examples": [
+              "https://example.com/error-log/abc123"
+            ],
+            "format": "uri",
+            "type": "string"
+          },
+          "status": {
+            "description": "HTTP status code",
+            "examples": [
+              400
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "title": {
+            "description": "A short, human-readable summary of the problem type. This value should not change between occurrences of the error.",
+            "examples": [
+              "Bad Request"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "default": "about:blank",
+            "description": "A URI reference to human-readable documentation for the error.",
+            "examples": [
+              "https://example.com/errors/example"
+            ],
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ServerInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "boundAs": {
+            "description": "Identity ds-ui is bound as",
+            "type": "string"
+          },
+          "build": {
+            "type": "string"
+          },
+          "dbImplementation": {
+            "description": "Database implementation (LMDB or Berkeley DB)",
+            "enum": [
+              "mdb",
+              "bdb",
+              ""
+            ],
+            "type": "string"
+          },
+          "defaultNamingContext": {
+            "type": "string"
+          },
+          "namingContexts": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "supportedControls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "supportedExtensions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "supportedSaslMechanisms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "vendorVersion": {
+            "type": "string"
+          },
+          "version": {
+            "description": "Parsed product version, e.g. 3.1.2",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vendor",
+          "vendorVersion",
+          "version",
+          "namingContexts",
+          "supportedControls",
+          "supportedExtensions",
+          "supportedSaslMechanisms",
+          "boundAs"
+        ],
+        "type": "object"
+      },
+      "SystemInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "instance": {
+            "description": "389 instance name",
+            "type": "string"
+          },
+          "server": {
+            "$ref": "#/components/schemas/ServerInfo"
+          },
+          "uiVersion": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "instance",
+          "uiVersion",
+          "server"
+        ],
+        "type": "object"
+      },
+      "SystemState": {
+        "additionalProperties": false,
+        "properties": {
+          "ldap": {
+            "description": "Result of an LDAP round-trip",
+            "enum": [
+              "ok",
+              "unreachable",
+              "error"
+            ],
+            "type": "string"
+          },
+          "ldapError": {
+            "type": "string"
+          },
+          "restartRequired": {
+            "description": "A setting changed that only applies after restart",
+            "type": "boolean"
+          },
+          "server": {
+            "description": "Process state from the lifecycle provider",
+            "enum": [
+              "running",
+              "stopped",
+              "restarting",
+              "unknown"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "ldap",
+          "server",
+          "restartRequired"
+        ],
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Administration API for 389 Directory Server.",
+    "title": "389-ds-ui API",
+    "version": "dev"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/system/capabilities": {
+      "get": {
+        "operationId": "getCapabilities",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capabilities"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Feature groups available in this deployment",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/v1/system/info": {
+      "get": {
+        "operationId": "getSystemInfo",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemInfo"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Server and UI information",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/v1/system/state": {
+      "get": {
+        "operationId": "getSystemState",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemState"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Live server state",
+        "tags": [
+          "system"
+        ]
+      }
+    }
+  }
+}

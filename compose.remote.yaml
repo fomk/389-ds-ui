@@ -1,0 +1,29 @@
+# Mode B (remote): ds-ui talks to an existing directory server over LDAP(S).
+#   DSUI_LDAP_URL=ldaps://ds1.example.com:636 docker compose -f compose.remote.yaml up -d
+name: 389-ds-ui-remote
+
+services:
+  ui:
+    build:
+      context: .
+      dockerfile: deploy/ui/Dockerfile
+      target: static
+    image: 389-ds-ui/ui:dev-static
+    environment:
+      DSUI_MODE: remote
+      DSUI_LDAP_URL: ${DSUI_LDAP_URL:?set DSUI_LDAP_URL, e.g. ldaps://ds1.example.com:636}
+      DSUI_LDAP_BIND_DN: ${DSUI_LDAP_BIND_DN:-cn=Directory Manager}
+      DSUI_LDAP_BIND_PASSWORD_FILE: /run/secrets/bind_password
+      # DSUI_LDAP_CA_FILE: /etc/ds-ui/ca.pem
+      DSUI_ALLOWED_ORIGINS: http://127.0.0.1:${DSUI_PORT:-8080},http://localhost:${DSUI_PORT:-8080}
+    secrets:
+      - source: bind_password
+        uid: "65532"
+        mode: 0400
+    ports:
+      - "127.0.0.1:${DSUI_PORT:-8080}:8080"
+    restart: unless-stopped
+
+secrets:
+  bind_password:
+    file: ./secrets/dm_password

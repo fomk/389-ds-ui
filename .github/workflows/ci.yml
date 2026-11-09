@@ -1,0 +1,71 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      - run: test -z "$(gofmt -l cmd internal test)" || (gofmt -l cmd internal test; exit 1)
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          args: --build-tags integration
+      - run: go test -race ./...
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-fund --no-audit
+        working-directory: web
+      - name: Locale files and i18n keys
+        run: npm run check:locales
+        working-directory: web
+      - name: Dependency licenses (ADR-004)
+        run: npm run check:licenses
+        working-directory: web
+      - name: Generated API client is up to date
+        run: make check-gen
+      - run: npm run build
+        working-directory: web
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: make itest
+
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: ds
+        run: docker build -t 389-ds-ui/ds:ci deploy/ds
+      - name: ui (sidecar)
+        run: docker build -f deploy/ui/Dockerfile --target sidecar -t 389-ds-ui/ui:ci .
+      - name: ui (static)
+        run: docker build -f deploy/ui/Dockerfile --target static -t 389-ds-ui/ui:ci-static .
