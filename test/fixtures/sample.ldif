@@ -1,0 +1,183 @@
+# Sample data for development and integration tests (suffix dc=example,dc=com).
+# Load into the dev stack with: make seed
+
+dn: ou=People,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: People
+description: User accounts
+
+dn: ou=Groups,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Groups
+description: Groups
+
+dn: ou=Services,dc=example,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: Services
+
+dn: uid=jdoe,ou=People,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: jdoe
+cn: John Doe
+givenName: John
+sn: Doe
+mail: jdoe@example.com
+departmentNumber: Engineering
+uidNumber: 10001
+gidNumber: 10000
+homeDirectory: /home/jdoe
+loginShell: /bin/bash
+userPassword: Secret123
+
+dn: uid=asmith,ou=People,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: asmith
+cn: Alice Smith
+givenName: Alice
+sn: Smith
+mail: asmith@example.com
+departmentNumber: Engineering
+uidNumber: 10002
+gidNumber: 10000
+homeDirectory: /home/asmith
+loginShell: /bin/bash
+userPassword: Secret123
+
+dn: uid=bjones,ou=People,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: bjones
+cn: Bob Jones
+givenName: Bob
+sn: Jones
+mail: bjones@example.com
+departmentNumber: Sales
+uidNumber: 10003
+gidNumber: 10000
+homeDirectory: /home/bjones
+loginShell: /bin/bash
+userPassword: Secret123
+
+dn: uid=cmiller,ou=People,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: cmiller
+cn: Carol Miller
+givenName: Carol
+sn: Miller
+mail: cmiller@example.com
+departmentNumber: Sales
+uidNumber: 10004
+gidNumber: 10000
+homeDirectory: /home/cmiller
+loginShell: /bin/bash
+userPassword: Secret123
+
+dn: uid=dwilson,ou=People,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: dwilson
+cn: Dave Wilson
+givenName: Dave
+sn: Wilson
+mail: dwilson@example.com
+departmentNumber: Support
+uidNumber: 10005
+gidNumber: 10000
+homeDirectory: /home/dwilson
+loginShell: /bin/bash
+userPassword: Secret123
+
+dn: uid=ivanov,ou=People,dc=example,dc=com
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: ivanov
+cn:: 0JjQstCw0L0g0JjQstCw0L3QvtCy
+givenName:: 0JjQstCw0L0=
+sn:: 0JjQstCw0L3QvtCy
+mail: ivanov@example.com
+departmentNumber: Support
+uidNumber: 10006
+gidNumber: 10000
+homeDirectory: /home/ivanov
+loginShell: /bin/bash
+userPassword: Secret123
+
+dn: cn=engineering,ou=Groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: engineering
+member: uid=jdoe,ou=People,dc=example,dc=com
+member: uid=asmith,ou=People,dc=example,dc=com
+
+dn: cn=sales,ou=Groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: sales
+member: uid=bjones,ou=People,dc=example,dc=com
+member: uid=cmiller,ou=People,dc=example,dc=com
+
+dn: cn=support,ou=Groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: support
+member: uid=dwilson,ou=People,dc=example,dc=com
+member: uid=ivanov,ou=People,dc=example,dc=com
+
+dn: cn=admins,ou=Groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: admins
+member: uid=jdoe,ou=People,dc=example,dc=com
+
+dn: cn=all-staff,ou=Groups,dc=example,dc=com
+objectClass: top
+objectClass: groupOfNames
+cn: all-staff
+description: Nested group example
+member: cn=engineering,ou=Groups,dc=example,dc=com
+member: cn=sales,ou=Groups,dc=example,dc=com
+member: cn=support,ou=Groups,dc=example,dc=com
+
+dn: cn=posix-users,ou=Groups,dc=example,dc=com
+objectClass: top
+objectClass: posixGroup
+cn: posix-users
+gidNumber: 10000
+memberUid: jdoe
+memberUid: asmith
+memberUid: bjones
+memberUid: cmiller
+memberUid: dwilson
+memberUid: ivanov
+
+dn: cn=backup,ou=Services,dc=example,dc=com
+objectClass: top
+objectClass: applicationProcess
+objectClass: simpleSecurityObject
+cn: backup
+description: Service account for backups
+userPassword: Secret123

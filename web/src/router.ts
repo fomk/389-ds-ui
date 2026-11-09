@@ -13,6 +13,7 @@ import {
   ScrollText,
   Settings,
 } from '@lucide/vue'
+import BrowserView from '@/views/BrowserView.vue'
 import OverviewView from '@/views/OverviewView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 
@@ -36,12 +37,14 @@ export interface NavItem {
   icon: Component
   /** Roadmap stage in which the section is implemented (docs/roadmap.md). */
   stage: number
+  /** Implemented view; sections without one render a placeholder. */
+  view?: Component
 }
 
 /** Sidebar sections; the ones from later stages render a placeholder. */
 export const nav: NavItem[] = [
-  { path: '/', key: 'overview', icon: House, stage: 0 },
-  { path: '/browser', key: 'browser', icon: Network, stage: 1 },
+  { path: '/', key: 'overview', icon: House, stage: 0, view: OverviewView },
+  { path: '/browser', key: 'browser', icon: Network, stage: 1, view: BrowserView },
   { path: '/monitor', key: 'monitor', icon: Activity, stage: 2 },
   { path: '/databases', key: 'databases', icon: Database, stage: 2 },
   { path: '/logs', key: 'logs', icon: ScrollText, stage: 2 },
@@ -60,15 +63,11 @@ declare module 'vue-router' {
 }
 
 const routes: RouteRecordRaw[] = [
-  { path: '/', component: OverviewView, meta: { nav: 'overview' } },
-  ...nav
-    .filter((n) => n.stage > 0)
-    .map((n) => ({
-      path: n.path,
-      component: PlaceholderView,
-      props: { navKey: n.key, stage: n.stage },
-      meta: { nav: n.key },
-    })),
+  ...nav.map((n) =>
+    n.view
+      ? { path: n.path, component: n.view, meta: { nav: n.key } }
+      : { path: n.path, component: PlaceholderView, props: { navKey: n.key, stage: n.stage }, meta: { nav: n.key } },
+  ),
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 

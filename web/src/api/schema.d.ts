@@ -4,6 +4,74 @@
  */
 
 export interface paths {
+    "/api/v1/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read one entry with user and operational attributes */
+        get: operations["getEntry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entries/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Direct children of an entry, sorted by RDN, paged */
+        get: operations["getEntryChildren"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entries/roots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tree roots: naming contexts and optional system trees */
+        get: operations["getEntryRoots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Parsed LDAP schema with resolved inheritance */
+        get: operations["getSchema"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/system/capabilities": {
         parameters: {
             query?: never;
@@ -59,6 +127,38 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Attribute: {
+            /** @description Values are base64-encoded */
+            binary?: boolean;
+            /** @description Attribute description as returned by the server, including options such as ;lang-ru */
+            name: string;
+            operational?: boolean;
+            /** @description Values are password hashes reduced to their {SCHEME} */
+            redacted?: boolean;
+            values: string[];
+        };
+        AttributeType: {
+            collective?: boolean;
+            desc?: string;
+            equality?: string;
+            /** @enum {string} */
+            kind: "string" | "integer" | "boolean" | "dn" | "time" | "binary" | "octet" | "password";
+            /** Format: int64 */
+            maxLen?: number;
+            names: string[];
+            noUserModification?: boolean;
+            obsolete?: boolean;
+            oid: string;
+            ordering?: string;
+            origin?: string[];
+            singleValue?: boolean;
+            substr?: string;
+            sup?: string;
+            /** @description Syntax OID, inherited from SUP if not set */
+            syntax?: string;
+            /** @enum {string} */
+            usage?: "userApplications" | "directoryOperation" | "distributedOperation" | "dSAOperation";
+        };
         Capabilities: {
             /** @description Management of the NSS certificate database */
             certs: boolean;
@@ -78,6 +178,25 @@ export interface components {
             mode: "sidecar" | "remote" | "aio";
             /** @description Offline database operations (dsctl) */
             offline: boolean;
+        };
+        ChildrenPage: {
+            items: components["schemas"]["Summary"][];
+            /** @description Pass as cursor to get the next page */
+            nextCursor?: string;
+            /** Format: int64 */
+            total: number;
+        };
+        Entry: {
+            attributes: components["schemas"]["Attribute"][];
+            dn: string;
+            /** @description Version of the user attributes; send as If-Match when modifying */
+            etag: string;
+            hasChildren: boolean;
+            /** Format: int64 */
+            numSubordinates: number;
+            objectClasses: string[];
+            parent: string;
+            rdn: string;
         };
         ErrorDetail: {
             /** @description Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id' */
@@ -120,6 +239,23 @@ export interface components {
              */
             type: string;
         };
+        ObjectClass: {
+            desc?: string;
+            /** @enum {string} */
+            kind: "structural" | "auxiliary" | "abstract";
+            may: string[];
+            must: string[];
+            names: string[];
+            obsolete?: boolean;
+            oid: string;
+            origin?: string[];
+            sup?: string[];
+        };
+        Schema: {
+            attributeTypes: components["schemas"]["AttributeType"][];
+            objectClasses: components["schemas"]["ObjectClass"][];
+            syntaxes: components["schemas"]["Syntax"][];
+        };
         ServerInfo: {
             /** @description Identity ds-ui is bound as */
             boundAs: string;
@@ -138,6 +274,22 @@ export interface components {
             vendorVersion: string;
             /** @description Parsed product version, e.g. 3.1.2 */
             version: string;
+        };
+        Summary: {
+            dn: string;
+            /** @description False for a naming context whose root entry has not been created yet */
+            exists: boolean;
+            hasChildren: boolean;
+            /** Format: int64 */
+            numSubordinates: number;
+            objectClasses: string[];
+            rdn: string;
+            /** @description Server-internal tree such as cn=config */
+            system?: boolean;
+        };
+        Syntax: {
+            desc?: string;
+            oid: string;
         };
         SystemInfo: {
             /** @description 389 instance name */
@@ -169,6 +321,141 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getEntry: {
+        parameters: {
+            query: {
+                /** @description Distinguished name of the entry */
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Entry"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getEntryChildren: {
+        parameters: {
+            query: {
+                /** @description Parent entry */
+                dn: string;
+                /** @description nextCursor from the previous page */
+                cursor?: string;
+                limit?: number;
+                /** @description Bypass the short-lived children cache */
+                refresh?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildrenPage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getEntryRoots: {
+        parameters: {
+            query?: {
+                /** @description Include server-internal trees (cn=config, cn=schema, cn=monitor) */
+                system?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Summary"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getSchema: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-None-Match"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    "Cache-Control"?: string;
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Schema"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     getCapabilities: {
         parameters: {
             query?: never;

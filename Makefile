@@ -36,8 +36,9 @@ check-gen: gen ## Fail if generated files are out of date
 	git diff --exit-code -- api/openapi.json web/src/api/schema.d.ts
 
 .PHONY: test
-test: ## Unit tests
+test: web/node_modules ## Unit tests (Go + frontend)
 	$(GO) test ./...
+	cd web && $(NPM) test
 
 .PHONY: ds-image
 ds-image: ## Build the 389-ds image used by integration tests
@@ -63,6 +64,11 @@ images: ## Build all images
 .PHONY: up
 up: secrets ## Start ds + ui (sidecar mode)
 	DOCKER_GID=$$(stat -c %g /var/run/docker.sock) docker compose up -d --build
+
+.PHONY: seed
+seed: ## Load test/fixtures/sample.ldif into the running ds container (existing entries are skipped)
+	docker compose exec -T ds ldapadd -c -Y EXTERNAL -Q -H ldapi://%2fdata%2frun%2fslapd-localhost.socket \
+		< test/fixtures/sample.ldif 2>&1 | grep -vE '^(adding new entry|$$)' || true
 
 .PHONY: down
 down: ## Stop the stack (keeps the data volume)

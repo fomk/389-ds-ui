@@ -7,6 +7,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"testing"
@@ -69,6 +70,10 @@ func run(m *testing.M) int {
 		log.Printf("DS not ready: %v", err)
 		return 1
 	}
+	if err := loadFixtures(ctx, ds); err != nil {
+		log.Printf("load fixtures: %v", err)
+		return 1
+	}
 	return m.Run()
 }
 
@@ -110,4 +115,21 @@ func waitForSuffix(ctx context.Context) error {
 		}
 		time.Sleep(time.Second)
 	}
+}
+
+// loadFixtures adds test/fixtures/sample.ldif with ldapadd inside the container.
+func loadFixtures(ctx context.Context, ds testcontainers.Container) error {
+	if err := ds.CopyFileToContainer(ctx, "../fixtures/sample.ldif", "/tmp/sample.ldif", 0o644); err != nil {
+		return err
+	}
+	code, out, err := ds.Exec(ctx, []string{"ldapadd", "-x", "-H", "ldap://localhost:3389",
+		"-D", dmDN, "-w", dmPassword, "-f", "/tmp/sample.ldif"})
+	if err != nil {
+		return err
+	}
+	if code != 0 {
+		b, _ := io.ReadAll(out)
+		return fmt.Errorf("ldapadd exit %d: %s", code, b)
+	}
+	return nil
 }

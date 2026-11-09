@@ -7,6 +7,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/go-ldap/ldap/v3"
 
+	"github.com/fomk/389-ds-ui/internal/entries"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 	"github.com/fomk/389-ds-ui/internal/providers"
 )
@@ -54,6 +55,9 @@ func toHTTPError(err error) error {
 	var se huma.StatusError
 	if errors.As(err, &se) {
 		return err
+	}
+	if errors.Is(err, entries.ErrInvalidDN) || errors.Is(err, entries.ErrInvalidCursor) {
+		return problem(http.StatusBadRequest, err.Error())
 	}
 	if errors.Is(err, providers.ErrNotSupported) {
 		return problem(http.StatusNotImplemented, err.Error())

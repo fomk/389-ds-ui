@@ -1,6 +1,120 @@
 {
   "components": {
     "schemas": {
+      "Attribute": {
+        "additionalProperties": false,
+        "properties": {
+          "binary": {
+            "description": "Values are base64-encoded",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Attribute description as returned by the server, including options such as ;lang-ru",
+            "type": "string"
+          },
+          "operational": {
+            "type": "boolean"
+          },
+          "redacted": {
+            "description": "Values are password hashes reduced to their {SCHEME}",
+            "type": "boolean"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "values"
+        ],
+        "type": "object"
+      },
+      "AttributeType": {
+        "additionalProperties": false,
+        "properties": {
+          "collective": {
+            "type": "boolean"
+          },
+          "desc": {
+            "type": "string"
+          },
+          "equality": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "string",
+              "integer",
+              "boolean",
+              "dn",
+              "time",
+              "binary",
+              "octet",
+              "password"
+            ],
+            "type": "string"
+          },
+          "maxLen": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "noUserModification": {
+            "type": "boolean"
+          },
+          "obsolete": {
+            "type": "boolean"
+          },
+          "oid": {
+            "type": "string"
+          },
+          "ordering": {
+            "type": "string"
+          },
+          "origin": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "singleValue": {
+            "type": "boolean"
+          },
+          "substr": {
+            "type": "string"
+          },
+          "sup": {
+            "type": "string"
+          },
+          "syntax": {
+            "description": "Syntax OID, inherited from SUP if not set",
+            "type": "string"
+          },
+          "usage": {
+            "enum": [
+              "userApplications",
+              "directoryOperation",
+              "distributedOperation",
+              "dSAOperation"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "oid",
+          "names",
+          "kind"
+        ],
+        "type": "object"
+      },
       "Capabilities": {
         "additionalProperties": false,
         "properties": {
@@ -50,6 +164,78 @@
           "files",
           "certs",
           "offline"
+        ],
+        "type": "object"
+      },
+      "ChildrenPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Summary"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "description": "Pass as cursor to get the next page",
+            "type": "string"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "type": "object"
+      },
+      "Entry": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "items": {
+              "$ref": "#/components/schemas/Attribute"
+            },
+            "type": "array"
+          },
+          "dn": {
+            "type": "string"
+          },
+          "etag": {
+            "description": "Version of the user attributes; send as If-Match when modifying",
+            "type": "string"
+          },
+          "hasChildren": {
+            "type": "boolean"
+          },
+          "numSubordinates": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "objectClasses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "parent": {
+            "type": "string"
+          },
+          "rdn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn",
+          "rdn",
+          "parent",
+          "objectClasses",
+          "attributes",
+          "numSubordinates",
+          "hasChildren",
+          "etag"
         ],
         "type": "object"
       },
@@ -122,6 +308,95 @@
         },
         "type": "object"
       },
+      "ObjectClass": {
+        "additionalProperties": false,
+        "properties": {
+          "desc": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "structural",
+              "auxiliary",
+              "abstract"
+            ],
+            "type": "string"
+          },
+          "may": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "must": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "obsolete": {
+            "type": "boolean"
+          },
+          "oid": {
+            "type": "string"
+          },
+          "origin": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "sup": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "oid",
+          "names",
+          "kind",
+          "must",
+          "may"
+        ],
+        "type": "object"
+      },
+      "Schema": {
+        "additionalProperties": false,
+        "properties": {
+          "attributeTypes": {
+            "items": {
+              "$ref": "#/components/schemas/AttributeType"
+            },
+            "type": "array"
+          },
+          "objectClasses": {
+            "items": {
+              "$ref": "#/components/schemas/ObjectClass"
+            },
+            "type": "array"
+          },
+          "syntaxes": {
+            "items": {
+              "$ref": "#/components/schemas/Syntax"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "attributeTypes",
+          "objectClasses",
+          "syntaxes"
+        ],
+        "type": "object"
+      },
       "ServerInfo": {
         "additionalProperties": false,
         "properties": {
@@ -188,6 +463,62 @@
           "supportedExtensions",
           "supportedSaslMechanisms",
           "boundAs"
+        ],
+        "type": "object"
+      },
+      "Summary": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          },
+          "exists": {
+            "description": "False for a naming context whose root entry has not been created yet",
+            "type": "boolean"
+          },
+          "hasChildren": {
+            "type": "boolean"
+          },
+          "numSubordinates": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "objectClasses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "rdn": {
+            "type": "string"
+          },
+          "system": {
+            "description": "Server-internal tree such as cn=config",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dn",
+          "rdn",
+          "objectClasses",
+          "numSubordinates",
+          "hasChildren",
+          "exists"
+        ],
+        "type": "object"
+      },
+      "Syntax": {
+        "additionalProperties": false,
+        "properties": {
+          "desc": {
+            "type": "string"
+          },
+          "oid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "oid"
         ],
         "type": "object"
       },
@@ -258,6 +589,231 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/entries": {
+      "get": {
+        "operationId": "getEntry",
+        "parameters": [
+          {
+            "description": "Distinguished name of the entry",
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "description": "Distinguished name of the entry",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            },
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Read one entry with user and operational attributes",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
+    "/api/v1/entries/children": {
+      "get": {
+        "operationId": "getEntryChildren",
+        "parameters": [
+          {
+            "description": "Parent entry",
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "description": "Parent entry",
+              "type": "string"
+            }
+          },
+          {
+            "description": "nextCursor from the previous page",
+            "explode": false,
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "description": "nextCursor from the previous page",
+              "type": "string"
+            }
+          },
+          {
+            "explode": false,
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 200,
+              "format": "int64",
+              "maximum": 1000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Bypass the short-lived children cache",
+            "explode": false,
+            "in": "query",
+            "name": "refresh",
+            "schema": {
+              "description": "Bypass the short-lived children cache",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildrenPage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Direct children of an entry, sorted by RDN, paged",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
+    "/api/v1/entries/roots": {
+      "get": {
+        "operationId": "getEntryRoots",
+        "parameters": [
+          {
+            "description": "Include server-internal trees (cn=config, cn=schema, cn=monitor)",
+            "explode": false,
+            "in": "query",
+            "name": "system",
+            "schema": {
+              "description": "Include server-internal trees (cn=config, cn=schema, cn=monitor)",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Summary"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Tree roots: naming contexts and optional system trees",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
+    "/api/v1/schema": {
+      "get": {
+        "operationId": "getSchema",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "If-None-Match",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Schema"
+                }
+              }
+            },
+            "description": "OK",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Parsed LDAP schema with resolved inheritance",
+        "tags": [
+          "schema"
+        ]
+      }
+    },
     "/api/v1/system/capabilities": {
       "get": {
         "operationId": "getCapabilities",

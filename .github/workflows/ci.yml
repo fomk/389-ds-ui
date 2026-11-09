@@ -44,6 +44,9 @@ jobs:
       - name: Dependency licenses (ADR-004)
         run: npm run check:licenses
         working-directory: web
+      - name: Frontend unit tests
+        run: npm test
+        working-directory: web
       - name: Generated API client is up to date
         run: make check-gen
       - run: npm run build

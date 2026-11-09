@@ -81,6 +81,33 @@
       "bdb": "Berkeley DB"
     }
   },
+  "browser": {
+    "showSystem": "System trees",
+    "showSystemHint": "Show cn=config, cn=schema and cn=monitor",
+    "refresh": "Refresh",
+    "loadMore": "Load more ({shown} of {total})",
+    "notCreated": "root entry not created",
+    "selectEntry": "Select an entry in the tree",
+    "loadError": "Could not load the entry",
+    "treeError": "Could not load the tree",
+    "copyDN": "Copy DN",
+    "copied": "Copied to clipboard",
+    "parent": "Parent",
+    "showOperational": "Operational attributes",
+    "children": "{n} child entry | {n} child entries",
+    "attribute": "Attribute",
+    "values": "Values",
+    "binary": "binary, {size}",
+    "download": "Download",
+    "passwordHash": "hashed, scheme {scheme}",
+    "attrInfo": {
+      "syntax": "Syntax",
+      "singleValue": "single-valued",
+      "operational": "operational",
+      "readOnly": "read-only",
+      "notInSchema": "Not defined in the schema"
+    }
+  },
   "errors": {
     "network": "Cannot reach the ds-ui API",
     "http": {

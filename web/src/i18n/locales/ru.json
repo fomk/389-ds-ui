@@ -81,6 +81,33 @@
       "bdb": "Berkeley DB"
     }
   },
+  "browser": {
+    "showSystem": "Системные деревья",
+    "showSystemHint": "Показать cn=config, cn=schema и cn=monitor",
+    "refresh": "Обновить",
+    "loadMore": "Загрузить ещё ({shown} из {total})",
+    "notCreated": "корневая запись не создана",
+    "selectEntry": "Выберите запись в дереве",
+    "loadError": "Не удалось загрузить запись",
+    "treeError": "Не удалось загрузить дерево",
+    "copyDN": "Скопировать DN",
+    "copied": "Скопировано в буфер обмена",
+    "parent": "Родитель",
+    "showOperational": "Операционные атрибуты",
+    "children": "{n} дочерняя запись | {n} дочерние записи | {n} дочерних записей | {n} дочерней записи",
+    "attribute": "Атрибут",
+    "values": "Значения",
+    "binary": "двоичные данные, {size}",
+    "download": "Скачать",
+    "passwordHash": "хеш, схема {scheme}",
+    "attrInfo": {
+      "syntax": "Синтаксис",
+      "singleValue": "одно значение",
+      "operational": "операционный",
+      "readOnly": "только чтение",
+      "notInSchema": "Не определён в схеме"
+    }
+  },
   "errors": {
     "network": "API ds-ui недоступен",
     "http": {

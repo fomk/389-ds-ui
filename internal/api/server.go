@@ -15,6 +15,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-ldap/ldap/v3"
 
+	"github.com/fomk/389-ds-ui/internal/entries"
+	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
 	"github.com/fomk/389-ds-ui/internal/providers"
 )
 
@@ -26,6 +28,8 @@ type LDAP interface {
 // Deps are the dependencies of the HTTP layer.
 type Deps struct {
 	LDAP           LDAP
+	Schemas        *schema.Cache
+	Entries        *entries.Service
 	Lifecycle      providers.Lifecycle
 	Capabilities   providers.Capabilities
 	Instance       string
@@ -49,7 +53,8 @@ func NewHandler(d Deps) http.Handler {
 		d.Logger = slog.Default()
 	}
 	r := chi.NewRouter()
-	r.Use(middleware.Recoverer, requestLogger(d.Logger), csrfGuard(d.AllowedOrigins))
+	r.Use(middleware.Recoverer, requestLogger(d.Logger), csrfGuard(d.AllowedOrigins),
+		middleware.Compress(5, "application/json", "application/problem+json"))
 
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -97,6 +102,7 @@ func apiConfig(version string) huma.Config {
 
 func register(api huma.API, d Deps) {
 	registerSystem(api, d)
+	registerBrowser(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

@@ -17,7 +17,9 @@ import (
 
 	"github.com/fomk/389-ds-ui/internal/api"
 	"github.com/fomk/389-ds-ui/internal/config"
+	"github.com/fomk/389-ds-ui/internal/entries"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
+	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
 	"github.com/fomk/389-ds-ui/internal/providers"
 	"github.com/fomk/389-ds-ui/internal/webui"
 )
@@ -113,8 +115,11 @@ func serve() error {
 		log.Warn("binary was built without the web UI; only the API is served")
 	}
 
+	schemas := schema.NewCache(time.Minute, log)
 	handler := api.NewHandler(api.Deps{
 		LDAP:           client,
+		Schemas:        schemas,
+		Entries:        entries.New(client, schemas, log),
 		Lifecycle:      lifecycle,
 		Capabilities:   caps,
 		Instance:       cfg.Instance,

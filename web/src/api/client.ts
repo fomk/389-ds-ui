@@ -6,6 +6,13 @@ export type ServerInfo = Schemas['ServerInfo']
 export type SystemInfo = Schemas['SystemInfo']
 export type SystemState = Schemas['SystemState']
 export type Capabilities = Schemas['Capabilities']
+export type Entry = Schemas['Entry']
+export type EntryAttribute = Schemas['Attribute']
+export type EntrySummary = Schemas['Summary']
+export type ChildrenPage = Schemas['ChildrenPage']
+export type LdapSchema = Schemas['Schema']
+export type AttributeType = Schemas['AttributeType']
+export type ObjectClass = Schemas['ObjectClass']
 
 /** RFC 9457 problem document returned by the API on errors. */
 export interface Problem {

@@ -47,7 +47,7 @@ const menuOptions = computed<MenuOption[]>(() =>
     label: () =>
       h(
         RouterLink,
-        item.stage > 0
+        !item.view
           ? {
               to: item.path,
               // Collapsed menu shows its own tooltip with the label; a native title would overlap it.
@@ -175,6 +175,6 @@ const statusHint = computed(() => (server.apiDown ? t('status.apiDown') : server
 
 :deep(.content) {
   padding: 24px;
-  max-width: 1280px;
+  max-width: 1600px;
 }
 </style>
