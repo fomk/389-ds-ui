@@ -45,9 +45,15 @@ Work items:
 
 **Done when:** `docker compose up` brings up DS + UI; the UI shows the root DSE (version, suffixes) via LDAPI autobind without a password; CI is green; the same binary in mode B connects over `ldap://` with a password.
 
-## Stage 1. LDAP editor (3–4 wk) → M1
+## Stage 1. LDAP editor (3–4 wk) → M1 — ✅ done
 
 **Goal:** a full-featured data editor — the main value for users.
+
+**Outcome:** all items below are implemented and covered by integration tests against 389-ds 3.1.2 and by UI walkthroughs. Deviations from the plan:
+- *VLV + SSS* was replaced by server-side paging of large branches (ADR-010): VLV in 389-ds needs a VLV index per branch, and reading 100k children took the server 8–12 s. Branches above 2000 children are now paged in server order (first page ≈ 40 ms on 100k entries; ds-ui RSS 7 MB instead of 650 MB).
+- *Password Modify* works over LDAPI/TLS; on plain LDAP (remote mode without TLS) 389-ds refuses it, ds-ui falls back to replacing `userPassword` and server-generated passwords are unavailable.
+- LDIF import does not support `modrdn` (parser limitation) and refuses URL values (`attr:< file://…`) because the parser would read files on the ds-ui host.
+- Found and fixed along the way: flaky suffix creation in the DS image (dscontainer runs a temporary server during setup), DNS-rebinding exposure (`Host` allowlist), password hashes in exports (excluded by default), unindexed quick-search filter (3.5 s → 30 ms).
 
 Work items:
 - RFC 4512 schema parser (`internal/ldapx/schema`): attributeTypes, objectClasses (SUP inheritance, must/may), syntaxes, matching rules; cache invalidated by the `modifyTimestamp` of `cn=schema`.
@@ -60,7 +66,7 @@ Work items:
 - Raw LDIF mode: view/edit an entry; import an LDIF fragment (add/modify via LDAP); export a subtree to LDIF (via search).
 - Search: base/scope/filter/attributes, results table, LDIF/CSV export.
 - Groups: add/remove members with search, display `memberOf` (read-only).
-- VLV control + SSS (custom ASN.1) — for large lists when indexes exist; otherwise Paged Results.
+- ~~VLV control + SSS (custom ASN.1)~~ → server-side paging of large branches (ADR-010).
 
 **Done when:** you can create an OU/user/group, edit, move, delete, search, export and import LDIF; forms correctly reflect the schema; a branch of 100k entries opens without freezing (pagination).
 

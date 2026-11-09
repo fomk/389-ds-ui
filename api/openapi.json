@@ -741,9 +741,7 @@
           }
         },
         "required": [
-          "base",
-          "scope",
-          "filter"
+          "base"
         ],
         "type": "object"
       },

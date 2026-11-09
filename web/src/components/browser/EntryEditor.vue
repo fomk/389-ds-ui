@@ -46,8 +46,11 @@ const schema = useSchemaStore()
 const server = useServerStore()
 
 const isBinaryKind = (name: string) => schema.attr(name)?.kind === 'binary'
+// memberOf is maintained by the server's memberOf plugin.
+const pluginManaged = new Set(['memberof'])
 const editable = (name: string) => {
   const a = schema.attr(name)
+  if (pluginManaged.has(name.split(';')[0]!.toLowerCase())) return false
   return !a || (!a.noUserModification && a.kind !== 'password')
 }
 

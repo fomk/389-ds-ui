@@ -141,3 +141,18 @@ Verified: create, exec, requests to other containers, and requests not from `ui`
 **Consequences.** Every UI feature is considered done only with keys in `en.json` and `ru.json` (a definition of done for all stages). Details for developers and translators — [i18n.md](i18n.md).
 
 **Alternatives.** Server-side localization (Go, `Accept-Language`) — rejected: it complicates the API and caching, and all UI texts live in the frontend anyway. Texts directly in YAML pages (`label: {en, ru}`) — rejected: adding a language would require editing every YAML file.
+
+---
+
+## ADR-010. Large branches are paged by the server, not with VLV
+
+**Status:** Accepted (stage 1)
+
+**Context.** The tree must open a branch of 100k entries without freezing. The first implementation read all children (Paged Results), sorted them by RDN and cached the list. Measured on 389-ds 3.1.2: reading 100k children takes the server 8–12 s even with the attribute list `1.1`, and ds-ui grew to ~650 MB. The roadmap proposed VLV + Server Side Sort; in 389-ds VLV needs a VLV index configured for each base/filter, which ordinary branches do not have.
+
+**Decision.** Branches with at most 2000 children (`numSubordinates` of the parent) are read completely, sorted by RDN and cached for 30 s. Larger branches are listed in server order with Paged Results: the API cursor carries the server's paging cookie (`p:<base64>`), each "load more" fetches the next server page (~20–40 ms). The response flags `sorted: false`; the tree labels such branches "server order" and points the user to search. Cookies are bound to the LDAP connection: after a reconnect the API answers 409 and the UI reloads the branch.
+
+**Consequences.** 100k branch: first page 39 ms, ds-ui RSS 7 MB. Large branches are not alphabetical; finding a specific entry there is done with search. VLV can be added later for branches where an administrator has configured a VLV index (stage 2 manages VLV indexes).
+
+**Alternatives.** VLV + SSS (needs per-branch indexes); SSS alone (still a full scan per request); full read with a longer cache (first open still 8–12 s, memory proportional to branch size).
+

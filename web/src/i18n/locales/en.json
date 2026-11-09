@@ -256,6 +256,21 @@
     "summary": "Applied: {applied}, failed: {failed}",
     "exportSubtree": "Export subtree (LDIF)"
   },
+  "groups": {
+    "members": "Members",
+    "memberCount": "{n} member | {n} members",
+    "filter": "Filter members",
+    "remove": "Remove from group",
+    "removed": "Removed from the group",
+    "add": "Add members",
+    "addPlaceholder": "Find users or groups by name, uid or email…",
+    "added": "Added {n} member | Added {n} members",
+    "none": "The group has no members",
+    "memberOf": "Member of",
+    "memberOfNone": "Not a member of any group",
+    "memberOfHint": "Groups that list this entry as member or uniqueMember",
+    "error": "Could not update the group"
+  },
   "errors": {
     "network": "Cannot reach the ds-ui API",
     "http": {

@@ -9,18 +9,18 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 
 | Feature | Mechanism | A | B | C |
 |---|---|---|---|---|
-| Lazy-loading tree, pagination | LDAP (one-level, Paged Results, `numSubordinates`) | ✅ | ✅ | ✅ |
+| Lazy-loading tree, pagination (sorted up to 2000 children, server order above) | LDAP (one-level, Paged Results, `numSubordinates`) | ✅ | ✅ | ✅ |
 | Entry view, operational attributes | LDAP | ✅ | ✅ | ✅ |
 | Schema-driven forms, objectClass add/remove | LDAP (`cn=schema`) | ✅ | ✅ | ✅ |
 | Creation from templates | LDAP | ✅ | ✅ | ✅ |
 | Rename / move | LDAP (ModifyDN) | ✅ | ✅ | ✅ |
 | Deletion (including subtrees) | LDAP | ✅ | ✅ | ✅ |
-| Password change | LDAP (modify / Password Modify extop) | ✅ | ✅ | ✅ |
+| Password change (server-generated over LDAPI/TLS only) | LDAP (Password Modify extop; modify fallback on plain LDAP) | ✅ | ✅ | ✅ |
 | Binary attributes (photos, certificates) | LDAP | ✅ | ✅ | ✅ |
 | Search, LDIF/CSV export of results | LDAP | ✅ | ✅ | ✅ |
 | LDIF fragment import | LDAP (add/modify) | ✅ | ✅ | ✅ |
-| Group members, memberOf | LDAP | ✅ | ✅ | ✅ |
-| VLV + SSS for large lists | LDAP (controls) | ✅ | ✅ | ✅ |
+| Group members (member/uniqueMember), "member of" (by search, no plugin needed) | LDAP | ✅ | ✅ | ✅ |
+| Entry LDIF view/edit, subtree export | LDAP | ✅ | ✅ | ✅ |
 
 ## Server and monitoring (stages 2–3)
 

@@ -26,6 +26,8 @@ import AttributeValue from './AttributeValue.vue'
 import DeleteDialog from './DeleteDialog.vue'
 import EntryEditor from './EntryEditor.vue'
 import EntryLdif from './EntryLdif.vue'
+import GroupMembers from './GroupMembers.vue'
+import MemberOf from './MemberOf.vue'
 import PasswordDialog from './PasswordDialog.vue'
 import RenameDialog from './RenameDialog.vue'
 
@@ -104,10 +106,21 @@ function onAction(key: string) {
   dialog.value = key as typeof dialog.value
 }
 
+/** DN-valued membership attribute managed in the members card, if any. */
+const memberAttr = computed(() => {
+  const ocs = new Set(entry.value?.objectClasses.map((o) => o.toLowerCase()))
+  if (ocs.has('groupofnames')) return 'member'
+  if (ocs.has('groupofuniquenames')) return 'uniqueMember'
+  return undefined
+})
+
 const attributes = computed(() =>
   (entry.value?.attributes ?? []).filter(
-    // objectClass is shown as tags above the table.
-    (a) => a.name.toLowerCase() !== 'objectclass' && (showOperational.value || !a.operational),
+    // objectClass is shown as tags above the table; members get their own card.
+    (a) =>
+      a.name.toLowerCase() !== 'objectclass' &&
+      a.name.toLowerCase() !== memberAttr.value?.toLowerCase() &&
+      (showOperational.value || !a.operational),
   ),
 )
 
@@ -226,6 +239,8 @@ defineExpose({ reload: load })
         </tr>
       </tbody>
     </NTable>
+    <GroupMembers v-if="memberAttr" :entry="entry" :attr="memberAttr" @changed="onSaved" />
+    <MemberOf :dn="entry.dn" :version="entry.etag" />
     </template>
     </template>
 

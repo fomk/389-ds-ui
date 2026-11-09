@@ -20,14 +20,19 @@ import (
 // ErrInvalidFilter is returned for a syntactically invalid LDAP filter.
 var ErrInvalidFilter = errors.New("invalid LDAP filter")
 
-// MaxSearchResults caps interactive search results.
-const MaxSearchResults = 5000
+const (
+	// MaxSearchResults caps interactive search results.
+	MaxSearchResults = 5000
+	// SearchTimeLimit is the server-side time limit (seconds) for interactive
+	// searches, so that an unindexed filter cannot block the UI for minutes.
+	SearchTimeLimit = 15
+)
 
 // SearchRequest describes an interactive search.
 type SearchRequest struct {
 	Base   string   `json:"base" minLength:"1"`
-	Scope  string   `json:"scope" enum:"base,one,sub" default:"sub"`
-	Filter string   `json:"filter" default:"(objectClass=*)"`
+	Scope  string   `json:"scope,omitempty" enum:"base,one,sub" default:"sub"`
+	Filter string   `json:"filter,omitempty" default:"(objectClass=*)"`
 	Attrs  []string `json:"attrs,omitempty" doc:"Attributes to return; empty returns all user attributes"`
 	Limit  int      `json:"limit,omitempty" minimum:"1" maximum:"5000" default:"500"`
 }
@@ -94,13 +99,17 @@ func (s *Service) Search(ctx context.Context, r SearchRequest) (*SearchResult, e
 	out := &SearchResult{Entries: []SearchHit{}}
 	err = s.ldap.Do(ctx, func(c *ldap.Conn) error {
 		res, err := c.Search(ldap.NewSearchRequest(r.Base, scope, ldap.NeverDerefAliases,
-			limit, 0, false, filter, attrs, nil))
-		if ldap.IsErrorWithCode(err, ldap.LDAPResultSizeLimitExceeded) {
+			limit, SearchTimeLimit, false, filter, attrs, nil))
+		if ldap.IsErrorWithCode(err, ldap.LDAPResultSizeLimitExceeded) ||
+			ldap.IsErrorWithCode(err, ldap.LDAPResultTimeLimitExceeded) {
 			out.Truncated = true
 			err = nil
 		}
 		if err != nil {
 			return err
+		}
+		if res == nil {
+			return nil
 		}
 		for _, e := range res.Entries {
 			hit := SearchHit{DN: e.DN, Attributes: make([]Attribute, 0, len(e.Attributes))}
