@@ -107,6 +107,7 @@ func register(api huma.API, d Deps) {
 	registerBrowser(api, d)
 	registerBrowserWrites(api, d)
 	registerTemplates(api, d)
+	registerLDIF(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

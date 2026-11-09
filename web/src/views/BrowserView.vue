@@ -6,6 +6,9 @@ import { NCard, NEmpty, NSplit } from 'naive-ui'
 import EntryTree from '@/components/browser/EntryTree.vue'
 import CreateEntry from '@/components/browser/CreateEntry.vue'
 import EntryView from '@/components/browser/EntryView.vue'
+import ImportLdifDialog from '@/components/browser/ImportLdifDialog.vue'
+import SearchPanel from '@/components/browser/SearchPanel.vue'
+import { useServerStore } from '@/stores/server'
 import type { Entry } from '@/api/client'
 import { splitRDN } from '@/ldap/dn'
 
@@ -19,10 +22,20 @@ const dn = computed(() => (typeof route.query.dn === 'string' ? route.query.dn :
 const tree = ref<InstanceType<typeof EntryTree>>()
 /** Parent DN while the create panel is open. */
 const creatingUnder = ref<string>()
+const searching = ref(false)
+const importing = ref(false)
+const server = useServerStore()
+const searchBase = computed(() => dn.value ?? server.info?.server.namingContexts[0] ?? '')
 
 function select(next: string) {
   creatingUnder.value = undefined
+  searching.value = false
   router.push({ path: '/browser', query: { dn: next } })
+}
+
+function openSearch() {
+  creatingUnder.value = undefined
+  searching.value = true
 }
 
 async function onCreated(e: Entry) {
@@ -55,13 +68,14 @@ async function onRenamed(oldDN: string, newDN: string) {
   <NSplit class="browser" direction="horizontal" :default-size="0.32" :min="0.18" :max="0.6">
     <template #1>
       <NCard size="small" class="pane" content-class="pane-content">
-        <EntryTree ref="tree" :selected="dn" @select="select" />
+        <EntryTree ref="tree" :selected="dn" @select="select" @search="openSearch" @import="importing = true" />
       </NCard>
     </template>
     <template #2>
       <div class="detail">
+        <SearchPanel v-if="searching" :key="searchBase" :base="searchBase" />
         <CreateEntry
-          v-if="creatingUnder"
+          v-else-if="creatingUnder"
           :key="creatingUnder"
           :parent="creatingUnder"
           @created="onCreated"
@@ -78,6 +92,7 @@ async function onRenamed(oldDN: string, newDN: string) {
         <NCard v-else size="small">
           <NEmpty :description="t('browser.selectEntry')" class="empty" />
         </NCard>
+        <ImportLdifDialog v-model:show="importing" @applied="tree?.reload()" />
       </div>
     </template>
   </NSplit>

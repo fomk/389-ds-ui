@@ -1,6 +1,73 @@
 {
   "components": {
     "schemas": {
+      "ApplyLDIFInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "ldif": {
+            "description": "Content or change records (add, modify, delete); URL values are not allowed",
+            "maxLength": 10485760,
+            "minLength": 1,
+            "type": "string"
+          },
+          "stopOnError": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ldif"
+        ],
+        "type": "object"
+      },
+      "ApplyResult": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "op": {
+            "enum": [
+              "add",
+              "modify",
+              "delete"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn",
+          "op"
+        ],
+        "type": "object"
+      },
+      "ApplySummary": {
+        "additionalProperties": false,
+        "properties": {
+          "applied": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "failed": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ApplyResult"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "applied",
+          "failed",
+          "results"
+        ],
+        "type": "object"
+      },
       "Attribute": {
         "additionalProperties": false,
         "properties": {
@@ -570,6 +637,21 @@
         ],
         "type": "object"
       },
+      "ReplaceLDIFInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "ldif": {
+            "description": "One content record for the same DN",
+            "maxLength": 10485760,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "ldif"
+        ],
+        "type": "object"
+      },
       "Schema": {
         "additionalProperties": false,
         "properties": {
@@ -596,6 +678,86 @@
           "attributeTypes",
           "objectClasses",
           "syntaxes"
+        ],
+        "type": "object"
+      },
+      "SearchHit": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "items": {
+              "$ref": "#/components/schemas/Attribute"
+            },
+            "type": "array"
+          },
+          "dn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn",
+          "attributes"
+        ],
+        "type": "object"
+      },
+      "SearchRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "attrs": {
+            "description": "Attributes to return; empty returns all user attributes",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "base": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "filter": {
+            "default": "(objectClass=*)",
+            "type": "string"
+          },
+          "limit": {
+            "default": 500,
+            "format": "int64",
+            "maximum": 5000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "scope": {
+            "default": "sub",
+            "enum": [
+              "base",
+              "one",
+              "sub"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "base",
+          "scope",
+          "filter"
+        ],
+        "type": "object"
+      },
+      "SearchResult": {
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/SearchHit"
+            },
+            "type": "array"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "entries",
+          "truncated"
         ],
         "type": "object"
       },
@@ -1130,6 +1292,72 @@
         ]
       }
     },
+    "/api/v1/entries/ldif": {
+      "put": {
+        "operationId": "replaceEntryFromLDIF",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "If-Match",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceLDIFInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            },
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replace an entry's attributes with the given LDIF record",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
     "/api/v1/entries/next-number": {
       "get": {
         "operationId": "nextNumber",
@@ -1314,6 +1542,152 @@
         ]
       }
     },
+    "/api/v1/export": {
+      "get": {
+        "operationId": "exportEntries",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "base",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "explode": false,
+            "in": "query",
+            "name": "scope",
+            "schema": {
+              "default": "sub",
+              "enum": [
+                "base",
+                "one",
+                "sub"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "explode": false,
+            "in": "query",
+            "name": "filter",
+            "schema": {
+              "default": "(objectClass=*)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Comma-separated attribute list; empty exports all user attributes (required for CSV)",
+            "explode": false,
+            "in": "query",
+            "name": "attrs",
+            "schema": {
+              "description": "Comma-separated attribute list; empty exports all user attributes (required for CSV)",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Also export operational attributes (LDIF only)",
+            "explode": false,
+            "in": "query",
+            "name": "operational",
+            "schema": {
+              "description": "Also export operational attributes (LDIF only)",
+              "type": "boolean"
+            }
+          },
+          {
+            "explode": false,
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "ldif",
+              "enum": [
+                "ldif",
+                "csv"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Include password hashes (excluded by default)",
+            "explode": false,
+            "in": "query",
+            "name": "passwords",
+            "schema": {
+              "description": "Include password hashes (excluded by default)",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/csv": {},
+              "text/ldif": {}
+            },
+            "description": "LDIF or CSV stream"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Stream entries as LDIF or CSV",
+        "tags": [
+          "search"
+        ]
+      }
+    },
+    "/api/v1/ldif/apply": {
+      "post": {
+        "operationId": "applyLDIF",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyLDIFInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplySummary"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Apply an LDIF fragment (add, modify, delete records)",
+        "tags": [
+          "search"
+        ]
+      }
+    },
     "/api/v1/schema": {
       "get": {
         "operationId": "getSchema",
@@ -1363,6 +1737,47 @@
         "summary": "Parsed LDAP schema with resolved inheritance",
         "tags": [
           "schema"
+        ]
+      }
+    },
+    "/api/v1/search": {
+      "post": {
+        "operationId": "search",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Search entries (interactive, limited)",
+        "tags": [
+          "search"
         ]
       }
     },

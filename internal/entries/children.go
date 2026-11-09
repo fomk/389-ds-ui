@@ -241,3 +241,9 @@ func (s *Service) NextNumber(ctx context.Context, base, attr string, floor int) 
 }
 
 var attrNameRE = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]*$`)
+
+func (c *childCache) clear() {
+	c.mu.Lock()
+	c.items = map[string]childCacheItem{}
+	c.mu.Unlock()
+}

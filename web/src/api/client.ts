@@ -53,3 +53,29 @@ export async function call<T>(p: Promise<{ data?: T; error?: unknown; response: 
   }
   return data
 }
+
+export interface ExportQuery {
+  base: string
+  scope?: 'base' | 'one' | 'sub'
+  filter?: string
+  attrs?: string[]
+  format?: 'ldif' | 'csv'
+}
+
+/** URL of the streaming export endpoint (used as a download link). */
+export function exportUrl(q: ExportQuery): string {
+  const p = new URLSearchParams({ base: q.base, scope: q.scope ?? 'sub', format: q.format ?? 'ldif' })
+  if (q.filter) p.set('filter', q.filter)
+  if (q.attrs?.length) p.set('attrs', q.attrs.join(','))
+  return `/api/v1/export?${p}`
+}
+
+/** Fetches an export as text (e.g. one entry as LDIF). */
+export async function fetchExport(q: ExportQuery): Promise<string> {
+  const res = await fetch(exportUrl(q))
+  if (!res.ok) {
+    const problem = (await res.json().catch(() => ({}))) as Problem
+    throw new ApiError(res.status, problem)
+  }
+  return res.text()
+}

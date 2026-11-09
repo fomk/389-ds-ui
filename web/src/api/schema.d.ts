@@ -41,6 +41,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/entries/ldif": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace an entry's attributes with the given LDIF record */
+        put: operations["replaceEntryFromLDIF"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/entries/next-number": {
         parameters: {
             query?: never;
@@ -109,6 +126,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stream entries as LDIF or CSV */
+        get: operations["exportEntries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ldif/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply an LDIF fragment (add, modify, delete records) */
+        post: operations["applyLDIF"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/schema": {
         parameters: {
             query?: never;
@@ -120,6 +171,23 @@ export interface paths {
         get: operations["getSchema"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Search entries (interactive, limited) */
+        post: operations["search"];
         delete?: never;
         options?: never;
         head?: never;
@@ -198,6 +266,24 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ApplyLDIFInputBody: {
+            /** @description Content or change records (add, modify, delete); URL values are not allowed */
+            ldif: string;
+            stopOnError?: boolean;
+        };
+        ApplyResult: {
+            dn: string;
+            error?: string;
+            /** @enum {string} */
+            op: "add" | "modify" | "delete";
+        };
+        ApplySummary: {
+            /** Format: int64 */
+            applied: number;
+            /** Format: int64 */
+            failed: number;
+            results: components["schemas"]["ApplyResult"][];
+        };
         Attribute: {
             /** @description Values are base64-encoded */
             binary?: boolean;
@@ -378,10 +464,39 @@ export interface components {
         RenameResult: {
             dn: string;
         };
+        ReplaceLDIFInputBody: {
+            /** @description One content record for the same DN */
+            ldif: string;
+        };
         Schema: {
             attributeTypes: components["schemas"]["AttributeType"][];
             objectClasses: components["schemas"]["ObjectClass"][];
             syntaxes: components["schemas"]["Syntax"][];
+        };
+        SearchHit: {
+            attributes: components["schemas"]["Attribute"][];
+            dn: string;
+        };
+        SearchRequest: {
+            /** @description Attributes to return; empty returns all user attributes */
+            attrs?: string[];
+            base: string;
+            /** @default (objectClass=*) */
+            filter: string;
+            /**
+             * Format: int64
+             * @default 500
+             */
+            limit: number;
+            /**
+             * @default sub
+             * @enum {string}
+             */
+            scope: "base" | "one" | "sub";
+        };
+        SearchResult: {
+            entries: components["schemas"]["SearchHit"][];
+            truncated: boolean;
         };
         ServerInfo: {
             /** @description Identity ds-ui is bound as */
@@ -638,6 +753,44 @@ export interface operations {
             };
         };
     };
+    replaceEntryFromLDIF: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: {
+                "If-Match"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceLDIFInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Entry"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     nextNumber: {
         parameters: {
             query: {
@@ -769,6 +922,80 @@ export interface operations {
             };
         };
     };
+    exportEntries: {
+        parameters: {
+            query: {
+                base: string;
+                scope?: "base" | "one" | "sub";
+                filter?: string;
+                /** @description Comma-separated attribute list; empty exports all user attributes (required for CSV) */
+                attrs?: string;
+                /** @description Also export operational attributes (LDIF only) */
+                operational?: boolean;
+                format?: "ldif" | "csv";
+                /** @description Include password hashes (excluded by default) */
+                passwords?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description LDIF or CSV stream */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": unknown;
+                    "text/ldif": unknown;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    applyLDIF: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyLDIFInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplySummary"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     getSchema: {
         parameters: {
             query?: never;
@@ -789,6 +1016,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Schema"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResult"];
                 };
             };
             /** @description Error */

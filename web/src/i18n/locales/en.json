@@ -213,6 +213,47 @@
       "description": "Choose object classes and attributes yourself"
     }
   },
+  "search": {
+    "open": "Search",
+    "title": "Search",
+    "base": "Base DN",
+    "scope": "Scope",
+    "scopes": {
+      "base": "This entry",
+      "one": "One level",
+      "sub": "Subtree"
+    },
+    "filter": "Filter",
+    "attrs": "Attributes",
+    "attrsHint": "Comma-separated; empty shows all user attributes",
+    "limit": "Limit",
+    "run": "Search",
+    "results": "{n} result | {n} results",
+    "truncated": "Only the first {n} entries are shown. Narrow the filter or raise the limit.",
+    "none": "Nothing found",
+    "error": "Search failed",
+    "exportLDIF": "Export LDIF",
+    "exportCSV": "Export CSV",
+    "csvNeedsAttrs": "CSV export needs an attribute list"
+  },
+  "ldif": {
+    "table": "Attributes",
+    "ldif": "LDIF",
+    "edit": "Edit LDIF",
+    "save": "Save LDIF",
+    "saved": "Entry updated from LDIF",
+    "error": "Could not apply the LDIF",
+    "loadError": "Could not load the LDIF",
+    "passwordNote": "Password attributes are not exported; they are kept unless you add them.",
+    "import": "Import LDIF",
+    "importTitle": "Import LDIF",
+    "importHint": "Entries (added) and change records with changetype add, modify or delete. modrdn and URL values (attr:< …) are not supported.",
+    "loadFile": "Load file",
+    "stopOnError": "Stop at the first error",
+    "apply": "Import",
+    "summary": "Applied: {applied}, failed: {failed}",
+    "exportSubtree": "Export subtree (LDIF)"
+  },
   "errors": {
     "network": "Cannot reach the ds-ui API",
     "http": {

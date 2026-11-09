@@ -58,7 +58,8 @@ func toHTTPError(err error) error {
 	}
 	switch {
 	case errors.Is(err, entries.ErrInvalidDN), errors.Is(err, entries.ErrInvalidCursor),
-		errors.Is(err, entries.ErrInvalidChange):
+		errors.Is(err, entries.ErrInvalidChange), errors.Is(err, entries.ErrInvalidFilter),
+		errors.Is(err, entries.ErrInvalidLDIF):
 		return problem(http.StatusBadRequest, err.Error())
 	case errors.Is(err, entries.ErrPreconditionFailed):
 		return problem(http.StatusPreconditionFailed, err.Error())

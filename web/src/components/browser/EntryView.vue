@@ -6,6 +6,8 @@ import {
   NButton,
   NCard,
   NDropdown,
+  NRadioButton,
+  NRadioGroup,
   NIcon,
   NSkeleton,
   NSpace,
@@ -17,12 +19,13 @@ import {
   useThemeVars,
 } from 'naive-ui'
 import { Copy, EllipsisVertical, Pencil, Plus, RefreshCw } from '@lucide/vue'
-import { api, call, type Entry, type EntryAttribute } from '@/api/client'
+import { api, call, exportUrl, type Entry, type EntryAttribute } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { useSchemaStore } from '@/stores/schema'
 import AttributeValue from './AttributeValue.vue'
 import DeleteDialog from './DeleteDialog.vue'
 import EntryEditor from './EntryEditor.vue'
+import EntryLdif from './EntryLdif.vue'
 import PasswordDialog from './PasswordDialog.vue'
 import RenameDialog from './RenameDialog.vue'
 
@@ -44,6 +47,7 @@ const error = ref<LocalizedError>()
 const loading = ref(false)
 const showOperational = ref(false)
 const editing = ref(false)
+const view = ref<'table' | 'ldif'>('table')
 const dialog = ref<'rename' | 'password' | 'delete' | null>(null)
 
 async function load() {
@@ -86,12 +90,17 @@ const canSetPassword = computed(() => {
 
 const actionOptions = computed(() => [
   { key: 'rename', label: t('actions.rename') },
+  { key: 'export', label: t('ldif.exportSubtree') },
   ...(canSetPassword.value ? [{ key: 'password', label: t('actions.password') }] : []),
   { type: 'divider', key: 'd1' },
   { key: 'delete', label: t('actions.delete'), props: { style: { color: vars.value.errorColor } } },
 ])
 
 function onAction(key: string) {
+  if (key === 'export') {
+    window.location.href = exportUrl({ base: props.dn, scope: 'sub' })
+    return
+  }
   dialog.value = key as typeof dialog.value
 }
 
@@ -167,6 +176,12 @@ defineExpose({ reload: load })
     <EntryEditor v-if="editing" :entry="entry" @saved="onSaved" @cancel="editing = false" @reload="load().then(() => (editing = true))" />
 
     <template v-else>
+    <NRadioGroup v-model:value="view" size="small" class="view-switch">
+      <NRadioButton value="table">{{ t('ldif.table') }}</NRadioButton>
+      <NRadioButton value="ldif">{{ t('ldif.ldif') }}</NRadioButton>
+    </NRadioGroup>
+    <EntryLdif v-if="view === 'ldif'" :key="entry.etag" :entry="entry" @saved="onSaved" @reload="load" />
+    <template v-else>
     <NSpace class="classes" :size="6">
       <NTooltip v-for="oc in entry.objectClasses" :key="oc" :disabled="!schema.objectClass(oc)?.desc">
         <template #trigger>
@@ -212,6 +227,7 @@ defineExpose({ reload: load })
       </tbody>
     </NTable>
     </template>
+    </template>
 
     <RenameDialog :show="dialog === 'rename'" :entry="entry" @update:show="(v) => !v && (dialog = null)" @renamed="(o, n) => emit('renamed', o, n)" />
     <PasswordDialog :show="dialog === 'password'" :entry="entry" @update:show="(v) => !v && (dialog = null)" @changed="load" />
@@ -252,6 +268,10 @@ defineExpose({ reload: load })
 }
 
 .classes {
+  margin-bottom: 12px;
+}
+
+.view-switch {
   margin-bottom: 12px;
 }
 

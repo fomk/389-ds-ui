@@ -2,13 +2,13 @@
 import { h, onMounted, reactive, ref, shallowReactive, watch, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NButton, NEmpty, NIcon, NSpin, NSwitch, NTag, NTree, useMessage, type TreeInst, type TreeOption } from 'naive-ui'
-import { Ellipsis, FileText, Folder, Globe, RefreshCw, Settings, User, Users } from '@lucide/vue'
+import { Ellipsis, FileText, Folder, Globe, RefreshCw, Search, Settings, Upload, User, Users } from '@lucide/vue'
 import { api, call, type EntrySummary } from '@/api/client'
 import { localizeError } from '@/i18n/errors'
 import { ancestorsUnder, dnKey } from '@/ldap/dn'
 
 const props = defineProps<{ selected?: string }>()
-const emit = defineEmits<{ select: [dn: string] }>()
+const emit = defineEmits<{ select: [dn: string]; search: []; import: [] }>()
 
 const { t } = useI18n()
 const message = useMessage()
@@ -218,9 +218,17 @@ defineExpose({ reload: loadRoots, refresh })
         <NSwitch v-model:value="showSystem" size="small" />
         {{ t('browser.showSystem') }}
       </label>
-      <NButton size="small" quaternary :loading="loading" :title="t('browser.refresh')" @click="loadRoots">
-        <template #icon><NIcon><RefreshCw /></NIcon></template>
-      </NButton>
+      <div class="toolbar-buttons">
+        <NButton size="small" quaternary :title="t('search.open')" :aria-label="t('search.open')" @click="emit('search')">
+          <template #icon><NIcon><Search /></NIcon></template>
+        </NButton>
+        <NButton size="small" quaternary :title="t('ldif.import')" :aria-label="t('ldif.import')" @click="emit('import')">
+          <template #icon><NIcon><Upload /></NIcon></template>
+        </NButton>
+        <NButton size="small" quaternary :loading="loading" :title="t('browser.refresh')" @click="loadRoots">
+          <template #icon><NIcon><RefreshCw /></NIcon></template>
+        </NButton>
+      </div>
     </div>
     <NSpin :show="loading && !roots.length" class="tree-wrap">
       <NTree
@@ -257,6 +265,10 @@ defineExpose({ reload: loadRoots, refresh })
   align-items: center;
   justify-content: space-between;
   padding: 0 4px 8px;
+}
+
+.toolbar-buttons {
+  display: flex;
 }
 
 .switch {
