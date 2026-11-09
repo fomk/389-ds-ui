@@ -2,6 +2,8 @@ package entries
 
 import (
 	"context"
+	"encoding/base64"
+	"errors"
 	"regexp"
 	"slices"
 	"strconv"
@@ -25,26 +27,51 @@ type Summary struct {
 	System          bool     `json:"system,omitempty" doc:"Server-internal tree such as cn=config"`
 }
 
-// ChildrenPage is one page of an entry's children, sorted by RDN.
+// ChildrenPage is one page of an entry's children.
 type ChildrenPage struct {
 	Items      []Summary `json:"items"`
 	Total      int       `json:"total"`
 	NextCursor string    `json:"nextCursor,omitempty" doc:"Pass as cursor to get the next page"`
+	Sorted     bool      `json:"sorted" doc:"Items are sorted by RDN; false for large branches listed in server order"`
 }
 
-// MaxPageSize caps the number of children returned per request.
-const MaxPageSize = 1000
+const (
+	// MaxPageSize caps the number of children returned per request.
+	MaxPageSize = 1000
+	// SortThreshold: branches with at most this many children are read
+	// completely and sorted by RDN. Larger ones are paged in server order:
+	// reading 100k children takes 389-ds several seconds, a page takes ~20 ms.
+	SortThreshold = 2000
+)
+
+// ErrPagingExpired: a server-side paging cursor is no longer valid (it is
+// bound to the LDAP connection, which may have been re-established).
+var ErrPagingExpired = errors.New("the listing expired; reload the branch")
+
+const pagedCursorPrefix = "p:"
 
 var summaryAttrs = []string{"objectClass", "numSubordinates", "hasSubordinates"}
 
 // Children returns a page of the direct children of dn.
 //
-// All children are fetched with the Paged Results control, sorted by RDN and
-// cached briefly, so that paging through a large branch is fast and stable and
-// does not depend on per-connection paged-search cookies.
+// Small branches (up to SortThreshold children) are read completely, sorted by
+// RDN and cached briefly, so paging is stable and independent of LDAP
+// connection state. Large branches are paged by the server (Paged Results) in
+// server order; their cursor carries the server's cookie.
 func (s *Service) Children(ctx context.Context, dn, cursor string, limit int, refresh bool) (*ChildrenPage, error) {
 	if !ldapx.ValidDN(dn) || dn == "" {
 		return nil, ErrInvalidDN
+	}
+	if limit <= 0 || limit > MaxPageSize {
+		limit = MaxPageSize
+	}
+	if strings.HasPrefix(cursor, pagedCursorPrefix) {
+		cookie, err := base64.RawURLEncoding.DecodeString(strings.TrimPrefix(cursor, pagedCursorPrefix))
+		if err != nil || len(cookie) == 0 {
+			return nil, ErrInvalidCursor
+		}
+		total, _ := s.countChildren(ctx, dn)
+		return s.pagedChildren(ctx, dn, cookie, limit, total)
 	}
 	offset := 0
 	if cursor != "" {
@@ -54,21 +81,24 @@ func (s *Service) Children(ctx context.Context, dn, cursor string, limit int, re
 		}
 		offset = n
 	}
-	if limit <= 0 || limit > MaxPageSize {
-		limit = MaxPageSize
-	}
 
 	key := ldapx.NormDN(dn)
 	items, ok := s.children.get(key)
 	if !ok || refresh {
-		var err error
+		total, err := s.countChildren(ctx, dn)
+		if err != nil {
+			return nil, err
+		}
+		if total > s.sortThreshold && offset == 0 {
+			return s.pagedChildren(ctx, dn, nil, limit, total)
+		}
 		if items, err = s.fetchChildren(ctx, dn); err != nil {
 			return nil, err
 		}
 		s.children.put(key, items)
 	}
 
-	page := &ChildrenPage{Total: len(items), Items: []Summary{}}
+	page := &ChildrenPage{Total: len(items), Items: []Summary{}, Sorted: true}
 	if offset < len(items) {
 		end := min(offset+limit, len(items))
 		page.Items = items[offset:end]
@@ -77,6 +107,53 @@ func (s *Service) Children(ctx context.Context, dn, cursor string, limit int, re
 		}
 	}
 	return page, nil
+}
+
+// countChildren reads numSubordinates of dn (-1 if the server does not say).
+func (s *Service) countChildren(ctx context.Context, dn string) (int, error) {
+	n := -1
+	err := s.ldap.Do(ctx, func(c *ldap.Conn) error {
+		res, err := c.Search(ldap.NewSearchRequest(dn, ldap.ScopeBaseObject, ldap.NeverDerefAliases,
+			1, 0, false, "(objectClass=*)", []string{"numSubordinates"}, nil))
+		if err != nil {
+			return err
+		}
+		if len(res.Entries) == 1 {
+			if v, err := strconv.Atoi(res.Entries[0].GetAttributeValue("numSubordinates")); err == nil {
+				n = v
+			}
+		}
+		return nil
+	})
+	return n, err
+}
+
+// pagedChildren returns one server-side page; cookie is nil for the first one.
+func (s *Service) pagedChildren(ctx context.Context, dn string, cookie []byte, limit, total int) (*ChildrenPage, error) {
+	page := &ChildrenPage{Items: []Summary{}, Total: total}
+	err := s.ldap.Do(ctx, func(c *ldap.Conn) error {
+		paging := ldap.NewControlPaging(uint32(limit))
+		paging.SetCookie(cookie)
+		res, err := c.Search(ldap.NewSearchRequest(dn, ldap.ScopeSingleLevel, ldap.NeverDerefAliases,
+			0, 0, false, "(objectClass=*)", summaryAttrs, []ldap.Control{paging}))
+		if err != nil {
+			if cookie != nil && !ldapx.IsConnError(err) {
+				return ErrPagingExpired
+			}
+			return err
+		}
+		for _, e := range res.Entries {
+			page.Items = append(page.Items, summarize(e))
+		}
+		if ctrl, ok := ldap.FindControl(res.Controls, ldap.ControlTypePaging).(*ldap.ControlPaging); ok && len(ctrl.Cookie) > 0 {
+			page.NextCursor = pagedCursorPrefix + base64.RawURLEncoding.EncodeToString(ctrl.Cookie)
+		}
+		return nil
+	})
+	if errors.Is(err, ErrPagingExpired) || (cookie != nil && ldapx.IsConnError(err)) {
+		return nil, ErrPagingExpired
+	}
+	return page, err
 }
 
 func (s *Service) fetchChildren(ctx context.Context, dn string) ([]Summary, error) {

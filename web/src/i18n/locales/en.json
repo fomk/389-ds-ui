@@ -86,6 +86,8 @@
     "showSystemHint": "Show cn=config, cn=schema and cn=monitor",
     "refresh": "Refresh",
     "loadMore": "Load more ({shown} of {total})",
+    "loadMoreUnsorted": "Load more ({shown} of {total}, server order)",
+    "unsortedHint": "Large branch: entries are listed in server order, not sorted. Use search to find a specific entry.",
     "notCreated": "root entry not created",
     "selectEntry": "Select an entry in the tree",
     "loadError": "Could not load the entry",

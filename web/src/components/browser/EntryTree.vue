@@ -3,7 +3,7 @@ import { h, onMounted, reactive, ref, shallowReactive, watch, type Component } f
 import { useI18n } from 'vue-i18n'
 import { NButton, NEmpty, NIcon, NSpin, NSwitch, NTag, NTree, useMessage, type TreeInst, type TreeOption } from 'naive-ui'
 import { Ellipsis, FileText, Folder, Globe, RefreshCw, Search, Settings, Upload, User, Users } from '@lucide/vue'
-import { api, call, type EntrySummary } from '@/api/client'
+import { api, ApiError, call, type EntrySummary } from '@/api/client'
 import { localizeError } from '@/i18n/errors'
 import { ancestorsUnder, dnKey } from '@/ldap/dn'
 
@@ -21,7 +21,7 @@ interface Node extends TreeOption {
   label: string
   summary?: EntrySummary
   /** Pseudo-node that loads the next page of its parent's children. */
-  more?: { parent: string; cursor: string; shown: number; total: number }
+  more?: { parent: string; cursor: string; shown: number; total: number; sorted: boolean }
   children?: Node[]
 }
 
@@ -49,8 +49,8 @@ function toNode(s: EntrySummary): Node {
   return n
 }
 
-function moreNode(parent: string, cursor: string, shown: number, total: number): Node {
-  return { key: `more:${parent}:${cursor}`, label: '', isLeaf: true, more: { parent, cursor, shown, total } }
+function moreNode(parent: string, cursor: string, shown: number, total: number, sorted: boolean): Node {
+  return { key: `more:${parent}:${cursor}`, label: '', isLeaf: true, more: { parent, cursor, shown, total, sorted } }
 }
 
 async function fetchPage(dn: string, cursor?: string, refresh = false) {
@@ -65,7 +65,7 @@ async function loadChildren(node: Node, refresh = false) {
   const dn = node.summary!.dn
   const page = await fetchPage(dn, undefined, refresh)
   const children = page.items.map(toNode)
-  if (page.nextCursor) children.push(moreNode(node.key, page.nextCursor, page.items.length, page.total))
+  if (page.nextCursor) children.push(moreNode(node.key, page.nextCursor, page.items.length, page.total, page.sorted))
   node.children = children
   node.isLeaf = children.length === 0
 }
@@ -85,10 +85,15 @@ async function loadMore(more: Node) {
     const page = await fetchPage(parent.summary!.dn, more.more!.cursor)
     const items = page.items.map(toNode)
     const shown = more.more!.shown + items.length
-    if (page.nextCursor) items.push(moreNode(parent.key, page.nextCursor, shown, page.total))
+    if (page.nextCursor) items.push(moreNode(parent.key, page.nextCursor, shown, page.total, page.sorted))
     const idx = parent.children.indexOf(more)
     parent.children.splice(idx, 1, ...items)
   } catch (e) {
+    // A server-side listing expired (e.g. the LDAP connection was renewed): start over.
+    if (e instanceof ApiError && e.status === 409) {
+      await loadChildren(parent, true).catch(() => undefined)
+      return
+    }
     message.error(`${t('browser.treeError')}: ${localizeError(e).summary}`)
   }
 }
@@ -162,7 +167,12 @@ function renderPrefix({ option }: { option: TreeOption }) {
 
 function renderLabel({ option }: { option: TreeOption }) {
   const n = option as Node
-  if (n.more) return h('span', { class: 'more' }, t('browser.loadMore', { shown: n.more.shown, total: n.more.total }))
+  if (n.more) {
+    const { shown, total, sorted } = n.more
+    return sorted
+      ? h('span', { class: 'more' }, t('browser.loadMore', { shown, total }))
+      : h('span', { class: 'more', title: t('browser.unsortedHint') }, t('browser.loadMoreUnsorted', { shown, total }))
+  }
   return h('span', { class: 'mono label', title: n.summary?.dn }, n.label)
 }
 

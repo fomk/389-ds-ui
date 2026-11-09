@@ -46,10 +46,11 @@ type Entry struct {
 
 // Service reads and writes directory entries.
 type Service struct {
-	ldap     schema.Doer
-	schemas  *schema.Cache
-	children *childCache
-	log      *slog.Logger
+	ldap          schema.Doer
+	schemas       *schema.Cache
+	children      *childCache
+	sortThreshold int
+	log           *slog.Logger
 }
 
 // New creates a Service.
@@ -57,8 +58,13 @@ func New(l schema.Doer, schemas *schema.Cache, log *slog.Logger) *Service {
 	if log == nil {
 		log = slog.Default()
 	}
-	return &Service{ldap: l, schemas: schemas, children: newChildCache(30*time.Second, 64), log: log}
+	return &Service{ldap: l, schemas: schemas, children: newChildCache(30*time.Second, 64),
+		sortThreshold: SortThreshold, log: log}
 }
+
+// SetSortThreshold changes the number of children up to which branches are
+// listed sorted (see SortThreshold). Intended for tuning and tests.
+func (s *Service) SetSortThreshold(n int) { s.sortThreshold = n }
 
 var (
 	// ErrInvalidDN is returned for syntactically invalid DNs.

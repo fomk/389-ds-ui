@@ -168,3 +168,42 @@ func TestBrowserAPI(t *testing.T) {
 		t.Errorf("invalid cursor: %d", rec.Code)
 	}
 }
+
+func TestChildrenServerPaging(t *testing.T) {
+	svc, _ := newEntries(t)
+	svc.SetSortThreshold(3) // ou=People has 6+ children → server-side paging
+	ctx := context.Background()
+	seen := map[string]bool{}
+	cursor := ""
+	pages := 0
+	for {
+		page, err := svc.Children(ctx, "ou=People,"+suffix, cursor, 2, false)
+		if err != nil {
+			t.Fatal(err)
+		}
+		pages++
+		if page.Sorted {
+			t.Fatal("large branch must be listed in server order")
+		}
+		for _, it := range page.Items {
+			if seen[it.DN] {
+				t.Errorf("duplicate %s", it.DN)
+			}
+			seen[it.DN] = true
+		}
+		if page.NextCursor == "" {
+			break
+		}
+		if !strings.HasPrefix(page.NextCursor, "p:") {
+			t.Fatalf("server paging cursor expected, got %q", page.NextCursor)
+		}
+		cursor = page.NextCursor
+		if pages > 20 {
+			t.Fatal("paging does not terminate")
+		}
+	}
+	total, _ := svc.Children(ctx, "ou=People,"+suffix, "", 1000, true)
+	if len(seen) != total.Total || pages < 3 {
+		t.Errorf("paged through %d entries in %d pages, total %d", len(seen), pages, total.Total)
+	}
+}

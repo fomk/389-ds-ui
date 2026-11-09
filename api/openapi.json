@@ -280,6 +280,10 @@
             "description": "Pass as cursor to get the next page",
             "type": "string"
           },
+          "sorted": {
+            "description": "Items are sorted by RDN; false for large branches listed in server order",
+            "type": "boolean"
+          },
           "total": {
             "format": "int64",
             "type": "integer"
@@ -287,7 +291,8 @@
         },
         "required": [
           "items",
-          "total"
+          "total",
+          "sorted"
         ],
         "type": "object"
       },

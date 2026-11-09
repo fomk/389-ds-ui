@@ -351,6 +351,8 @@ export interface components {
             items: components["schemas"]["Summary"][];
             /** @description Pass as cursor to get the next page */
             nextCursor?: string;
+            /** @description Items are sorted by RDN; false for large branches listed in server order */
+            sorted: boolean;
             /** Format: int64 */
             total: number;
         };

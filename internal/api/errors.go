@@ -61,6 +61,8 @@ func toHTTPError(err error) error {
 		errors.Is(err, entries.ErrInvalidChange), errors.Is(err, entries.ErrInvalidFilter),
 		errors.Is(err, entries.ErrInvalidLDIF):
 		return problem(http.StatusBadRequest, err.Error())
+	case errors.Is(err, entries.ErrPagingExpired):
+		return problem(http.StatusConflict, err.Error())
 	case errors.Is(err, entries.ErrPreconditionFailed):
 		return problem(http.StatusPreconditionFailed, err.Error())
 	case errors.Is(err, entries.ErrSubtreeTooLarge), errors.Is(err, entries.ErrPasswordGenerationUnavailable):
