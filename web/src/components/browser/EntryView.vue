@@ -5,6 +5,7 @@ import {
   NAlert,
   NButton,
   NCard,
+  NDropdown,
   NIcon,
   NSkeleton,
   NSpace,
@@ -15,13 +16,18 @@ import {
   useMessage,
   useThemeVars,
 } from 'naive-ui'
-import { Copy, RefreshCw } from '@lucide/vue'
+import { Copy, EllipsisVertical, Pencil, RefreshCw } from '@lucide/vue'
 import { api, call, type Entry, type EntryAttribute } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { useSchemaStore } from '@/stores/schema'
 import AttributeValue from './AttributeValue.vue'
+import DeleteDialog from './DeleteDialog.vue'
+import EntryEditor from './EntryEditor.vue'
+import PasswordDialog from './PasswordDialog.vue'
+import RenameDialog from './RenameDialog.vue'
 
 const props = defineProps<{ dn: string }>()
+const emit = defineEmits<{ changed: [dn: string]; deleted: [dn: string]; renamed: [oldDN: string, newDN: string] }>()
 
 const { t } = useI18n()
 const message = useMessage()
@@ -32,6 +38,8 @@ const entry = ref<Entry>()
 const error = ref<LocalizedError>()
 const loading = ref(false)
 const showOperational = ref(false)
+const editing = ref(false)
+const dialog = ref<'rename' | 'password' | 'delete' | null>(null)
 
 async function load() {
   loading.value = true
@@ -50,7 +58,37 @@ async function load() {
   }
 }
 
-watch(() => props.dn, load, { immediate: true })
+watch(
+  () => props.dn,
+  () => {
+    editing.value = false
+    load()
+  },
+  { immediate: true },
+)
+
+function onSaved(updated: Entry) {
+  entry.value = updated
+  editing.value = false
+  emit('changed', updated.dn)
+}
+
+const canSetPassword = computed(() => {
+  if (!entry.value) return false
+  const { must, may, any } = schema.allowed(entry.value.objectClasses)
+  return any || [...must, ...may].some((a) => a.toLowerCase() === 'userpassword')
+})
+
+const actionOptions = computed(() => [
+  { key: 'rename', label: t('actions.rename') },
+  ...(canSetPassword.value ? [{ key: 'password', label: t('actions.password') }] : []),
+  { type: 'divider', key: 'd1' },
+  { key: 'delete', label: t('actions.delete'), props: { style: { color: vars.value.errorColor } } },
+])
+
+function onAction(key: string) {
+  dialog.value = key as typeof dialog.value
+}
 
 const attributes = computed(() =>
   (entry.value?.attributes ?? []).filter(
@@ -97,7 +135,16 @@ defineExpose({ reload: load })
       </div>
     </template>
     <template #header-extra>
-      <NSpace align="center" :size="16">
+      <NSpace v-if="!editing" align="center" :size="12">
+        <NButton size="small" @click="editing = true">
+          <template #icon><NIcon><Pencil /></NIcon></template>
+          {{ t('edit.edit') }}
+        </NButton>
+        <NDropdown trigger="click" :options="actionOptions" @select="onAction">
+          <NButton size="small" quaternary :title="t('actions.more')" :aria-label="t('actions.more')">
+            <template #icon><NIcon><EllipsisVertical /></NIcon></template>
+          </NButton>
+        </NDropdown>
         <label class="switch">
           <NSwitch v-model:value="showOperational" size="small" />
           {{ t('browser.showOperational') }}
@@ -108,6 +155,9 @@ defineExpose({ reload: load })
       </NSpace>
     </template>
 
+    <EntryEditor v-if="editing" :entry="entry" @saved="onSaved" @cancel="editing = false" @reload="load().then(() => (editing = true))" />
+
+    <template v-else>
     <NSpace class="classes" :size="6">
       <NTooltip v-for="oc in entry.objectClasses" :key="oc" :disabled="!schema.objectClass(oc)?.desc">
         <template #trigger>
@@ -152,6 +202,11 @@ defineExpose({ reload: load })
         </tr>
       </tbody>
     </NTable>
+    </template>
+
+    <RenameDialog :show="dialog === 'rename'" :entry="entry" @update:show="(v) => !v && (dialog = null)" @renamed="(o, n) => emit('renamed', o, n)" />
+    <PasswordDialog :show="dialog === 'password'" :entry="entry" @update:show="(v) => !v && (dialog = null)" @changed="load" />
+    <DeleteDialog :show="dialog === 'delete'" :entry="entry" @update:show="(v) => !v && (dialog = null)" @deleted="(dn) => emit('deleted', dn)" />
   </NCard>
 
   <NCard v-else size="small">

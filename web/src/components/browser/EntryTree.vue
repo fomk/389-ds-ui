@@ -192,7 +192,23 @@ watch(
 
 onMounted(loadRoots)
 
-defineExpose({ reload: loadRoots })
+/** Reloads the children of dn if they are loaded (after create/delete/rename). */
+async function refresh(dn: string) {
+  const node = nodes.get(dnKey(dn))
+  if (!node) return
+  if (node.children) {
+    try {
+      await loadChildren(node, true)
+    } catch (e) {
+      message.error(`${t('browser.treeError')}: ${localizeError(e).summary}`)
+    }
+  } else {
+    // Children were not loaded: only the leaf state may have changed.
+    node.isLeaf = false
+  }
+}
+
+defineExpose({ reload: loadRoots, refresh })
 </script>
 
 <template>

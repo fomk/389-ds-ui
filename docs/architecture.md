@@ -134,5 +134,5 @@ On startup ds-ui checks the availability of each provider (socket, volume, proxy
 - Docker API — only via `wollomatic/socket-proxy` with an allowlist: `GET …/containers/<ds>/json` and `POST …/containers/<ds>/(restart|stop|start)`, source — the `ui` container only (ADR-002). Even if ds-ui is compromised, it cannot create a container or run `exec`.
 - File operations — only within paths obtained from `cn=config`, with path traversal checks.
 - Secrets (the DM password in mode B, remote node credentials) — only from files (`*_FILE`), not from env values.
-- CSRF: in the absence of authentication — `Origin`/`Host` checks and a mandatory custom header for mutations.
+- Without authentication: every request must carry an allowed `Host` (DNS-rebinding protection, `421`), mutations additionally need an allowed `Origin` and the `X-Requested-With: ds-ui` header (CSRF).
 - Preparing for authentication: `LDAPConn.Conn(ctx)` receives the request context — later the connection will take the bind account from the session, and permissions will be determined by the DS's own ACIs.

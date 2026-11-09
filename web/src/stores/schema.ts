@@ -46,5 +46,48 @@ export const useSchemaStore = defineStore('schema', () => {
     return classes.get(name.toLowerCase())
   }
 
-  return { schema, load, attr, objectClass }
+  /** The class and all its superclasses, nearest first (cycle-safe). */
+  function superclasses(name: string): ObjectClass[] {
+    const out: ObjectClass[] = []
+    const seen = new Set<ObjectClass>()
+    const walk = (n: string) => {
+      const c = objectClass(n)
+      if (!c || seen.has(c)) return
+      seen.add(c)
+      out.push(c)
+      for (const s of c.sup ?? []) walk(s)
+    }
+    walk(name)
+    return out
+  }
+
+  /**
+   * MUST and MAY attributes (canonical names) allowed by a set of object
+   * classes, including inherited ones; `any` is true for extensibleObject.
+   */
+  function allowed(objectClasses: string[]): { must: string[]; may: string[]; any: boolean } {
+    const canon = (n: string) => attr(n)?.names[0] ?? n
+    const must = new Map<string, string>()
+    const may = new Map<string, string>()
+    let any = false
+    const chains = objectClasses.map(superclasses)
+    for (const chain of chains) {
+      for (const c of chain) {
+        if (c.names.some((n) => n.toLowerCase() === 'extensibleobject')) any = true
+        for (const n of c.must) must.set(canon(n).toLowerCase(), canon(n))
+      }
+    }
+    for (const chain of chains) {
+      for (const c of chain) {
+        for (const n of c.may) {
+          const key = canon(n).toLowerCase()
+          if (!must.has(key)) may.set(key, canon(n))
+        }
+      }
+    }
+    const sorted = (m: Map<string, string>) => [...m.values()].sort((a, b) => a.localeCompare(b))
+    return { must: sorted(must), may: sorted(may), any }
+  }
+
+  return { schema, load, attr, objectClass, superclasses, allowed }
 })

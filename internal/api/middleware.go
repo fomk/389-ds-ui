@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -63,6 +64,30 @@ func requestLogger(log *slog.Logger) func(http.Handler) http.Handler {
 			log.Log(r.Context(), level, "http",
 				"method", r.Method, "path", r.URL.Path, "status", ww.Status(),
 				"bytes", ww.BytesWritten(), "duration", time.Since(start).Round(time.Microsecond))
+		})
+	}
+}
+
+// hostGuard rejects requests whose Host header is not one of the allowed
+// origins. Without authentication this is the defence against DNS rebinding:
+// a hostile page whose domain resolves to 127.0.0.1 would otherwise be able to
+// read the directory through the browser. /healthz and /readyz stay open for
+// container health checks.
+func hostGuard(allowedOrigins []string) func(http.Handler) http.Handler {
+	hosts := map[string]bool{}
+	for _, o := range allowedOrigins {
+		if u, err := url.Parse(o); err == nil && u.Host != "" {
+			hosts[strings.ToLower(u.Host)] = true
+		}
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if len(hosts) == 0 || hosts[strings.ToLower(r.Host)] || r.URL.Path == "/healthz" || r.URL.Path == "/readyz" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			writeProblem(w, http.StatusMisdirectedRequest,
+				"host "+r.Host+" is not allowed; add its origin to DSUI_ALLOWED_ORIGINS")
 		})
 	}
 }

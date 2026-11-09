@@ -109,3 +109,119 @@ func registerBrowser(api huma.API, d Deps) {
 		return &childrenOutput{Body: page}, nil
 	})
 }
+
+type modifyInput struct {
+	DN      string `query:"dn" required:"true"`
+	IfMatch string `header:"If-Match" doc:"ETag from the last read; the request fails with 412 if the entry changed since"`
+	Body    struct {
+		Changes []entries.Change `json:"changes" minItems:"1"`
+	}
+}
+
+type createInput struct {
+	Body entries.NewEntry
+}
+
+type createOutput struct {
+	Status int
+	ETag   string `header:"ETag"`
+	Body   *entries.Entry
+}
+
+type deleteInput struct {
+	DN      string `query:"dn" required:"true"`
+	Subtree bool   `query:"subtree" doc:"Also delete all descendants (at most 10000 entries)"`
+}
+
+type deleteOutput struct {
+	Body *entries.DeleteResult
+}
+
+type renameInput struct {
+	Body entries.RenameRequest
+}
+
+type renameOutput struct {
+	Body *entries.RenameResult
+}
+
+type passwordInput struct {
+	Body entries.PasswordRequest
+}
+
+type passwordOutput struct {
+	Body *entries.PasswordResult
+}
+
+func registerBrowserWrites(api huma.API, d Deps) {
+	huma.Register(api, huma.Operation{
+		OperationID: "modifyEntry",
+		Method:      http.MethodPatch,
+		Path:        apiPrefix + "/entries",
+		Summary:     "Modify attributes of an entry",
+		Tags:        []string{"entries"},
+	}, func(ctx context.Context, in *modifyInput) (*entryOutput, error) {
+		e, err := d.Entries.Modify(ctx, in.DN, in.IfMatch, in.Body.Changes)
+		if err != nil {
+			return nil, toHTTPError(err)
+		}
+		return &entryOutput{ETag: e.ETag, Body: e}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID:   "createEntry",
+		Method:        http.MethodPost,
+		Path:          apiPrefix + "/entries",
+		Summary:       "Create an entry",
+		Tags:          []string{"entries"},
+		DefaultStatus: http.StatusCreated,
+	}, func(ctx context.Context, in *createInput) (*createOutput, error) {
+		e, err := d.Entries.Add(ctx, in.Body)
+		if err != nil {
+			return nil, toHTTPError(err)
+		}
+		return &createOutput{Status: http.StatusCreated, ETag: e.ETag, Body: e}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "deleteEntry",
+		Method:      http.MethodDelete,
+		Path:        apiPrefix + "/entries",
+		Summary:     "Delete an entry, optionally with its subtree",
+		Tags:        []string{"entries"},
+	}, func(ctx context.Context, in *deleteInput) (*deleteOutput, error) {
+		res, err := d.Entries.Delete(ctx, in.DN, in.Subtree)
+		if err != nil {
+			return nil, toHTTPError(err)
+		}
+		return &deleteOutput{Body: res}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "renameEntry",
+		Method:      http.MethodPost,
+		Path:        apiPrefix + "/entries/rename",
+		Summary:     "Rename and/or move an entry (ModifyDN)",
+		Tags:        []string{"entries"},
+	}, func(ctx context.Context, in *renameInput) (*renameOutput, error) {
+		res, err := d.Entries.Rename(ctx, in.Body)
+		if err != nil {
+			return nil, toHTTPError(err)
+		}
+		return &renameOutput{Body: res}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "setPassword",
+		Method:      http.MethodPost,
+		Path:        apiPrefix + "/entries/password",
+		Summary:     "Set a password with the Password Modify extended operation",
+		Tags:        []string{"entries"},
+	}, func(ctx context.Context, in *passwordInput) (*passwordOutput, error) {
+		res, err := d.Entries.SetPassword(ctx, in.Body)
+		if err != nil {
+			return nil, toHTTPError(err)
+		}
+		return &passwordOutput{Body: res}, nil
+	})
+}

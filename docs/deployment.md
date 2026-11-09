@@ -78,7 +78,7 @@ Planned for stage 7 (DS image + s6-overlay + ds-ui, Lifecycle provider `s6`). Cu
 | `DSUI_LIFECYCLE` | `docker` if `DSUI_DOCKER_HOST` is set (sidecar); `s6` (aio); otherwise `none` | process management provider |
 | `DSUI_DOCKER_HOST` | — | `tcp://docker-proxy:2375` |
 | `DSUI_DS_CONTAINER` | — | DS container name for the Docker API |
-| `DSUI_ALLOWED_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | allowed `Origin` values for state-changing requests |
+| `DSUI_ALLOWED_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | origins under which the UI is opened: the `Host` header of every request (except `/healthz`, `/readyz`) must match one of them (DNS-rebinding protection, otherwise 421), and state-changing requests must carry a matching `Origin`. Add your URL when using an SSH tunnel on another port or a hostname; in compose it can be overridden from the environment |
 | `DSUI_LOG_LEVEL` | `info` | `debug` / `info` / `warn` / `error` |
 
 HTTP endpoints for orchestrators: `/healthz` — the process is alive (independent of DS); `/readyz` — there is an LDAP connection to DS. Image healthcheck: `ds-ui healthcheck`.

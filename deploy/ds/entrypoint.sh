@@ -46,12 +46,23 @@ ensure_suffix() {
     dsconf "$LDAPI_URL" backend create --suffix "$suffix" --be-name "$backend" --create-suffix
 }
 
+# On first start dscontainer briefly runs the server while creating the
+# instance and then restarts it, so a single health check can hit the
+# temporary server. Retry until the suffix exists or the timeout expires.
 if [[ -n "${DS_SUFFIX:-}" ]]; then
-    if wait_healthy; then
-        ensure_suffix "$DS_SUFFIX" || log "WARNING: failed to create suffix $DS_SUFFIX"
-    else
-        log "WARNING: server did not become healthy, skipping suffix creation"
-    fi
+    deadline=$((SECONDS + ${DS_STARTUP_TIMEOUT:-60} * 2))
+    while :; do
+        if wait_healthy && ensure_suffix "$DS_SUFFIX"; then
+            log "suffix $DS_SUFFIX ready"
+            break
+        fi
+        if ((SECONDS >= deadline)) || ! kill -0 "$pid" 2>/dev/null; then
+            log "WARNING: failed to create suffix $DS_SUFFIX"
+            break
+        fi
+        log "server not ready yet, retrying suffix creation"
+        sleep 3
+    done
 fi
 
 # Wait for dscontainer; `wait` is interrupted by trapped signals, so loop until it is gone.

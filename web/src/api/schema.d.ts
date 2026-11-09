@@ -14,11 +14,14 @@ export interface paths {
         /** Read one entry with user and operational attributes */
         get: operations["getEntry"];
         put?: never;
-        post?: never;
-        delete?: never;
+        /** Create an entry */
+        post: operations["createEntry"];
+        /** Delete an entry, optionally with its subtree */
+        delete: operations["deleteEntry"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Modify attributes of an entry */
+        patch: operations["modifyEntry"];
         trace?: never;
     };
     "/api/v1/entries/children": {
@@ -32,6 +35,40 @@ export interface paths {
         get: operations["getEntryChildren"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entries/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set a password with the Password Modify extended operation */
+        post: operations["setPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/entries/rename": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rename and/or move an entry (ModifyDN) */
+        post: operations["renameEntry"];
         delete?: never;
         options?: never;
         head?: never;
@@ -179,12 +216,27 @@ export interface components {
             /** @description Offline database operations (dsctl) */
             offline: boolean;
         };
+        Change: {
+            attr: string;
+            /** @description Values are base64-encoded */
+            binary?: boolean;
+            /**
+             * @description delete without values removes the attribute
+             * @enum {string}
+             */
+            op: "add" | "delete" | "replace";
+            values?: string[];
+        };
         ChildrenPage: {
             items: components["schemas"]["Summary"][];
             /** @description Pass as cursor to get the next page */
             nextCursor?: string;
             /** Format: int64 */
             total: number;
+        };
+        DeleteResult: {
+            /** Format: int64 */
+            deleted: number;
         };
         Entry: {
             attributes: components["schemas"]["Attribute"][];
@@ -239,6 +291,18 @@ export interface components {
              */
             type: string;
         };
+        ModifyInputBody: {
+            changes: components["schemas"]["Change"][];
+        };
+        NewEntry: {
+            attributes: components["schemas"]["NewValues"][];
+            dn: string;
+        };
+        NewValues: {
+            binary?: boolean;
+            name: string;
+            values: string[];
+        };
         ObjectClass: {
             desc?: string;
             /** @enum {string} */
@@ -250,6 +314,26 @@ export interface components {
             oid: string;
             origin?: string[];
             sup?: string[];
+        };
+        PasswordRequest: {
+            dn: string;
+            /** @description New password; empty asks the server to generate one */
+            password?: string;
+        };
+        PasswordResult: {
+            generated?: string;
+        };
+        RenameRequest: {
+            /** @description Remove the old RDN value from the entry */
+            deleteOldRdn: boolean;
+            dn: string;
+            /** @description New parent DN; empty keeps the current parent */
+            newParent?: string;
+            /** @description New RDN, e.g. uid=newname (may equal the current RDN when only moving) */
+            newRdn: string;
+        };
+        RenameResult: {
+            dn: string;
         };
         Schema: {
             attributeTypes: components["schemas"]["AttributeType"][];
@@ -354,6 +438,112 @@ export interface operations {
             };
         };
     };
+    createEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewEntry"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Entry"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteEntry: {
+        parameters: {
+            query: {
+                dn: string;
+                /** @description Also delete all descendants (at most 10000 entries) */
+                subtree?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteResult"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    modifyEntry: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: {
+                /** @description ETag from the last read; the request fails with 412 if the entry changed since */
+                "If-Match"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModifyInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Entry"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     getEntryChildren: {
         parameters: {
             query: {
@@ -378,6 +568,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChildrenPage"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordResult"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    renameEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RenameResult"];
                 };
             };
             /** @description Error */

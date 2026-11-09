@@ -56,8 +56,14 @@ func toHTTPError(err error) error {
 	if errors.As(err, &se) {
 		return err
 	}
-	if errors.Is(err, entries.ErrInvalidDN) || errors.Is(err, entries.ErrInvalidCursor) {
+	switch {
+	case errors.Is(err, entries.ErrInvalidDN), errors.Is(err, entries.ErrInvalidCursor),
+		errors.Is(err, entries.ErrInvalidChange):
 		return problem(http.StatusBadRequest, err.Error())
+	case errors.Is(err, entries.ErrPreconditionFailed):
+		return problem(http.StatusPreconditionFailed, err.Error())
+	case errors.Is(err, entries.ErrSubtreeTooLarge), errors.Is(err, entries.ErrPasswordGenerationUnavailable):
+		return problem(http.StatusUnprocessableEntity, err.Error())
 	}
 	if errors.Is(err, providers.ErrNotSupported) {
 		return problem(http.StatusNotImplemented, err.Error())

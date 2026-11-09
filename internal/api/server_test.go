@@ -36,6 +36,7 @@ func newTestHandler(l LDAP) http.Handler {
 
 func do(h http.Handler, method, path string, hdr map[string]string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(method, path, nil)
+	req.Host = "127.0.0.1:8080"
 	for k, v := range hdr {
 		req.Header.Set(k, v)
 	}
@@ -113,6 +114,31 @@ func TestCSRFGuard(t *testing.T) {
 		CSRFHeader: "ds-ui", "Origin": "http://127.0.0.1:8080",
 	}); rec.Code == 403 {
 		t.Errorf("POST from allowed origin was rejected")
+	}
+}
+
+func TestHostGuard(t *testing.T) {
+	h := newTestHandler(fakeLDAP{})
+	req := httptest.NewRequest("GET", "/api/v1/system/capabilities", nil)
+	req.Host = "evil.example:8080" // DNS rebinding: hostile name resolving to 127.0.0.1
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusMisdirectedRequest {
+		t.Errorf("foreign Host = %d", rec.Code)
+	}
+	req = httptest.NewRequest("GET", "/healthz", nil)
+	req.Host = "172.18.0.3:8080"
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Errorf("healthz must stay reachable by any host, got %d", rec.Code)
+	}
+	req = httptest.NewRequest("GET", "/api/v1/system/capabilities", nil)
+	req.Host = "127.0.0.1:8080"
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Errorf("allowed Host = %d", rec.Code)
 	}
 }
 

@@ -32,7 +32,9 @@ services:
       DSUI_DATA_DIR: /data
       DSUI_DOCKER_HOST: tcp://docker-proxy:2375
       DSUI_DS_CONTAINER: 389-ds-ui-ds-1
-      DSUI_ALLOWED_ORIGINS: http://127.0.0.1:${DSUI_PORT:-8080},http://localhost:${DSUI_PORT:-8080}
+      # Browser origins (and Host headers) allowed to use the UI; add yours if you
+      # reach the UI under another name, e.g. through an SSH tunnel on another port.
+      DSUI_ALLOWED_ORIGINS: ${DSUI_ALLOWED_ORIGINS:-http://127.0.0.1:${DSUI_PORT:-8080},http://localhost:${DSUI_PORT:-8080}}
     volumes:
       - ds-data:/data
     ports:

@@ -15,7 +15,7 @@ services:
       DSUI_LDAP_BIND_DN: ${DSUI_LDAP_BIND_DN:-cn=Directory Manager}
       DSUI_LDAP_BIND_PASSWORD_FILE: /run/secrets/bind_password
       # DSUI_LDAP_CA_FILE: /etc/ds-ui/ca.pem
-      DSUI_ALLOWED_ORIGINS: http://127.0.0.1:${DSUI_PORT:-8080},http://localhost:${DSUI_PORT:-8080}
+      DSUI_ALLOWED_ORIGINS: ${DSUI_ALLOWED_ORIGINS:-http://127.0.0.1:${DSUI_PORT:-8080},http://localhost:${DSUI_PORT:-8080}}
     secrets:
       - source: bind_password
         uid: "65532"

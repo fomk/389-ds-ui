@@ -167,6 +167,39 @@
         ],
         "type": "object"
       },
+      "Change": {
+        "additionalProperties": false,
+        "properties": {
+          "attr": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "binary": {
+            "description": "Values are base64-encoded",
+            "type": "boolean"
+          },
+          "op": {
+            "description": "delete without values removes the attribute",
+            "enum": [
+              "add",
+              "delete",
+              "replace"
+            ],
+            "type": "string"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "op",
+          "attr"
+        ],
+        "type": "object"
+      },
       "ChildrenPage": {
         "additionalProperties": false,
         "properties": {
@@ -188,6 +221,19 @@
         "required": [
           "items",
           "total"
+        ],
+        "type": "object"
+      },
+      "DeleteResult": {
+        "additionalProperties": false,
+        "properties": {
+          "deleted": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "deleted"
         ],
         "type": "object"
       },
@@ -308,6 +354,67 @@
         },
         "type": "object"
       },
+      "ModifyInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "type": "object"
+      },
+      "NewEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "items": {
+              "$ref": "#/components/schemas/NewValues"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "dn": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn",
+          "attributes"
+        ],
+        "type": "object"
+      },
+      "NewValues": {
+        "additionalProperties": false,
+        "properties": {
+          "binary": {
+            "type": "boolean"
+          },
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "values"
+        ],
+        "type": "object"
+      },
       "ObjectClass": {
         "additionalProperties": false,
         "properties": {
@@ -365,6 +472,72 @@
           "kind",
           "must",
           "may"
+        ],
+        "type": "object"
+      },
+      "PasswordRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "password": {
+            "description": "New password; empty asks the server to generate one",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn"
+        ],
+        "type": "object"
+      },
+      "PasswordResult": {
+        "additionalProperties": false,
+        "properties": {
+          "generated": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "RenameRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "deleteOldRdn": {
+            "description": "Remove the old RDN value from the entry",
+            "type": "boolean"
+          },
+          "dn": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "newParent": {
+            "description": "New parent DN; empty keeps the current parent",
+            "type": "string"
+          },
+          "newRdn": {
+            "description": "New RDN, e.g. uid=newname (may equal the current RDN when only moving)",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn",
+          "newRdn",
+          "deleteOldRdn"
+        ],
+        "type": "object"
+      },
+      "RenameResult": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn"
         ],
         "type": "object"
       },
@@ -590,6 +763,56 @@
   "openapi": "3.1.0",
   "paths": {
     "/api/v1/entries": {
+      "delete": {
+        "operationId": "deleteEntry",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Also delete all descendants (at most 10000 entries)",
+            "explode": false,
+            "in": "query",
+            "name": "subtree",
+            "schema": {
+              "description": "Also delete all descendants (at most 10000 entries)",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete an entry, optionally with its subtree",
+        "tags": [
+          "entries"
+        ]
+      },
       "get": {
         "operationId": "getEntry",
         "parameters": [
@@ -635,6 +858,118 @@
           }
         },
         "summary": "Read one entry with user and operational attributes",
+        "tags": [
+          "entries"
+        ]
+      },
+      "patch": {
+        "operationId": "modifyEntry",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "ETag from the last read; the request fails with 412 if the entry changed since",
+            "in": "header",
+            "name": "If-Match",
+            "schema": {
+              "description": "ETag from the last read; the request fails with 412 if the entry changed since",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModifyInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            },
+            "description": "OK",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Modify attributes of an entry",
+        "tags": [
+          "entries"
+        ]
+      },
+      "post": {
+        "operationId": "createEntry",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewEntry"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Entry"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create an entry",
         "tags": [
           "entries"
         ]
@@ -711,6 +1046,88 @@
           }
         },
         "summary": "Direct children of an entry, sorted by RDN, paged",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
+    "/api/v1/entries/password": {
+      "post": {
+        "operationId": "setPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Set a password with the Password Modify extended operation",
+        "tags": [
+          "entries"
+        ]
+      }
+    },
+    "/api/v1/entries/rename": {
+      "post": {
+        "operationId": "renameEntry",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenameResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Rename and/or move an entry (ModifyDN)",
         "tags": [
           "entries"
         ]

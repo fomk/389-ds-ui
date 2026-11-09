@@ -53,7 +53,7 @@ func NewHandler(d Deps) http.Handler {
 		d.Logger = slog.Default()
 	}
 	r := chi.NewRouter()
-	r.Use(middleware.Recoverer, requestLogger(d.Logger), csrfGuard(d.AllowedOrigins),
+	r.Use(middleware.Recoverer, requestLogger(d.Logger), hostGuard(d.AllowedOrigins), csrfGuard(d.AllowedOrigins),
 		middleware.Compress(5, "application/json", "application/problem+json"))
 
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
@@ -103,6 +103,7 @@ func apiConfig(version string) huma.Config {
 func register(api huma.API, d Deps) {
 	registerSystem(api, d)
 	registerBrowser(api, d)
+	registerBrowserWrites(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

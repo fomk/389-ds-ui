@@ -108,6 +108,69 @@
       "notInSchema": "Not defined in the schema"
     }
   },
+  "edit": {
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Changes saved",
+    "noChanges": "Nothing to save",
+    "saveError": "Could not save the changes",
+    "conflict": "The entry was changed by someone else since you opened it. Reload it and repeat your changes.",
+    "reload": "Reload",
+    "addAttribute": "Add attribute…",
+    "addValue": "Add value",
+    "removeValue": "Remove value",
+    "removeAttribute": "Remove attribute",
+    "addObjectClass": "Add object class…",
+    "required": "Required by the object classes",
+    "notAllowed": "Not allowed by the object classes; remove it or add a class that permits it",
+    "singleValue": "Only one value is allowed",
+    "invalidInteger": "Must be an integer",
+    "emptyRequired": "{attr} is required",
+    "upload": "Upload file",
+    "replaceFile": "Replace",
+    "newBinary": "new file, {size}",
+    "classKind": {
+      "structural": "structural",
+      "auxiliary": "auxiliary",
+      "abstract": "abstract"
+    }
+  },
+  "actions": {
+    "rename": "Rename / move",
+    "password": "Set password",
+    "delete": "Delete",
+    "more": "More actions"
+  },
+  "delete": {
+    "title": "Delete entry",
+    "confirm": "Delete {dn}?",
+    "subtree": "Also delete all {n} entries below it | Also delete all {n} entries below it",
+    "hasChildren": "This entry has child entries. Without the option below the server will refuse to delete it.",
+    "done": "Deleted {n} entry | Deleted {n} entries",
+    "error": "Could not delete"
+  },
+  "rename": {
+    "title": "Rename or move",
+    "newRdn": "New RDN",
+    "newParent": "Parent DN",
+    "deleteOldRdn": "Remove the old RDN value from the entry",
+    "apply": "Apply",
+    "done": "Entry is now {dn}",
+    "error": "Could not rename"
+  },
+  "password": {
+    "title": "Set password",
+    "new": "New password",
+    "confirm": "Repeat password",
+    "mismatch": "Passwords do not match",
+    "generate": "Let the server generate a password",
+    "apply": "Set password",
+    "done": "Password changed",
+    "generated": "Generated password (shown once):",
+    "copy": "Copy",
+    "error": "Could not set the password"
+  },
   "errors": {
     "network": "Cannot reach the ds-ui API",
     "http": {

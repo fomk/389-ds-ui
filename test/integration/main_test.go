@@ -47,8 +47,8 @@ func run(m *testing.M) int {
 				"DS_DM_PASSWORD": dmPassword,
 				"DS_SUFFIX":      suffix,
 			},
-			// The entrypoint logs this once the suffix exists.
-			WaitingFor: wait.ForLog("ds-entrypoint: creating suffix").
+			// The entrypoint logs this once the suffix exists (see deploy/ds/entrypoint.sh).
+			WaitingFor: wait.ForLog("ds-entrypoint: suffix " + suffix + " ready").
 				WithStartupTimeout(3 * time.Minute).
 				WithPollInterval(time.Second),
 		},
