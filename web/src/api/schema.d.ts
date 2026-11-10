@@ -160,6 +160,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/monitor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Server, database and connection statistics */
+        get: operations["getMonitor"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/monitor/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recent samples of cumulative counters (kept in memory) */
+        get: operations["getMonitorHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/schema": {
         parameters: {
             query?: never;
@@ -222,6 +256,23 @@ export interface paths {
         get: operations["getSystemInfo"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/system/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restart the directory server (asynchronous; watch /system/state) */
+        post: operations["restartServer"];
         delete?: never;
         options?: never;
         head?: never;
@@ -316,6 +367,43 @@ export interface components {
             /** @enum {string} */
             usage?: "userApplications" | "directoryOperation" | "distributedOperation" | "dSAOperation";
         };
+        BackendMonitor: {
+            dnCache: components["schemas"]["CacheStats"];
+            entryCache: components["schemas"]["CacheStats"];
+            name: string;
+            readOnly: boolean;
+            suffix?: string;
+        };
+        CacheStats: {
+            /** Format: int64 */
+            count: number;
+            /** Format: int64 */
+            evictions?: number;
+            /**
+             * Format: int64
+             * @description Percent
+             */
+            hitRatio: number;
+            /** Format: int64 */
+            hits: number;
+            /**
+             * Format: int64
+             * @description -1 = unlimited
+             */
+            maxCount: number;
+            /**
+             * Format: int64
+             * @description Bytes
+             */
+            maxSize: number;
+            /**
+             * Format: int64
+             * @description Bytes in use
+             */
+            size: number;
+            /** Format: int64 */
+            tries: number;
+        };
         Capabilities: {
             /** @description Management of the NSS certificate database */
             certs: boolean;
@@ -356,9 +444,32 @@ export interface components {
             /** Format: int64 */
             total: number;
         };
+        ConnectionInfo: {
+            address: string;
+            bindDn: string;
+            fd: string;
+            id: string;
+            /** Format: date-time */
+            opened: string;
+            /** Format: int64 */
+            opsCompleted: number;
+            /** Format: int64 */
+            opsInitiated: number;
+        };
         DeleteResult: {
             /** Format: int64 */
             deleted: number;
+        };
+        DiskUsage: {
+            /** Format: int64 */
+            available: number;
+            partition: string;
+            /** Format: int64 */
+            size: number;
+            /** Format: int64 */
+            usePct: number;
+            /** Format: int64 */
+            used: number;
         };
         Entry: {
             attributes: components["schemas"]["Attribute"][];
@@ -418,8 +529,27 @@ export interface components {
             default?: string;
             name: string;
         };
+        HistoryOutputBody: {
+            /** Format: int64 */
+            intervalSeconds: number;
+            samples: components["schemas"]["Sample"][];
+        };
         ModifyInputBody: {
             changes: components["schemas"]["Change"][];
+        };
+        Monitor: {
+            backends: components["schemas"]["BackendMonitor"][];
+            /** Format: date-time */
+            collected: string;
+            connections: components["schemas"]["ConnectionInfo"][];
+            disks: components["schemas"]["DiskUsage"][];
+            /** @description Normalized DN cache (global) */
+            ndnCache: components["schemas"]["CacheStats"];
+            /** @description Counters from cn=snmp,cn=monitor (lower-case names) */
+            operations: {
+                [key: string]: number;
+            };
+            server: components["schemas"]["ServerMonitor"];
         };
         NewEntry: {
             attributes: components["schemas"]["NewValues"][];
@@ -470,6 +600,23 @@ export interface components {
             /** @description One content record for the same DN */
             ldif: string;
         };
+        Sample: {
+            /** Format: int64 */
+            bytesSent: number;
+            /**
+             * Format: int64
+             * @description Current connections (a gauge, not cumulative)
+             */
+            connections: number;
+            /** Format: int64 */
+            entriesSent: number;
+            /** Format: int64 */
+            opsCompleted: number;
+            /** Format: date-time */
+            t: string;
+            /** Format: int64 */
+            threads: number;
+        };
         Schema: {
             attributeTypes: components["schemas"]["AttributeType"][];
             objectClasses: components["schemas"]["ObjectClass"][];
@@ -519,6 +666,40 @@ export interface components {
             /** @description Parsed product version, e.g. 3.1.2 */
             version: string;
         };
+        ServerMonitor: {
+            /** Format: int64 */
+            bytesSent: number;
+            /** Format: int64 */
+            connectionsAtMaxThreads: number;
+            /** Format: int64 */
+            currentConnections: number;
+            /** Format: date-time */
+            currentTime: string;
+            /**
+             * Format: int64
+             * @description File descriptor table size
+             */
+            dtableSize: number;
+            /** Format: int64 */
+            entriesSent: number;
+            /** Format: int64 */
+            maxThreadsPerConnHits: number;
+            /** Format: int64 */
+            opsCompleted: number;
+            /** Format: int64 */
+            opsInitiated: number;
+            /** Format: int64 */
+            readWaiters: number;
+            /** Format: date-time */
+            startTime: string;
+            /** Format: int64 */
+            threads: number;
+            /** Format: int64 */
+            totalConnections: number;
+            /** Format: int64 */
+            uptimeSeconds: number;
+            version: string;
+        };
         Summary: {
             dn: string;
             /** @description False for a naming context whose root entry has not been created yet */
@@ -548,6 +729,8 @@ export interface components {
              */
             ldap: "ok" | "unreachable" | "error";
             ldapError?: string;
+            /** @description Settings waiting for a restart */
+            restartReasons: string[];
             /** @description A setting changed that only applies after restart */
             restartRequired: boolean;
             /**
@@ -998,6 +1181,64 @@ export interface operations {
             };
         };
     };
+    getMonitor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Monitor"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getMonitorHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HistoryOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     getSchema: {
         parameters: {
             query?: never;
@@ -1110,6 +1351,33 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SystemInfo"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    restartServer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

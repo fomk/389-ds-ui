@@ -182,6 +182,84 @@
         ],
         "type": "object"
       },
+      "BackendMonitor": {
+        "additionalProperties": false,
+        "properties": {
+          "dnCache": {
+            "$ref": "#/components/schemas/CacheStats"
+          },
+          "entryCache": {
+            "$ref": "#/components/schemas/CacheStats"
+          },
+          "name": {
+            "type": "string"
+          },
+          "readOnly": {
+            "type": "boolean"
+          },
+          "suffix": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "readOnly",
+          "entryCache",
+          "dnCache"
+        ],
+        "type": "object"
+      },
+      "CacheStats": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "evictions": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "hitRatio": {
+            "description": "Percent",
+            "format": "int64",
+            "type": "integer"
+          },
+          "hits": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "maxCount": {
+            "description": "-1 = unlimited",
+            "format": "int64",
+            "type": "integer"
+          },
+          "maxSize": {
+            "description": "Bytes",
+            "format": "int64",
+            "type": "integer"
+          },
+          "size": {
+            "description": "Bytes in use",
+            "format": "int64",
+            "type": "integer"
+          },
+          "tries": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "hitRatio",
+          "hits",
+          "tries",
+          "size",
+          "maxSize",
+          "count",
+          "maxCount"
+        ],
+        "type": "object"
+      },
       "Capabilities": {
         "additionalProperties": false,
         "properties": {
@@ -296,6 +374,45 @@
         ],
         "type": "object"
       },
+      "ConnectionInfo": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "bindDn": {
+            "type": "string"
+          },
+          "fd": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "opened": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "opsCompleted": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "opsInitiated": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "fd",
+          "opened",
+          "opsInitiated",
+          "opsCompleted",
+          "bindDn",
+          "address"
+        ],
+        "type": "object"
+      },
       "DeleteResult": {
         "additionalProperties": false,
         "properties": {
@@ -306,6 +423,38 @@
         },
         "required": [
           "deleted"
+        ],
+        "type": "object"
+      },
+      "DiskUsage": {
+        "additionalProperties": false,
+        "properties": {
+          "available": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "partition": {
+            "type": "string"
+          },
+          "size": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "usePct": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "used": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "partition",
+          "size",
+          "used",
+          "available",
+          "usePct"
         ],
         "type": "object"
       },
@@ -442,6 +591,26 @@
         ],
         "type": "object"
       },
+      "HistoryOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "intervalSeconds": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/Sample"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "intervalSeconds",
+          "samples"
+        ],
+        "type": "object"
+      },
       "ModifyInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -455,6 +624,58 @@
         },
         "required": [
           "changes"
+        ],
+        "type": "object"
+      },
+      "Monitor": {
+        "additionalProperties": false,
+        "properties": {
+          "backends": {
+            "items": {
+              "$ref": "#/components/schemas/BackendMonitor"
+            },
+            "type": "array"
+          },
+          "collected": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "connections": {
+            "items": {
+              "$ref": "#/components/schemas/ConnectionInfo"
+            },
+            "type": "array"
+          },
+          "disks": {
+            "items": {
+              "$ref": "#/components/schemas/DiskUsage"
+            },
+            "type": "array"
+          },
+          "ndnCache": {
+            "$ref": "#/components/schemas/CacheStats",
+            "description": "Normalized DN cache (global)"
+          },
+          "operations": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "description": "Counters from cn=snmp,cn=monitor (lower-case names)",
+            "type": "object"
+          },
+          "server": {
+            "$ref": "#/components/schemas/ServerMonitor"
+          }
+        },
+        "required": [
+          "server",
+          "operations",
+          "disks",
+          "ndnCache",
+          "backends",
+          "connections",
+          "collected"
         ],
         "type": "object"
       },
@@ -657,6 +878,45 @@
         ],
         "type": "object"
       },
+      "Sample": {
+        "additionalProperties": false,
+        "properties": {
+          "bytesSent": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "connections": {
+            "description": "Current connections (a gauge, not cumulative)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "entriesSent": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "opsCompleted": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "t": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "threads": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "t",
+          "opsCompleted",
+          "entriesSent",
+          "bytesSent",
+          "connections",
+          "threads"
+        ],
+        "type": "object"
+      },
       "Schema": {
         "additionalProperties": false,
         "properties": {
@@ -833,6 +1093,89 @@
         ],
         "type": "object"
       },
+      "ServerMonitor": {
+        "additionalProperties": false,
+        "properties": {
+          "bytesSent": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "connectionsAtMaxThreads": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "currentConnections": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "currentTime": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dtableSize": {
+            "description": "File descriptor table size",
+            "format": "int64",
+            "type": "integer"
+          },
+          "entriesSent": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "maxThreadsPerConnHits": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "opsCompleted": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "opsInitiated": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "readWaiters": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "startTime": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "threads": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalConnections": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "uptimeSeconds": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "startTime",
+          "currentTime",
+          "uptimeSeconds",
+          "threads",
+          "currentConnections",
+          "totalConnections",
+          "connectionsAtMaxThreads",
+          "maxThreadsPerConnHits",
+          "readWaiters",
+          "opsInitiated",
+          "opsCompleted",
+          "entriesSent",
+          "bytesSent",
+          "dtableSize"
+        ],
+        "type": "object"
+      },
       "Summary": {
         "additionalProperties": false,
         "properties": {
@@ -925,6 +1268,13 @@
           "ldapError": {
             "type": "string"
           },
+          "restartReasons": {
+            "description": "Settings waiting for a restart",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "restartRequired": {
             "description": "A setting changed that only applies after restart",
             "type": "boolean"
@@ -943,7 +1293,8 @@
         "required": [
           "ldap",
           "server",
-          "restartRequired"
+          "restartRequired",
+          "restartReasons"
         ],
         "type": "object"
       },
@@ -1691,6 +2042,68 @@
         ]
       }
     },
+    "/api/v1/monitor": {
+      "get": {
+        "operationId": "getMonitor",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Monitor"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Server, database and connection statistics",
+        "tags": [
+          "monitor"
+        ]
+      }
+    },
+    "/api/v1/monitor/history": {
+      "get": {
+        "operationId": "getMonitorHistory",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Recent samples of cumulative counters (kept in memory)",
+        "tags": [
+          "monitor"
+        ]
+      }
+    },
     "/api/v1/schema": {
       "get": {
         "operationId": "getSchema",
@@ -1841,6 +2254,30 @@
           }
         },
         "summary": "Server and UI information",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/v1/system/restart": {
+      "post": {
+        "operationId": "restartServer",
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Restart the directory server (asynchronous; watch /system/state)",
         "tags": [
           "system"
         ]

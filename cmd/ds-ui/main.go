@@ -17,9 +17,11 @@ import (
 
 	"github.com/fomk/389-ds-ui/internal/api"
 	"github.com/fomk/389-ds-ui/internal/config"
+	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/entries"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
+	"github.com/fomk/389-ds-ui/internal/monitor"
 	"github.com/fomk/389-ds-ui/internal/providers"
 	"github.com/fomk/389-ds-ui/internal/templates"
 	"github.com/fomk/389-ds-ui/internal/webui"
@@ -121,11 +123,15 @@ func serve() error {
 		return fmt.Errorf("entry templates: %w", err)
 	}
 	schemas := schema.NewCache(time.Minute, log)
+	// One hour of counters at 10 s resolution, for the monitoring charts.
+	history := monitor.NewHistory(client, 10*time.Second, 360, log)
 	handler := api.NewHandler(api.Deps{
 		LDAP:           client,
 		Schemas:        schemas,
 		Entries:        entries.New(client, schemas, log),
 		Templates:      tpls,
+		History:        history,
+		Restart:        &ds.RestartRegistry{},
 		Lifecycle:      lifecycle,
 		Capabilities:   caps,
 		Instance:       cfg.Instance,
@@ -160,6 +166,8 @@ func serve() error {
 			log.Warn("directory server is not reachable yet", "err", err)
 		}
 	}()
+
+	go history.Run(ctx)
 
 	errc := make(chan error, 1)
 	go func() { errc <- srv.Serve(ln) }()

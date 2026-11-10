@@ -15,8 +15,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-ldap/ldap/v3"
 
+	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/entries"
 	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
+	"github.com/fomk/389-ds-ui/internal/monitor"
 	"github.com/fomk/389-ds-ui/internal/providers"
 	"github.com/fomk/389-ds-ui/internal/templates"
 )
@@ -32,6 +34,8 @@ type Deps struct {
 	Schemas        *schema.Cache
 	Entries        *entries.Service
 	Templates      []templates.Template
+	History        *monitor.History
+	Restart        *ds.RestartRegistry
 	Lifecycle      providers.Lifecycle
 	Capabilities   providers.Capabilities
 	Instance       string
@@ -108,6 +112,7 @@ func register(api huma.API, d Deps) {
 	registerBrowserWrites(api, d)
 	registerTemplates(api, d)
 	registerLDIF(api, d)
+	registerMonitor(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

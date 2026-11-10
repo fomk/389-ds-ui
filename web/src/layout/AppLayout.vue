@@ -4,6 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
   NAlert,
+  NButton,
   NIcon,
   NLayout,
   NLayoutContent,
@@ -11,10 +12,15 @@ import {
   NLayoutSider,
   NMenu,
   NTag,
+  useDialog,
+  useMessage,
   useThemeVars,
   type MenuOption,
 } from 'naive-ui'
+import { RotateCw } from '@lucide/vue'
+import { api, call } from '@/api/client'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
+import { localizeError } from '@/i18n/errors'
 import { nav } from '@/router'
 import { useServerStore } from '@/stores/server'
 
@@ -78,6 +84,29 @@ const status = computed<{ label: string; type: TagType }>(() => {
   return { label: t('status.error'), type: 'error' }
 })
 const statusHint = computed(() => (server.apiDown ? t('status.apiDown') : server.state?.ldapError))
+
+const dialog = useDialog()
+const message = useMessage()
+const canRestart = computed(() => !!server.capabilities && server.capabilities.lifecycle !== 'none')
+
+function restart() {
+  dialog.warning({
+    title: t('monitor.restart'),
+    content: t('monitor.restartConfirm'),
+    positiveText: t('monitor.restart'),
+    negativeText: t('edit.cancel'),
+    onPositiveClick: async () => {
+      try {
+        await call(api.POST('/api/v1/system/restart'))
+        message.info(t('monitor.restartStarted'))
+        // Poll faster than usual so the status tag follows the restart.
+        for (let i = 0; i < 12; i++) setTimeout(() => server.refreshState(), 1500 * (i + 1))
+      } catch (e) {
+        message.error(localizeError(e).summary)
+      }
+    },
+  })
+}
 </script>
 
 <template>
@@ -111,6 +140,10 @@ const statusHint = computed(() => (server.apiDown ? t('status.apiDown') : server
           <span v-if="server.info" class="muted">389-ds {{ server.info.server.version }}</span>
         </div>
         <div class="header-right">
+          <NButton v-if="canRestart" size="small" quaternary @click="restart">
+            <template #icon><NIcon><RotateCw /></NIcon></template>
+            {{ t('monitor.restart') }}
+          </NButton>
           <LocaleSwitcher />
           <NTag :type="status.type" size="small" round :title="statusHint">{{ status.label }}</NTag>
         </div>
@@ -119,6 +152,10 @@ const statusHint = computed(() => (server.apiDown ? t('status.apiDown') : server
       <NLayoutContent :native-scrollbar="false" content-class="content">
         <NAlert type="warning" :show-icon="true" class="noauth">
           {{ t('app.noAuthWarning') }}
+        </NAlert>
+        <NAlert v-if="server.state?.restartRequired" type="info" class="noauth">
+          {{ t('monitor.restartRequired', { reasons: server.state.restartReasons.join(', ') }) }}
+          <NButton v-if="canRestart" size="small" class="restart-now" @click="restart">{{ t('monitor.restart') }}</NButton>
         </NAlert>
         <slot />
       </NLayoutContent>
@@ -171,6 +208,10 @@ const statusHint = computed(() => (server.apiDown ? t('status.apiDown') : server
 
 .noauth {
   margin-bottom: 20px;
+}
+
+.restart-now {
+  margin-left: 12px;
 }
 
 :deep(.content) {

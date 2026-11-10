@@ -24,10 +24,11 @@ type systemInfoOutput struct{ Body SystemInfo }
 type capabilitiesOutput struct{ Body providers.Capabilities }
 
 type SystemState struct {
-	LDAP            string `json:"ldap" enum:"ok,unreachable,error" doc:"Result of an LDAP round-trip"`
-	LDAPError       string `json:"ldapError,omitempty"`
-	Server          string `json:"server" enum:"running,stopped,restarting,unknown" doc:"Process state from the lifecycle provider"`
-	RestartRequired bool   `json:"restartRequired" doc:"A setting changed that only applies after restart"`
+	LDAP            string   `json:"ldap" enum:"ok,unreachable,error" doc:"Result of an LDAP round-trip"`
+	LDAPError       string   `json:"ldapError,omitempty"`
+	Server          string   `json:"server" enum:"running,stopped,restarting,unknown" doc:"Process state from the lifecycle provider"`
+	RestartRequired bool     `json:"restartRequired" doc:"A setting changed that only applies after restart"`
+	RestartReasons  []string `json:"restartReasons" doc:"Settings waiting for a restart"`
 }
 
 type systemStateOutput struct{ Body SystemState }
@@ -68,7 +69,11 @@ func registerSystem(api huma.API, d Deps) {
 		Summary:     "Live server state",
 		Tags:        []string{"system"},
 	}, func(ctx context.Context, _ *struct{}) (*systemStateOutput, error) {
-		st := SystemState{LDAP: "ok", Server: string(providers.StateUnknown)}
+		st := SystemState{LDAP: "ok", Server: string(providers.StateUnknown), RestartReasons: []string{}}
+		if d.Restart != nil {
+			st.RestartReasons = d.Restart.Reasons()
+			st.RestartRequired = len(st.RestartReasons) > 0
+		}
 		if err := ping(ctx, d.LDAP); err != nil {
 			st.LDAP, st.LDAPError = "error", err.Error()
 			if ldapx.IsConnError(err) {

@@ -36,7 +36,7 @@ export const useServerStore = defineStore('server', () => {
       state.value = await call(api.GET('/api/v1/system/state'))
       apiDown.value = false
     } catch {
-      state.value = { ldap: 'unreachable', server: 'unknown', restartRequired: false }
+      state.value = { ldap: 'unreachable', server: 'unknown', restartRequired: false, restartReasons: [] }
       apiDown.value = true
     }
     // Server came back (e.g. after a restart): identity may have changed.
