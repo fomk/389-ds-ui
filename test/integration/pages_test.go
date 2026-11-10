@@ -136,7 +136,7 @@ func TestPagesAPI(t *testing.T) {
 		t.Errorf("attribute of another page: %d %s", r.Code, r.Body)
 	}
 
-	// A restart-only setting is marked for restart.
+	// A restart-only setting is marked for restart; changing it back clears it.
 	r = do("GET", "/api/v1/pages/server-general", "")
 	_ = json.Unmarshal(r.Body.Bytes(), &st)
 	exact := st.Values["nsslapd-return-exact-case"][0]
@@ -145,9 +145,12 @@ func TestPagesAPI(t *testing.T) {
 	if r.Code != 200 || !strings.Contains(r.Body.String(), `"restart":["nsslapd-return-exact-case"]`) {
 		t.Errorf("restart patch: %d %s", r.Code, r.Body)
 	}
-	do("PATCH", "/api/v1/pages/server-general", `{"values":{"nsslapd-return-exact-case":["`+exact+`"]}}`)
 	if !slices.Contains(restart.Reasons(), "nsslapd-return-exact-case") {
-		t.Errorf("restart reasons = %v", restart.Reasons())
+		t.Errorf("restart reasons after change = %v", restart.Reasons())
+	}
+	do("PATCH", "/api/v1/pages/server-general", `{"values":{"nsslapd-return-exact-case":["`+exact+`"]}}`)
+	if slices.Contains(restart.Reasons(), "nsslapd-return-exact-case") {
+		t.Errorf("restart reasons after revert = %v", restart.Reasons())
 	}
 }
 
@@ -224,9 +227,12 @@ func TestPluginsAPI(t *testing.T) {
 	if r.Code != 200 || json.Unmarshal(r.Body.Bytes(), &ch) != nil || ch.Plugin.Enabled == usn {
 		t.Fatalf("toggle: %d %s", r.Code, r.Body)
 	}
-	do("PATCH", "/api/v1/plugins/USN", fmt.Sprintf(`{"enabled":%v}`, usn))
 	if ch.Restart != !list.Dynamic || ch.Restart && !slices.Contains(restart.Reasons(), "USN") {
 		t.Errorf("restart = %v, dynamic = %v, reasons = %v", ch.Restart, list.Dynamic, restart.Reasons())
+	}
+	do("PATCH", "/api/v1/plugins/USN", fmt.Sprintf(`{"enabled":%v}`, usn))
+	if slices.Contains(restart.Reasons(), "USN") {
+		t.Errorf("toggled back, still pending: %v", restart.Reasons())
 	}
 	if r := do("GET", "/api/v1/tasks", ""); !strings.Contains(r.Body.String(), `"type":"enable-plugin"`) {
 		t.Errorf("history lacks plug-in changes: %s", r.Body)

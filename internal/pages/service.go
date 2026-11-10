@@ -152,6 +152,10 @@ type PageUpdate struct {
 	State   *PageState `json:"state"`
 	Changed []string   `json:"changed" doc:"Attributes that were modified"`
 	Restart []string   `json:"restart" doc:"Changed attributes that apply only after a server restart"`
+	// Values before the update and the values written, by changed attribute
+	// (for the restart registry).
+	Before map[string][]string `json:"-"`
+	After  map[string][]string `json:"-"`
 }
 
 // Update writes the given values; attributes whose values are unchanged are
@@ -166,7 +170,7 @@ func (s *Service) Update(c *ldap.Conn, id string, values map[string][]string) (*
 		return nil, err
 	}
 	req := ldap.NewModifyRequest(p.DN, nil)
-	res := &PageUpdate{Changed: []string{}, Restart: []string{}}
+	res := &PageUpdate{Changed: []string{}, Restart: []string{}, Before: map[string][]string{}, After: map[string][]string{}}
 	for attr, vals := range values {
 		f := p.Field(attr)
 		if f == nil {
@@ -192,6 +196,7 @@ func (s *Service) Update(c *ldap.Conn, id string, values map[string][]string) (*
 			continue
 		}
 		res.Changed = append(res.Changed, f.Attr)
+		res.Before[f.Attr], res.After[f.Attr] = clean(old), norm
 		if f.Restart {
 			res.Restart = append(res.Restart, f.Attr)
 		}
@@ -212,15 +217,6 @@ func (s *Service) Update(c *ldap.Conn, id string, values map[string][]string) (*
 // sameValues compares value lists ignoring surrounding blanks and empties;
 // order matters only for lists, where the server keeps it anyway.
 func sameValues(a, b []string) bool {
-	clean := func(v []string) []string {
-		var out []string
-		for _, s := range v {
-			if s = strings.TrimSpace(s); s != "" {
-				out = append(out, s)
-			}
-		}
-		return out
-	}
 	a, b = clean(a), clean(b)
 	if len(a) != len(b) {
 		return false
@@ -231,4 +227,15 @@ func sameValues(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+// clean drops blank values ("attr:" in cn=config means unset).
+func clean(v []string) []string {
+	out := []string{}
+	for _, s := range v {
+		if s = strings.TrimSpace(s); s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
 }

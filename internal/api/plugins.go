@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/go-ldap/ldap/v3"
@@ -89,7 +90,7 @@ func registerPlugins(api huma.API, d Deps) {
 				return nil, toHTTPError(err)
 			}
 			if out.Restart && d.Restart != nil {
-				d.Restart.Require(in.Name)
+				d.Restart.Change(in.Name, strconv.FormatBool(!in.Body.Enabled), strconv.FormatBool(in.Body.Enabled))
 			}
 			return &pluginPatchOutput{Body: out}, nil
 		})

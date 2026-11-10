@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/go-ldap/ldap/v3"
@@ -60,9 +61,13 @@ func registerPages(api huma.API, d Deps) {
 			}
 			if d.Restart != nil {
 				for _, a := range res.Restart {
-					d.Restart.Require(a)
+					d.Restart.Change(a, restartValue(res.Before[a]), restartValue(res.After[a]))
 				}
 			}
 			return &pageUpdateOutput{Body: res}, nil
 		})
 }
+
+// restartValue makes attribute values comparable for the restart registry:
+// cn=config literals may differ only in case (on/On).
+func restartValue(v []string) string { return strings.ToLower(strings.Join(v, "\n")) }
