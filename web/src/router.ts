@@ -26,6 +26,7 @@ import ReplicationView from '@/views/ReplicationView.vue'
 import RolesView from '@/views/RolesView.vue'
 import SchemaView from '@/views/SchemaView.vue'
 import SettingsView from '@/views/SettingsView.vue'
+import TlsView from '@/views/TlsView.vue'
 
 /** Message keys under "nav" in the locale files. */
 export type NavKey =
@@ -65,7 +66,7 @@ export const nav: NavItem[] = [
   { path: '/policies', key: 'policies', icon: KeyRound, stage: 4, view: PoliciesView },
   { path: '/roles', key: 'roles', icon: UsersRound, stage: 4, view: RolesView },
   { path: '/replication', key: 'replication', icon: RefreshCw, stage: 5, view: ReplicationView },
-  { path: '/security', key: 'security', icon: Lock, stage: 6 },
+  { path: '/security', key: 'security', icon: Lock, stage: 6, view: TlsView },
 ]
 
 declare module 'vue-router' {

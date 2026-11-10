@@ -10,12 +10,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/go-ldap/ldap/v3"
 
 	"github.com/fomk/389-ds-ui/internal/api"
+	"github.com/fomk/389-ds-ui/internal/certs"
 	"github.com/fomk/389-ds-ui/internal/config"
 	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/entries"
@@ -115,6 +117,11 @@ func serve() error {
 		Offline:   false,
 	}
 
+	var certStore *certs.Store
+	if caps.Certs {
+		certStore = certs.New(filepath.Join(files.Root, "config"), certs.LocalRunner{})
+	}
+
 	static := webui.FS()
 	if static == nil {
 		log.Warn("binary was built without the web UI; only the API is served")
@@ -148,6 +155,8 @@ func serve() error {
 		Tasks:          ds.NewTasks(client, bus, log),
 		Events:         bus,
 		Files:          files,
+		Certs:          certStore,
+		TLSHost:        cfg.TLSHost,
 		Lifecycle:      lifecycle,
 		Capabilities:   caps,
 		Instance:       cfg.Instance,

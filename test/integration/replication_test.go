@@ -50,7 +50,7 @@ func startNode(t *testing.T, ctx context.Context, nw *testcontainers.DockerNetwo
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Image:        image,
-			ExposedPorts: []string{"3389/tcp"},
+			ExposedPorts: []string{"3389/tcp", "3636/tcp"},
 			Env:          map[string]string{"DS_DM_PASSWORD": dmPassword, "DS_SUFFIX": suffix},
 			WaitingFor: wait.ForLog("ds-entrypoint: suffix " + suffix + " ready").
 				WithStartupTimeout(3 * time.Minute).WithPollInterval(time.Second),

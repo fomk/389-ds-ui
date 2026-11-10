@@ -1220,6 +1220,161 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/security/certs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Certificates of the server's NSS database */
+        get: operations["listCerts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/certs/ca": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a trusted CA certificate */
+        post: operations["importCA"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/certs/issued": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add the certificate issued for a request made here */
+        post: operations["importIssued"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/certs/pem-pair": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import a PEM certificate and private key */
+        post: operations["importPEMPair"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/certs/pkcs12": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import a certificate with its key from PKCS#12 */
+        post: operations["importPKCS12"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/certs/{nickname}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One certificate with its PEM */
+        get: operations["getCert"];
+        put?: never;
+        post?: never;
+        /** Delete a certificate (and its key) */
+        delete: operations["deleteCert"];
+        options?: never;
+        head?: never;
+        /** Change trust flags */
+        patch: operations["setCertTrust"];
+        trace?: never;
+    };
+    "/api/v1/security/csr": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate a key and a certificate request */
+        post: operations["createCSR"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/presented": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Certificate the server presents on its LDAPS port (TLS handshake) */
+        get: operations["presentedCert"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/server-cert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Use a certificate with a key as the server certificate (after restart) */
+        put: operations["setServerCert"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/system/capabilities": {
         parameters: {
             query?: never;
@@ -1547,6 +1702,19 @@ export interface components {
             /** @enum {string} */
             state?: "backend" | "disabled" | "referral" | "referral on update";
         };
+        CSR: {
+            pem: string;
+        };
+        CSRRequest: {
+            dnsNames?: string[];
+            /**
+             * @description Default rsa3072
+             * @enum {string}
+             */
+            keyType?: "rsa2048" | "rsa3072" | "rsa4096" | "ec256" | "ec384";
+            /** @description e.g. CN=ldap.example.org,O=Example */
+            subject: string;
+        };
         CacheStats: {
             /** Format: int64 */
             count: number;
@@ -1596,6 +1764,36 @@ export interface components {
             mode: "sidecar" | "remote" | "aio";
             /** @description Offline database operations (dsctl) */
             offline: boolean;
+        };
+        CertList: {
+            certificates: components["schemas"]["Certificate"][];
+            /** @description nsSSLPersonalitySSL in cn=RSA,cn=encryption,cn=config */
+            serverCert: string;
+        };
+        CertPEMInputBody: {
+            nickname: string;
+            pem: string;
+        };
+        Certificate: {
+            ca: boolean;
+            dnsNames: string[];
+            hasKey: boolean;
+            ipAddresses: string[];
+            issuer: string;
+            keyType: string;
+            nickname: string;
+            /** Format: date-time */
+            notAfter: string;
+            /** Format: date-time */
+            notBefore: string;
+            pem?: string;
+            selfSigned: boolean;
+            serial: string;
+            /** @description Fingerprint of the DER certificate */
+            sha256: string;
+            subject: string;
+            /** @description NSS trust flags SSL,S/MIME,code: C trusted CA, T client CA, P trusted peer, u has a private key */
+            trust: string;
         };
         Change: {
             attr: string;
@@ -1849,6 +2047,9 @@ export interface components {
             /** @description File name in the LDIF directory. The backend's current content is replaced. */
             file: string;
         };
+        Imported: {
+            nicknames: string[];
+        };
         Index: {
             attribute: string;
             matchingRules: string[];
@@ -2097,6 +2298,17 @@ export interface components {
         PasswordResult: {
             generated?: string;
         };
+        PemPairInputBody: {
+            cert: string;
+            chain?: string;
+            key: string;
+            nickname: string;
+        };
+        Pkcs12InputBody: {
+            /** @description The PKCS#12 file (base64 in JSON) */
+            data: string;
+            password: string;
+        };
         Plugin: {
             /** @description Named plug-ins and plug-in types this one depends on */
             dependsOn: string[];
@@ -2145,6 +2357,14 @@ export interface components {
             kind: "dn" | "filter" | "enum";
             required?: boolean;
             values?: string[];
+        };
+        Presented: {
+            address: string;
+            /** @description Server certificate first */
+            chain: components["schemas"]["Certificate"][];
+            cipher: string;
+            /** @description Negotiated TLS version */
+            version: string;
         };
         RUV: {
             generation?: string;
@@ -2323,6 +2543,9 @@ export interface components {
             entries: components["schemas"]["SearchHit"][];
             truncated: boolean;
         };
+        ServerCertInputBody: {
+            nickname: string;
+        };
         ServerInfo: {
             /** @description Identity ds-ui is bound as */
             boundAs: string;
@@ -2463,6 +2686,10 @@ export interface components {
             values: {
                 [key: string]: string[];
             };
+        };
+        TrustInputBody: {
+            /** @description e.g. CT,, (trusted CA) or ,, (none) */
+            trust: string;
         };
         UpdateDefaultIndexInputBody: {
             matchingRules?: string[];
@@ -5901,6 +6128,349 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SearchResult"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listCerts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertList"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    importCA: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CertPEMInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    importIssued: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CertPEMInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    importPEMPair: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PemPairInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Imported"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    importPKCS12: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Pkcs12InputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Imported"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getCert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nickname: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Certificate"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteCert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nickname: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setCertTrust: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nickname: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrustInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createCSR: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CSRRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CSR"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    presentedCert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Presented"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setServerCert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServerCertInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

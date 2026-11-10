@@ -61,7 +61,7 @@ if (typeof route.query.page === 'string' && ELSEWHERE[route.query.page]) router.
 const sections = computed(() => {
   const out: { name: string; pages: PageSummary[] }[] = []
   // Plug-in pages live on the Plugins page.
-  const pages = list.value ? [...list.value.filter((x) => !x.plugin && !x.entryClass && !ELSEWHERE[x.id]), ...CUSTOM] : []
+  const pages = list.value ? [...list.value.filter((x) => !x.plugin && !x.entryClass && !ELSEWHERE[x.id] && x.section !== 'tls'), ...CUSTOM] : []
   pages.sort((a, b) => a.order - b.order)
   for (const p of pages) {
     let s = out.find((x) => x.name === p.section)

@@ -572,7 +572,8 @@
       "database": "Database",
       "logging": "Logging",
       "security": "Security",
-      "plugins": "Plug-ins"
+      "plugins": "Plug-ins",
+      "tls": "TLS"
     },
     "_groups": {
       "network": "Network",
@@ -1495,6 +1496,40 @@
           "help": "A mepTemplateEntry with mepRDNAttr, mepStaticAttr, mepMappedAttr."
         }
       }
+    },
+    "tls-general": {
+      "title": "LDAPS",
+      "fields": {
+        "nsslapd-security": {
+          "label": "TLS enabled",
+          "help": "LDAPS on the secure port and StartTLS on the LDAP port."
+        },
+        "nsslapd-securePort": {
+          "label": "LDAPS port"
+        }
+      }
+    },
+    "tls-protocol": {
+      "title": "Protocol",
+      "fields": {
+        "sslVersionMin": {
+          "label": "Minimum version"
+        },
+        "sslVersionMax": {
+          "label": "Maximum version"
+        },
+        "nsSSLClientAuth": {
+          "label": "Client certificates",
+          "help": "allowed: clients may present one; required: no connection without one."
+        },
+        "nsSSL3Ciphers": {
+          "label": "Ciphers",
+          "help": "e.g. +all,-rsa_rc4_128_md5; empty: the server's secure defaults."
+        },
+        "allowWeakCipher": {
+          "label": "Allow weak ciphers"
+        }
+      }
     }
   },
   "plugins": {
@@ -1952,5 +1987,77 @@
     "convert": "Keep as",
     "convertHint": "New RDN:",
     "converted": "Conflict entry kept under the new RDN."
+  },
+  "tls": {
+    "error": "Certificates",
+    "presented": "Presented on LDAPS",
+    "refresh": "Check again",
+    "address": "Connection",
+    "subject": "Subject",
+    "subjectHint": "Distinguished name of the server, e.g. CN=ldap.example.org,O=Example.",
+    "issuer": "Issuer",
+    "expires": "Expires",
+    "valid": "Valid",
+    "inDatabase": "In the database as",
+    "notInDatabase": "not found in the database",
+    "pendingRestart": "another certificate is chosen; restart to apply",
+    "certificates": "Certificate database",
+    "add": "Add",
+    "none": "No certificates",
+    "noFiles": "ds-ui cannot reach the server's NSS database in this mode (remote): certificates are managed on the server host.",
+    "keysWarning": "Backups of the server include the private keys of this database.",
+    "nickname": "Nickname",
+    "nicknameHint": "Name of the certificate in the NSS database.",
+    "serverTag": "server",
+    "keyTag": "key",
+    "trust": "Trust",
+    "trustHint": "NSS trust flags for TLS, e-mail, code, e.g. CT,, — a CA trusted for server and client certificates; ,, — not trusted.",
+    "actions": "Actions",
+    "details": "Details",
+    "useAsServer": "Use as server certificate",
+    "useAsServerConfirm": "The server will present {name} after the next restart.",
+    "afterRestart": "Takes effect after a server restart.",
+    "delete": "Delete",
+    "deleteConfirm": "Delete the certificate {name}?",
+    "deleteWithKey": "Delete the certificate {name} and its private key? This cannot be undone.",
+    "sans": "Alternative names",
+    "keyType": "Key",
+    "keyTypes": {
+      "rsa2048": "RSA 2048",
+      "rsa3072": "RSA 3072",
+      "rsa4096": "RSA 4096",
+      "ec256": "ECDSA P-256",
+      "ec384": "ECDSA P-384"
+    },
+    "serial": "Serial",
+    "import": {
+      "pair": "Certificate with private key",
+      "ca": "CA certificate",
+      "csr": "Certificate request (CSR)",
+      "issued": "Issued certificate (for a CSR)"
+    },
+    "importHints": {
+      "pair": "A server certificate obtained elsewhere, with its key.",
+      "ca": "Trusted for server and client certificates (CT,,).",
+      "csr": "A key is generated in the database; send the request to your CA, then add the issued certificate.",
+      "issued": "The certificate your CA issued for a request made here; it joins its key in the database."
+    },
+    "format": "Format",
+    "file": "File",
+    "p12Password": "File password",
+    "certificatePEM": "Certificate (PEM)",
+    "keyPEM": "Private key (PEM)",
+    "chainPEM": "CA chain (PEM, optional)",
+    "dnsNames": "DNS names",
+    "dnsNamesHint": "Names clients use to reach the server.",
+    "generate": "Generate",
+    "importButton": "Add",
+    "csrReady": "The key is in the database. Send this request to your CA.",
+    "copy": "Copy",
+    "copied": "Copied.",
+    "download": "Download",
+    "close": "Close",
+    "saved": "Certificate added.",
+    "imported": "Added: {names}."
   }
 }

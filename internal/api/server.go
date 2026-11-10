@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-ldap/ldap/v3"
 
+	"github.com/fomk/389-ds-ui/internal/certs"
 	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/entries"
 	"github.com/fomk/389-ds-ui/internal/events"
@@ -42,6 +43,8 @@ type Deps struct {
 	Tasks          *ds.Tasks
 	Events         *events.Bus
 	Files          *providers.Files // nil when the server's files are not reachable
+	Certs          *certs.Store     // nil when the NSS database is not reachable
+	TLSHost        string           // host of the LDAPS port, for the handshake check
 	Lifecycle      providers.Lifecycle
 	Capabilities   providers.Capabilities
 	Instance       string
@@ -137,6 +140,7 @@ func register(api huma.API, d Deps) {
 	registerCollections(api, d)
 	registerRoles(api, d)
 	registerReplication(api, d)
+	registerTLS(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

@@ -109,10 +109,10 @@ All plugins are LDAP-based and available in all modes.
 
 | Feature | Mechanism | A | B | C |
 |---|---|---|---|---|
-| Enabling LDAPS, TLS versions, ciphers | LDAP (`cn=encryption,cn=config`) | ✅ | ✅ | ✅ |
-| Server certificate selection | LDAP | ✅ | ✅ | ✅ |
-| Certificates: list, import, CSR, deletion, CA trust | CLI (`dsconf -j` in A, `certutil` in C) | ✅ | ❌ | ✅ |
-| Verifying the served certificate | TLS handshake | ✅ | ✅ | ✅ |
+| Enabling LDAPS, TLS versions, client certificates, ciphers — done | LDAP (`cn=encryption,cn=config`) | ✅ | ✅ | ✅ |
+| Server certificate selection — done | LDAP | ✅ | ✅ | ✅ |
+| Certificates: list, import (CA, PKCS#12, PEM pair, issued), CSR, deletion, trust — done | CLI (`certutil`, `pk12util`, `openssl`) | ✅ | ❌ | ✅ |
+| Verifying the served certificate — done | TLS handshake | ✅ | ✅ | ✅ |
 
 ## Out of scope
 

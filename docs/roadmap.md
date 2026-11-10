@@ -148,7 +148,11 @@ Work items:
 
 **Done when:** in a test setup of two DS instances, multi-supplier is configured through the UI, a replica is initialized, statuses are visible; an e2e test of the setup runs in CI.
 
-## Stage 6. TLS and certificates (1.5–2 wk) → v0.5
+## Stage 6. TLS and certificates (1.5–2 wk) → v0.5 — ✅ done
+
+**Outcome:** in the integration suite a fresh server gets a new certificate only through the API — a key and CSR made in its NSS database, signed by a test CA, imported, chosen as the server certificate, TLS 1.3 required — and after a restart the LDAPS handshake shows exactly that certificate and version. The UI shows the presented certificate, the TLS settings and the certificate database. Deviations:
+- The NSS tools run in the sidecar image (`certutil`, `pk12util`, `openssl`); in remote mode only the LDAP settings and the handshake check are available. The all-in-one variant (stage 7) runs them the same way, not through `dsconf`.
+- A CSR leaves its key in the database until the issued certificate arrives; keys without a certificate are not listed or removed yet.
 
 Work items:
 - Settings: `nsslapd-security`, LDAPS port, `cn=encryption,cn=config` (TLS versions, ciphers), server certificate selection.

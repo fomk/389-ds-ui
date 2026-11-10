@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -32,6 +33,9 @@ type Config struct {
 	LDAPTimeout      time.Duration
 
 	DataDir string
+	// TLSHost is where ds-ui reaches the server's LDAPS port to see the
+	// certificate it presents (the port comes from nsslapd-securePort).
+	TLSHost string
 
 	Lifecycle       string // docker | s6 | none
 	DockerHost      string
@@ -92,6 +96,8 @@ func load(getenv func(string) string) (*Config, error) {
 		return nil, errors.New("DSUI_LDAP_BIND_DN is set but DSUI_LDAP_BIND_PASSWORD_FILE is empty")
 	}
 
+	cfg.TLSHost = env("DSUI_TLS_HOST", defaultTLSHost(cfg.LDAPURL))
+
 	var err error
 	if cfg.LDAPTimeout, err = time.ParseDuration(env("DSUI_LDAP_TIMEOUT", "10s")); err != nil {
 		return nil, fmt.Errorf("DSUI_LDAP_TIMEOUT: %w", err)
@@ -128,4 +134,13 @@ func load(getenv func(string) string) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// defaultTLSHost is the host of an ldap(s) URL; with LDAPI (sidecar) it is
+// "ds", the service name of the server in the Compose files.
+func defaultTLSHost(ldapURL string) string {
+	if u, err := url.Parse(ldapURL); err == nil && (u.Scheme == "ldap" || u.Scheme == "ldaps") && u.Hostname() != "" {
+		return u.Hostname()
+	}
+	return "ds"
 }

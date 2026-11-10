@@ -604,6 +604,49 @@
         },
         "type": "object"
       },
+      "CSR": {
+        "additionalProperties": false,
+        "properties": {
+          "pem": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pem"
+        ],
+        "type": "object"
+      },
+      "CSRRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "dnsNames": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "keyType": {
+            "description": "Default rsa3072",
+            "enum": [
+              "rsa2048",
+              "rsa3072",
+              "rsa4096",
+              "ec256",
+              "ec384"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "description": "e.g. CN=ldap.example.org,O=Example",
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject"
+        ],
+        "type": "object"
+      },
       "CacheStats": {
         "additionalProperties": false,
         "properties": {
@@ -704,6 +747,122 @@
           "files",
           "certs",
           "offline"
+        ],
+        "type": "object"
+      },
+      "CertList": {
+        "additionalProperties": false,
+        "properties": {
+          "certificates": {
+            "items": {
+              "$ref": "#/components/schemas/Certificate"
+            },
+            "type": "array"
+          },
+          "serverCert": {
+            "description": "nsSSLPersonalitySSL in cn=RSA,cn=encryption,cn=config",
+            "type": "string"
+          }
+        },
+        "required": [
+          "certificates",
+          "serverCert"
+        ],
+        "type": "object"
+      },
+      "CertPEMInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "nickname": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "pem": {
+            "maxLength": 1048576,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "nickname",
+          "pem"
+        ],
+        "type": "object"
+      },
+      "Certificate": {
+        "additionalProperties": false,
+        "properties": {
+          "ca": {
+            "type": "boolean"
+          },
+          "dnsNames": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "hasKey": {
+            "type": "boolean"
+          },
+          "ipAddresses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "keyType": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "notAfter": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "notBefore": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "pem": {
+            "type": "string"
+          },
+          "selfSigned": {
+            "type": "boolean"
+          },
+          "serial": {
+            "type": "string"
+          },
+          "sha256": {
+            "description": "Fingerprint of the DER certificate",
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "trust": {
+            "description": "NSS trust flags SSL,S/MIME,code: C trusted CA, T client CA, P trusted peer, u has a private key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nickname",
+          "trust",
+          "hasKey",
+          "ca",
+          "subject",
+          "issuer",
+          "selfSigned",
+          "notBefore",
+          "notAfter",
+          "dnsNames",
+          "ipAddresses",
+          "serial",
+          "keyType",
+          "sha256"
         ],
         "type": "object"
       },
@@ -1420,6 +1579,21 @@
         },
         "required": [
           "file"
+        ],
+        "type": "object"
+      },
+      "Imported": {
+        "additionalProperties": false,
+        "properties": {
+          "nicknames": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "nicknames"
         ],
         "type": "object"
       },
@@ -2346,6 +2520,54 @@
         },
         "type": "object"
       },
+      "PemPairInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "cert": {
+            "maxLength": 1048576,
+            "minLength": 1,
+            "type": "string"
+          },
+          "chain": {
+            "maxLength": 1048576,
+            "type": "string"
+          },
+          "key": {
+            "maxLength": 1048576,
+            "minLength": 1,
+            "type": "string"
+          },
+          "nickname": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "nickname",
+          "cert",
+          "key"
+        ],
+        "type": "object"
+      },
+      "Pkcs12InputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "contentEncoding": "base64",
+            "description": "The PKCS#12 file (base64 in JSON)",
+            "maxLength": 1048576,
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "data",
+          "password"
+        ],
+        "type": "object"
+      },
       "Plugin": {
         "additionalProperties": false,
         "properties": {
@@ -2518,6 +2740,35 @@
         "required": [
           "attr",
           "kind"
+        ],
+        "type": "object"
+      },
+      "Presented": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "chain": {
+            "description": "Server certificate first",
+            "items": {
+              "$ref": "#/components/schemas/Certificate"
+            },
+            "type": "array"
+          },
+          "cipher": {
+            "type": "string"
+          },
+          "version": {
+            "description": "Negotiated TLS version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "address",
+          "version",
+          "cipher",
+          "chain"
         ],
         "type": "object"
       },
@@ -3072,6 +3323,19 @@
         ],
         "type": "object"
       },
+      "ServerCertInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "nickname": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "nickname"
+        ],
+        "type": "object"
+      },
       "ServerInfo": {
         "additionalProperties": false,
         "properties": {
@@ -3505,6 +3769,19 @@
         },
         "required": [
           "values"
+        ],
+        "type": "object"
+      },
+      "TrustInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "trust": {
+            "description": "e.g. CT,, (trusted CA) or ,, (none)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trust"
         ],
         "type": "object"
       },
@@ -8261,6 +8538,408 @@
         "summary": "Search entries (interactive, limited)",
         "tags": [
           "search"
+        ]
+      }
+    },
+    "/api/v1/security/certs": {
+      "get": {
+        "operationId": "listCerts",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CertList"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Certificates of the server's NSS database",
+        "tags": [
+          "tls"
+        ]
+      }
+    },
+    "/api/v1/security/certs/ca": {
+      "post": {
+        "operationId": "importCA",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CertPEMInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add a trusted CA certificate",
+        "tags": [
+          "tls"
+        ]
+      }
+    },
+    "/api/v1/security/certs/issued": {
+      "post": {
+        "operationId": "importIssued",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CertPEMInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add the certificate issued for a request made here",
+        "tags": [
+          "tls"
+        ]
+      }
+    },
+    "/api/v1/security/certs/pem-pair": {
+      "post": {
+        "operationId": "importPEMPair",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PemPairInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Imported"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Import a PEM certificate and private key",
+        "tags": [
+          "tls"
+        ]
+      }
+    },
+    "/api/v1/security/certs/pkcs12": {
+      "post": {
+        "operationId": "importPKCS12",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pkcs12InputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Imported"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Import a certificate with its key from PKCS#12",
+        "tags": [
+          "tls"
+        ]
+      }
+    },
+    "/api/v1/security/certs/{nickname}": {
+      "delete": {
+        "operationId": "deleteCert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "nickname",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a certificate (and its key)",
+        "tags": [
+          "tls"
+        ]
+      },
+      "get": {
+        "operationId": "getCert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "nickname",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Certificate"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "One certificate with its PEM",
+        "tags": [
+          "tls"
+        ]
+      },
+      "patch": {
+        "operationId": "setCertTrust",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "nickname",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrustInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change trust flags",
+        "tags": [
+          "tls"
+        ]
+      }
+    },
+    "/api/v1/security/csr": {
+      "post": {
+        "operationId": "createCSR",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CSRRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CSR"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Generate a key and a certificate request",
+        "tags": [
+          "tls"
+        ]
+      }
+    },
+    "/api/v1/security/presented": {
+      "get": {
+        "operationId": "presentedCert",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Presented"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Certificate the server presents on its LDAPS port (TLS handshake)",
+        "tags": [
+          "tls"
+        ]
+      }
+    },
+    "/api/v1/security/server-cert": {
+      "put": {
+        "operationId": "setServerCert",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServerCertInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Use a certificate with a key as the server certificate (after restart)",
+        "tags": [
+          "tls"
         ]
       }
     },

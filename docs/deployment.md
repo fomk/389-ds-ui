@@ -75,6 +75,7 @@ Planned for stage 7 (DS image + s6-overlay + ds-ui, Lifecycle provider `s6`). Cu
 | `DSUI_LDAP_CA_FILE` | — | CA for LDAPS / StartTLS |
 | `DSUI_LDAP_TIMEOUT` | `10s` | connection and operation timeout |
 | `DSUI_DATA_DIR` | `/data` | root of the shared volume (sidecar/aio) |
+| `DSUI_TLS_HOST` | the host of an `ldap(s)://` URL, else `ds` | where ds-ui reaches the LDAPS port to check the certificate the server presents (the port is `nsslapd-securePort`) |
 | `DSUI_LIFECYCLE` | `docker` if `DSUI_DOCKER_HOST` is set (sidecar); `s6` (aio); otherwise `none` | process management provider |
 | `DSUI_DOCKER_HOST` | — | `tcp://docker-proxy:2375` |
 | `DSUI_DS_CONTAINER` | — | DS container name for the Docker API |

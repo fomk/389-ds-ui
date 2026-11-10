@@ -1,0 +1,22 @@
+# TLS settings, shown on the TLS & certificates page (section tls is not in
+# the settings menu). Every change applies after a server restart.
+pages:
+  - id: tls-general
+    section: tls
+    order: 10
+    dn: cn=config
+    fields:
+      - {attr: nsslapd-security, type: bool, restart: true}
+      - {attr: nsslapd-securePort, type: int, min: 1, max: 65535, restart: true}
+
+  - id: tls-protocol
+    section: tls
+    order: 20
+    dn: cn=encryption,cn=config
+    sparse: true
+    fields:
+      - {attr: sslVersionMin, type: enum, values: [TLS1.0, TLS1.1, TLS1.2, TLS1.3], restart: true}
+      - {attr: sslVersionMax, type: enum, values: [TLS1.0, TLS1.1, TLS1.2, TLS1.3], restart: true}
+      - {attr: nsSSLClientAuth, type: enum, values: ["off", allowed, required], restart: true}
+      - {attr: nsSSL3Ciphers, type: string, restart: true}
+      - {attr: allowWeakCipher, type: bool, restart: true}
