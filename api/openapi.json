@@ -61,6 +61,22 @@
         ],
         "type": "object"
       },
+      "AciSetInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "acis": {
+            "description": "All ACIs of the entry; empty removes them",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "acis"
+        ],
+        "type": "object"
+      },
       "ApplyLDIFInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -663,6 +679,36 @@
         ],
         "type": "object"
       },
+      "EffectiveRights": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "attributeLevelRights by attribute: r read, s search, c compare, w write, o obliterate (delete value), W/S self write",
+            "type": "object"
+          },
+          "entry": {
+            "description": "entryLevelRights: v view, a add, d delete, n rename",
+            "type": "string"
+          },
+          "subject": {
+            "description": "Empty: anonymous",
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "target",
+          "subject",
+          "entry",
+          "attributes"
+        ],
+        "type": "object"
+      },
       "Entry": {
         "additionalProperties": false,
         "properties": {
@@ -708,6 +754,25 @@
           "numSubordinates",
           "hasChildren",
           "etag"
+        ],
+        "type": "object"
+      },
+      "EntryACIs": {
+        "additionalProperties": false,
+        "properties": {
+          "acis": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "dn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn",
+          "acis"
         ],
         "type": "object"
       },
@@ -807,6 +872,31 @@
         },
         "required": [
           "name"
+        ],
+        "type": "object"
+      },
+      "GerInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "description": "Attributes the entry does not have yet",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "subject": {
+            "description": "Bind DN to evaluate; empty for anonymous",
+            "type": "string"
+          },
+          "target": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "target",
+          "subject"
         ],
         "type": "object"
       },
@@ -2639,6 +2729,190 @@
         "summary": "Unlock an account and reset a lockout after failed binds",
         "tags": [
           "accounts"
+        ]
+      }
+    },
+    "/api/v1/aci": {
+      "get": {
+        "operationId": "listACIs",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Include the entries below dn",
+            "explode": false,
+            "in": "query",
+            "name": "subtree",
+            "schema": {
+              "description": "Include the entries below dn",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EntryACIs"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "ACIs of an entry (and of the entries below it)",
+        "tags": [
+          "access control"
+        ]
+      },
+      "put": {
+        "operationId": "setACIs",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AciSetInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replace the ACIs of an entry (the server checks the syntax)",
+        "tags": [
+          "access control"
+        ]
+      }
+    },
+    "/api/v1/aci/effective-rights": {
+      "post": {
+        "operationId": "effectiveRights",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GerInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectiveRights"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Rights a subject has on an entry (Get Effective Rights)",
+        "tags": [
+          "access control"
+        ]
+      }
+    },
+    "/api/v1/aci/inherited": {
+      "get": {
+        "operationId": "listInheritedACIs",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EntryACIs"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "ACIs of the ancestors of an entry, nearest first",
+        "tags": [
+          "access control"
         ]
       }
     },

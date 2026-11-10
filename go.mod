@@ -4,6 +4,7 @@ go 1.26.5
 
 require (
 	github.com/danielgtaylor/huma/v2 v2.40.0
+	github.com/go-asn1-ber/asn1-ber v1.5.8
 	github.com/go-chi/chi/v5 v5.5.0
 	github.com/go-ldap/ldap/v3 v3.4.15
 	github.com/go-ldap/ldif v0.0.0-20260814080914-716cb106d6e4
@@ -28,7 +29,6 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/ebitengine/purego v0.10.1 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
-	github.com/go-asn1-ber/asn1-ber v1.5.8 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect

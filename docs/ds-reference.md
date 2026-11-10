@@ -140,7 +140,8 @@ Replacing the certificate requires a DS restart.
 | `1.2.840.113556.1.4.319` | Paged Results |
 | `2.16.840.1.113730.3.4.9` | VLV request |
 | `1.2.840.113556.1.4.473` | Server Side Sort |
-| `1.3.6.1.4.1.42.2.27.9.5.2` | Get Effective Rights |
+| `1.3.6.1.4.1.42.2.27.9.5.2` | Get Effective Rights — 389-ds takes the value as one OCTET STRING `dn: <subject>` (`dn: ` alone = anonymous); request `entryLevelRights` and `attributeLevelRights` (`cn:rscwo, sn:…`), plus names of absent attributes to see their rights |
+| `2.16.840.1.113730.3.4.17` | Real attributes only (no CoS/role values) — tells a stored `nsAccountLock` from a computed one |
 | `2.16.840.1.113730.3.4.2` | ManageDsaIT |
 | `1.2.840.113556.1.4.805` | Tree Delete (verify support in 389) |
 | `1.3.6.1.4.1.4203.1.11.1` | Password Modify (extop) |

@@ -55,6 +55,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/aci": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ACIs of an entry (and of the entries below it) */
+        get: operations["listACIs"];
+        /** Replace the ACIs of an entry (the server checks the syntax) */
+        put: operations["setACIs"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/aci/effective-rights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rights a subject has on an entry (Get Effective Rights) */
+        post: operations["effectiveRights"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/aci/inherited": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ACIs of the ancestors of an entry, nearest first */
+        get: operations["listInheritedACIs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/backends": {
         parameters: {
             query?: never;
@@ -985,6 +1037,10 @@ export interface components {
             /** @description active, or any of locked, locked-role, locked-out, expired, must-change */
             states: string[];
         };
+        AciSetInputBody: {
+            /** @description All ACIs of the entry; empty removes them */
+            acis: string[];
+        };
         ApplyLDIFInputBody: {
             /** @description Content or change records (add, modify, delete); URL values are not allowed */
             ldif: string;
@@ -1193,6 +1249,17 @@ export interface components {
             /** Format: int64 */
             used: number;
         };
+        EffectiveRights: {
+            /** @description attributeLevelRights by attribute: r read, s search, c compare, w write, o obliterate (delete value), W/S self write */
+            attributes: {
+                [key: string]: string;
+            };
+            /** @description entryLevelRights: v view, a add, d delete, n rename */
+            entry: string;
+            /** @description Empty: anonymous */
+            subject: string;
+            target: string;
+        };
         Entry: {
             attributes: components["schemas"]["Attribute"][];
             dn: string;
@@ -1204,6 +1271,10 @@ export interface components {
             objectClasses: string[];
             parent: string;
             rdn: string;
+        };
+        EntryACIs: {
+            acis: string[];
+            dn: string;
         };
         ErrorDetail: {
             /** @description Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id' */
@@ -1256,6 +1327,13 @@ export interface components {
             /** @description May reference other fields as {attr}; {next:attr} is the next free number */
             default?: string;
             name: string;
+        };
+        GerInputBody: {
+            /** @description Attributes the entry does not have yet */
+            attributes?: string[];
+            /** @description Bind DN to evaluate; empty for anonymous */
+            subject: string;
+            target: string;
         };
         HistoryOutputBody: {
             /** Format: int64 */
@@ -1837,6 +1915,136 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AccountStatus"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listACIs: {
+        parameters: {
+            query: {
+                dn: string;
+                /** @description Include the entries below dn */
+                subtree?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryACIs"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setACIs: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AciSetInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    effectiveRights: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GerInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EffectiveRights"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listInheritedACIs: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EntryACIs"][];
                 };
             };
             /** @description Error */

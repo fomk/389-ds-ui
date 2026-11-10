@@ -133,6 +133,7 @@ func register(api huma.API, d Deps) {
 	registerSchemaWrites(api, d)
 	registerPwPolicies(api, d)
 	registerAccounts(api, d)
+	registerACI(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
