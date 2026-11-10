@@ -79,7 +79,11 @@ func registerMonitor(api huma.API, d Deps) {
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 			defer cancel()
-			if err := d.Lifecycle.Restart(ctx); err != nil {
+			err := d.Lifecycle.Restart(ctx)
+			if d.Tasks != nil {
+				d.Tasks.Record(ds.OpRestart, "", err)
+			}
+			if err != nil {
 				d.Logger.Error("server restart failed", "err", err)
 				return
 			}

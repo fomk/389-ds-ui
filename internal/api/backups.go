@@ -153,6 +153,7 @@ func registerBackups(api huma.API, d Deps) {
 			s, err := store(ctx, d, true)
 			if err == nil {
 				err = s.Remove(in.Name)
+				d.Tasks.Record(ds.OpDeleteBackup, in.Name, err)
 			}
 			if err != nil {
 				return nil, toHTTPError(err)
@@ -201,6 +202,7 @@ func registerBackups(api huma.API, d Deps) {
 			s, err := store(ctx, d, false)
 			if err == nil {
 				err = s.Remove(in.Name)
+				d.Tasks.Record(ds.OpDeleteLDIF, in.Name, err)
 			}
 			if err != nil {
 				return nil, toHTTPError(err)
@@ -260,6 +262,7 @@ func uploadLDIF(d Deps) http.HandlerFunc {
 		if err == nil {
 			var info files.Info
 			info, err = s.Create(chi.URLParam(r, "name"), r.Body)
+			d.Tasks.Record(ds.OpUploadLDIF, chi.URLParam(r, "name"), err)
 			if err == nil {
 				writeJSON(w, http.StatusCreated, info)
 				return

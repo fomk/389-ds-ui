@@ -145,12 +145,16 @@ const columns = computed<DataTableColumns<Index>>(() => [
   {
     key: 'actions',
     title: '',
-    width: 120,
+    width: 112,
+    // Fixed slots, left-aligned: the same action is always in the same
+    // column; system indexes keep an empty slot where "delete" would be.
     render: (r) =>
-      h(NSpace, { size: 2, justify: 'end' }, () => [
-        h(NButton, { size: 'tiny', quaternary: true, title: t('indexes.reindex'), onClick: () => reindex([r.attribute]) }, { icon: icon(RefreshCw) }),
-        h(NButton, { size: 'tiny', quaternary: true, title: t('indexes.edit'), onClick: () => (editing.value = { attribute: r.attribute, types: [...r.types], isNew: false }) }, { icon: icon(Pencil) }),
-        r.system ? null : h(NButton, { size: 'tiny', quaternary: true, title: t('indexes.delete'), onClick: () => remove(r) }, { icon: icon(Trash2) }),
+      h('div', { class: 'row-actions' }, [
+        h(NButton, { size: 'tiny', quaternary: true, title: t('indexes.reindex'), 'aria-label': t('indexes.reindex'), onClick: () => reindex([r.attribute]) }, { icon: icon(RefreshCw) }),
+        h(NButton, { size: 'tiny', quaternary: true, title: t('indexes.edit'), 'aria-label': t('indexes.edit'), onClick: () => (editing.value = { attribute: r.attribute, types: [...r.types], isNew: false }) }, { icon: icon(Pencil) }),
+        r.system
+          ? h('span', { class: 'slot' })
+          : h(NButton, { size: 'tiny', quaternary: true, title: t('indexes.delete'), 'aria-label': t('indexes.delete'), onClick: () => remove(r) }, { icon: icon(Trash2) }),
       ]),
   },
 ])
@@ -203,5 +207,17 @@ const columns = computed<DataTableColumns<Index>>(() => [
 <style scoped>
 .toolbar {
   margin-bottom: 10px;
+}
+
+:deep(.row-actions) {
+  display: grid;
+  grid-template-columns: repeat(3, 28px);
+  justify-content: start;
+  /* keeps the icons clear of the table's scrollbar */
+  padding-right: 8px;
+}
+
+:deep(.row-actions .slot) {
+  width: 28px;
 }
 </style>

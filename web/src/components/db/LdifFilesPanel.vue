@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, h, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NAlert, NButton, NDataTable, NIcon, NSpace, useDialog, useMessage, type DataTableColumns } from 'naive-ui'
+import { NAlert, NButton, NDataTable, NEmpty, NIcon, NSpace, useDialog, useMessage, type DataTableColumns } from 'naive-ui'
 import { Download, Trash2, Upload } from '@lucide/vue'
 import { api, ApiError, call, type Problem, type Schemas } from '@/api/client'
 import { currentLocale } from '@/i18n'
@@ -9,6 +9,7 @@ import { localizeError } from '@/i18n/errors'
 import { formatBytes } from '@/ldap/values'
 import { useServerStore } from '@/stores/server'
 import { useTasksStore } from '@/stores/tasks'
+import TaskList from '@/components/TaskList.vue'
 
 type FileInfo = Schemas['Info']
 
@@ -18,6 +19,7 @@ const dialog = useDialog()
 const server = useServerStore()
 const tasks = useTasksStore()
 
+const ldifTypes = ['export', 'import', 'upload-ldif', 'delete-ldif']
 const canSeeFiles = computed(() => server.capabilities?.files ?? false)
 const list = ref<FileInfo[]>([])
 const loading = ref(false)
@@ -114,12 +116,21 @@ const columns = computed<DataTableColumns<FileInfo>>(() => [
         {{ t('ldifFiles.upload') }}
       </NButton>
     </NSpace>
-    <NDataTable :columns="columns" :data="list" :loading="loading" :row-key="(r: FileInfo) => r.name" size="small" :empty-text="t('ldifFiles.none')" />
+    <NDataTable :columns="columns" :data="list" :loading="loading" :row-key="(r: FileInfo) => r.name" size="small">
+      <template #empty><NEmpty :description="t('ldifFiles.none')" size="small" /></template>
+    </NDataTable>
+    <div v-if="tasks.tasks.some((x) => ldifTypes.includes(x.type))" class="tasks">
+      <TaskList :types="ldifTypes" :limit="8" />
+    </div>
   </template>
 </template>
 
 <style scoped>
 .toolbar {
   margin-bottom: 12px;
+}
+
+.tasks {
+  margin-top: 16px;
 }
 </style>

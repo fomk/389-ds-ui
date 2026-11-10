@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, h, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NAlert, NButton, NDataTable, NIcon, NInput, NSpace, useDialog, useMessage, type DataTableColumns } from 'naive-ui'
+import { NAlert, NButton, NDataTable, NEmpty, NIcon, NInput, NSpace, useDialog, useMessage, type DataTableColumns } from 'naive-ui'
 import { Archive, Download, RotateCcw, Trash2 } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
 import { currentLocale } from '@/i18n'
@@ -109,7 +109,8 @@ const columns = computed<DataTableColumns<FileInfo>>(() => [
   },
 ])
 
-const backupTasks = computed(() => tasks.tasks.some((x) => x.type === 'backup' || x.type === 'restore'))
+const backupTypes = ['backup', 'restore', 'delete-backup']
+const backupTasks = computed(() => tasks.tasks.some((x) => backupTypes.includes(x.type)))
 </script>
 
 <template>
@@ -137,10 +138,11 @@ const backupTasks = computed(() => tasks.tasks.some((x) => x.type === 'backup' |
     :loading="loading"
     :row-key="(r: FileInfo) => r.name"
     size="small"
-    :empty-text="t('backups.none')"
-  />
+  >
+    <template #empty><NEmpty :description="t('backups.none')" size="small" /></template>
+  </NDataTable>
   <div v-if="backupTasks" class="tasks">
-    <TaskList :limit="5" />
+    <TaskList :types="backupTypes" :limit="8" />
   </div>
 </template>
 

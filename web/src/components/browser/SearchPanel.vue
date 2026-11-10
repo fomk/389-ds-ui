@@ -8,6 +8,7 @@ import {
   NCard,
   NCollapseTransition,
   NDataTable,
+  NEmpty,
   NForm,
   NFormItem,
   NIcon,
@@ -195,8 +196,9 @@ const exportQuery = computed(() => ({ base: base.value.trim(), scope: scope.valu
         virtual-scroll
         :max-height="480"
         :scroll-x="300 + columnNames.length * 160"
-        :empty-text="t('search.none')"
-      />
+      >
+        <template #empty><NEmpty :description="t('search.none')" size="small" /></template>
+      </NDataTable>
     </template>
   </NCard>
 </template>

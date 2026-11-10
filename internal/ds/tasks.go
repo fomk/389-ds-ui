@@ -232,3 +232,37 @@ func (m *Tasks) Wait(ctx context.Context, id string) (*Task, error) {
 		}
 	}
 }
+
+// Operations recorded in the task history although they are not server
+// tasks (they finish immediately): deletions, uploads, restarts.
+const (
+	OpDeleteBackup  = "delete-backup"
+	OpUploadLDIF    = "upload-ldif"
+	OpDeleteLDIF    = "delete-ldif"
+	OpCreateBackend = "create-backend"
+	OpDeleteBackend = "delete-backend"
+	OpRestart       = "restart"
+)
+
+// Record adds a finished operation to the history: ok when err is nil,
+// failed with the error as message otherwise.
+func (m *Tasks) Record(typ, target string, err error) {
+	if m == nil {
+		return
+	}
+	now := time.Now().UTC()
+	t := &Task{
+		ID: fmt.Sprintf("%s_%s", typ, now.Format("20060102_150405.000000")), Type: typ, Target: target,
+		Status: TaskSucceeded, Log: []string{}, Started: now, Finished: &now,
+	}
+	if err != nil {
+		t.Status, t.Message = TaskFailed, err.Error()
+	}
+	m.mu.Lock()
+	m.tasks = append(m.tasks, t)
+	if len(m.tasks) > maxTasks {
+		m.tasks = m.tasks[len(m.tasks)-maxTasks:]
+	}
+	m.mu.Unlock()
+	m.publish(t)
+}

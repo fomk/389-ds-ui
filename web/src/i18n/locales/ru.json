@@ -415,7 +415,13 @@
       "backup": "Резервная копия",
       "restore": "Восстановление",
       "export": "Экспорт",
-      "import": "Импорт"
+      "import": "Импорт",
+      "delete-backup": "Удаление копии",
+      "upload-ldif": "Загрузка LDIF",
+      "delete-ldif": "Удаление LDIF",
+      "create-backend": "Создание суффикса",
+      "delete-backend": "Удаление суффикса",
+      "restart": "Перезапуск сервера"
     },
     "progress": "{current} из {total}"
   },

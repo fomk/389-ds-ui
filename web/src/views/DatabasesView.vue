@@ -158,7 +158,9 @@ const vlvColumns = computed<DataTableColumns<VLV>>(() => [
             <BackendTransfer :backend="selected" />
           </NTabPane>
           <NTabPane name="vlv" :tab="t('db.tabs.vlv')">
-            <NDataTable :columns="vlvColumns" :data="vlv" size="small" :row-key="(r: VLV) => r.name" :empty-text="t('indexes.none')" />
+            <NDataTable :columns="vlvColumns" :data="vlv" size="small" :row-key="(r: VLV) => r.name">
+              <template #empty><NEmpty :description="t('indexes.none')" size="small" /></template>
+            </NDataTable>
           </NTabPane>
         </NTabs>
       </NCard>

@@ -6,6 +6,7 @@ import {
   NButton,
   NCard,
   NDataTable,
+  NEmpty,
   NIcon,
   NInput,
   NSelect,
@@ -166,8 +167,9 @@ async function add() {
         :row-key="(r: { dn: string }) => r.dn"
         size="small"
         :pagination="shown.length > 50 ? { pageSize: 50 } : false"
-        :empty-text="t('groups.none')"
-      />
+      >
+        <template #empty><NEmpty :description="t('groups.none')" size="small" /></template>
+      </NDataTable>
     </NSpace>
   </NCard>
 </template>

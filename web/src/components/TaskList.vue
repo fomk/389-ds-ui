@@ -5,8 +5,8 @@ import { NButton, NEmpty, NProgress, NTag, useThemeVars } from 'naive-ui'
 import { currentLocale } from '@/i18n'
 import { useTasksStore, type Task } from '@/stores/tasks'
 
-/** Tasks, newest first; optionally only those of one target (backend). */
-const props = defineProps<{ target?: string; limit?: number }>()
+/** Tasks, newest first; optionally only one target (backend) or some types. */
+const props = defineProps<{ target?: string; types?: string[]; limit?: number }>()
 
 const { t, te } = useI18n()
 const vars = useThemeVars()
@@ -14,7 +14,10 @@ const store = useTasksStore()
 const open = ref<string>()
 
 const list = computed(() =>
-  store.tasks.filter((x) => !props.target || x.target?.toLowerCase() === props.target.toLowerCase()).slice(0, props.limit ?? 20),
+  store.tasks
+    .filter((x) => !props.target || x.target?.toLowerCase() === props.target.toLowerCase())
+    .filter((x) => !props.types || props.types.includes(x.type))
+    .slice(0, props.limit ?? 20),
 )
 
 const typeLabel = (x: Task) => (te(`tasks.types.${x.type}`) ? t(`tasks.types.${x.type}`) : x.type)

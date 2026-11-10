@@ -84,6 +84,7 @@ func registerDatabases(api huma.API, d Deps) {
 				b, err = ds.GetBackend(c, in.Body.Name)
 				return err
 			})
+			d.Tasks.Record(ds.OpCreateBackend, in.Body.Suffix, err)
 			if err != nil {
 				return nil, toHTTPError(err)
 			}
@@ -111,7 +112,9 @@ func registerDatabases(api huma.API, d Deps) {
 	huma.Register(api, huma.Operation{OperationID: "deleteBackend", Method: http.MethodDelete, Path: apiPrefix + "/backends/{name}",
 		Summary: "Delete a suffix and all its data", Tags: tags, DefaultStatus: http.StatusNoContent},
 		func(ctx context.Context, in *backendPath) (*noContent, error) {
-			if err := conn(ctx, func(c *ldap.Conn) error { return ds.DeleteBackend(c, in.Name) }); err != nil {
+			err := conn(ctx, func(c *ldap.Conn) error { return ds.DeleteBackend(c, in.Name) })
+			d.Tasks.Record(ds.OpDeleteBackend, in.Name, err)
+			if err != nil {
 				return nil, toHTTPError(err)
 			}
 			return &noContent{}, nil

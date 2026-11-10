@@ -172,4 +172,9 @@ func TestDatabasesAPI(t *testing.T) {
 	if r := do("GET", "/api/v1/backends/apibe/indexes", ""); r.Code != 404 {
 		t.Errorf("indexes of a deleted backend: %d", r.Code)
 	}
+	// Immediate operations are recorded in the task history too.
+	if r := do("GET", "/api/v1/tasks", ""); !strings.Contains(r.Body.String(), `"type":"delete-backend"`) ||
+		!strings.Contains(r.Body.String(), `"type":"create-backend"`) {
+		t.Errorf("history lacks create/delete-backend: %s", r.Body)
+	}
 }

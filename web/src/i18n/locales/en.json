@@ -415,7 +415,13 @@
       "backup": "Backup",
       "restore": "Restore",
       "export": "Export",
-      "import": "Import"
+      "import": "Import",
+      "delete-backup": "Backup deleted",
+      "upload-ldif": "LDIF uploaded",
+      "delete-ldif": "LDIF deleted",
+      "create-backend": "Suffix created",
+      "delete-backend": "Suffix deleted",
+      "restart": "Server restart"
     },
     "progress": "{current} of {total}"
   },
