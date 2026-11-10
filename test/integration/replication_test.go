@@ -283,13 +283,22 @@ func TestTwoSupplierReplication(t *testing.T) {
 		t.Errorf("conflict = %+v", conflicts[0])
 	}
 
-	// Resolve it by deleting the conflict entry.
+	// Resolve it by keeping the conflict entry under a new RDN; any other
+	// conflict entries are deleted. 404: a change from the other server has
+	// already replicated.
+	kept := false
 	for _, n := range []*node{ds1, ds2} {
 		_, body := n.do(t, "GET", "/api/v1/replication/conflicts"+q, "")
 		var list []ds.Conflict
 		_ = json.Unmarshal([]byte(body), &list)
 		for _, cf := range list {
-			// 404: the delete from the other server has already replicated.
+			if !kept && !cf.Glue {
+				if code, out := n.do(t, "POST", "/api/v1/replication/conflicts/convert?dn="+url.QueryEscape(cf.DN), `{"rdn":"uid=twin-kept"}`); code != 204 {
+					t.Errorf("convert conflict on %s: %d %s", n.name, code, out)
+				}
+				kept = true
+				continue
+			}
 			if code, out := n.do(t, "DELETE", "/api/v1/replication/conflicts?dn="+url.QueryEscape(cf.DN), ""); code != 204 && code != 404 {
 				t.Errorf("delete conflict on %s: %d %s", n.name, code, out)
 			}
@@ -308,6 +317,8 @@ func TestTwoSupplierReplication(t *testing.T) {
 	if !ds1.exists(t, twin) || !ds2.exists(t, twin) {
 		t.Error("the winning twin entry is gone")
 	}
+	kept2 := "uid=twin-kept,ou=People," + suffix
+	waitFor(t, "converted entry on both servers", 60*time.Second, func() bool { return ds1.exists(t, kept2) && ds2.exists(t, kept2) })
 
 	// CleanAllRUV refuses the server's own ID.
 	if code, _ := ds1.do(t, "POST", "/api/v1/replication/cleanallruv"+q, `{"replicaId":1}`); code != 422 {

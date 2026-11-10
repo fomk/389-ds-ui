@@ -120,7 +120,7 @@ Common attributes: `nsslapd-pluginEnabled`, `nsslapd-pluginPath`, `nsslapd-plugi
 | Initialization | modify of the agreement | `nsds5BeginReplicaRefresh: start` |
 | Agreement status | same entry (operational) | `nsds5replicaLastUpdateStatus`, `nsds5replicaLastUpdateStart/End`, `nsds5replicaUpdateInProgress`, `nsds5replicaLastInitStatus`, `nsds5replicaLastInitStart/End`, `nsds5replicaChangesSentSinceStartup` |
 | RUV | the replica entry (live), or the RUV tombstone `(&(nsuniqueid=ffffffff-ffffffff-ffffffff-ffffffff)(objectclass=nstombstone))` under the suffix (written to the database with a delay of up to ~30 s) | `nsds50ruv`, `nsruvReplicaLastModified` |
-| Conflicts | search `(nsds5ReplConflict=*)` under the suffix | `nsds5ReplConflict` |
+| Conflicts | search `(nsds5ReplConflict=*)` under the suffix (conflict entries are also `ldapSubEntry`, so ask for that class too) | `nsds5ReplConflict`; the RDN is `nsuniqueid=…+<rdn>` — to keep the entry, modrdn **without** deleting the old RDN (nsuniqueid cannot be removed), then delete the old RDN value, `nsds5ReplConflict` and `objectClass: ldapSubEntry` |
 
 ## TLS
 

@@ -822,23 +822,50 @@ func DeleteConflict(c *ldap.Conn, dn string) error {
 }
 
 // ConvertConflict keeps a conflict entry as a regular entry under a new RDN.
+// The conflict RDN is multi-valued (nsuniqueid=…+uid=x) and nsuniqueid
+// cannot be removed, so the rename keeps the old RDN values and the stale
+// ones are removed afterwards, together with the conflict marker and the
+// ldapSubEntry class the server uses to hide conflict entries.
 func ConvertConflict(c *ldap.Conn, dn, newRDN string) error {
 	if err := isConflict(c, dn); err != nil {
 		return err
 	}
-	r, err := ldap.ParseDN(newRDN)
-	if err != nil || len(r.RDNs) != 1 {
+	nr, err := ldap.ParseDN(newRDN)
+	if err != nil || len(nr.RDNs) != 1 {
 		return fmt.Errorf("%w: new RDN %q", ErrInvalidValue, newRDN)
 	}
-	if err := c.ModifyDN(ldap.NewModifyDNRequest(dn, newRDN, true, "")); err != nil {
-		return err
+	old, err := ldap.ParseDN(dn)
+	if err != nil || len(old.RDNs) < 2 {
+		return fmt.Errorf("%w: %q", ErrInvalidValue, dn)
 	}
 	parent, err := parentDN(dn)
 	if err != nil {
 		return err
 	}
-	req := ldap.NewModifyRequest(newRDN+","+parent, nil)
+	if err := c.ModifyDN(ldap.NewModifyDNRequest(dn, newRDN, false, "")); err != nil {
+		return err
+	}
+	newDN := newRDN + "," + parent
+	req := ldap.NewModifyRequest(newDN, nil)
 	req.Delete("nsds5ReplConflict", nil)
+	keep := map[string]bool{}
+	for _, a := range nr.RDNs[0].Attributes {
+		keep[strings.ToLower(a.Type)+"="+strings.ToLower(a.Value)] = true
+	}
+	for _, a := range old.RDNs[0].Attributes {
+		if strings.EqualFold(a.Type, "nsuniqueid") || keep[strings.ToLower(a.Type)+"="+strings.ToLower(a.Value)] {
+			continue
+		}
+		req.Delete(a.Type, []string{a.Value})
+	}
+	res, err := c.Search(ldap.NewSearchRequest(newDN, ldap.ScopeBaseObject, ldap.NeverDerefAliases, 1, 0, false,
+		"(|(objectClass=*)(objectClass=ldapSubEntry))", []string{"objectClass"}, nil))
+	if err != nil {
+		return err
+	}
+	if len(res.Entries) == 1 && hasClass(res.Entries[0], "ldapSubEntry") {
+		req.Delete("objectClass", []string{"ldapSubEntry"})
+	}
 	return c.Modify(req)
 }
 
