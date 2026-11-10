@@ -28,7 +28,7 @@ func TestPagesMatchServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	svc := pages.New(defs)
+	svc := pages.New(defs, nil)
 	c := newClient(t)
 	err = c.Do(context.Background(), func(conn *ldap.Conn) error {
 		sch, _, _, err := schema.Fetch(conn)
@@ -90,7 +90,7 @@ func TestPagesAPI(t *testing.T) {
 		t.Fatal(err)
 	}
 	restart := &ds.RestartRegistry{}
-	h := api.NewHandler(api.Deps{LDAP: newClient(t), Pages: pages.New(defs), Restart: restart, Lifecycle: providers.NoLifecycle{}})
+	h := api.NewHandler(api.Deps{LDAP: newClient(t), Pages: pages.New(defs, nil), Restart: restart, Lifecycle: providers.NoLifecycle{}})
 	do := func(method, path, body string) *httptest.ResponseRecorder {
 		req := httptest.NewRequest(method, path, strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
@@ -163,7 +163,7 @@ func TestPluginPageRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	svc := pages.New(defs)
+	svc := pages.New(defs, nil)
 	c := newClient(t)
 	err = c.Do(context.Background(), func(conn *ldap.Conn) error {
 		res, err := svc.Update(conn, "plugin-memberof", "", map[string][]string{

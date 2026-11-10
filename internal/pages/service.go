@@ -16,10 +16,13 @@ var ErrNotFound = errors.New("page not found")
 const ldbmConfigDN = "cn=config,cn=ldbm database,cn=plugins,cn=config"
 
 // Service serves the loaded pages against a server connection.
-type Service struct{ pages []*Page }
+type Service struct {
+	pages []*Page
+	cols  []*Collection
+}
 
-// New wraps loaded pages.
-func New(pages []*Page) *Service { return &Service{pages: pages} }
+// New wraps loaded pages and collections.
+func New(pages []*Page, cols []*Collection) *Service { return &Service{pages: pages, cols: cols} }
 
 // PageSummary is a page in the menu.
 type PageSummary struct {

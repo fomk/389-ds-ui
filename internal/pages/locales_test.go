@@ -14,6 +14,10 @@ func TestLocalesCoverPages(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	cols, err := LoadCollections()
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, lang := range []string{"en", "ru"} {
 		keys := loadLocale(t, lang)
 		need := func(k, why string) {
@@ -38,6 +42,15 @@ func TestLocalesCoverPages(t *testing.T) {
 				}
 				for _, fl := range f.Flags {
 					need("pages."+p.ID+".flags."+fl.Name, f.Attr)
+				}
+			}
+		}
+		for _, c := range cols {
+			need("pages."+c.ID+".title", "collection title")
+			for _, f := range c.Fields {
+				need("pages."+c.ID+".fields."+f.Attr+".label", c.ID)
+				if f.Group != "" {
+					need("pages._groups."+f.Group, c.ID+" "+f.Attr)
 				}
 			}
 		}

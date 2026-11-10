@@ -430,7 +430,10 @@
       "disable-plugin": "Plug-in disabled",
       "root-password": "Directory Manager password changed",
       "lock-account": "Account locked",
-      "unlock-account": "Account unlocked"
+      "unlock-account": "Account unlocked",
+      "memberof-task": "memberOf rebuild",
+      "automember-rebuild-membership": "Auto membership rebuild",
+      "fixup-linked-attributes": "Linked attributes fixup"
     },
     "progress": "{current} of {total}",
     "completed": "Completed."
@@ -591,7 +594,8 @@
       "lockout": "Lockout",
       "scope": "Scope",
       "time": "Time",
-      "hosts": "Hosts"
+      "hosts": "Hosts",
+      "replication": "Replication"
     },
     "_units": {
       "B": "B",
@@ -1328,6 +1332,166 @@
     "root-password": {
       "title": "Directory Manager password",
       "description": "The password of the root DN. The server stores it hashed with the Directory Manager scheme of the password policy."
+    },
+    "plugin-pam": {
+      "title": "PAM Pass-Through",
+      "description": "Checks the passwords of bind DNs with PAM on the server host instead of userPassword.",
+      "fields": {
+        "pamService": {
+          "label": "PAM service",
+          "help": "Name of the PAM configuration, e.g. ldapserver."
+        },
+        "pamIDMapMethod": {
+          "label": "ID mapping",
+          "help": "RDN, DN or ENTRY; several separated by spaces."
+        },
+        "pamIDAttr": {
+          "label": "ID attribute",
+          "help": "For ENTRY mapping: the attribute holding the PAM user name."
+        },
+        "pamFallback": {
+          "label": "Fall back to LDAP",
+          "help": "If PAM fails, try the entry's own password."
+        },
+        "pamSecure": {
+          "label": "Require a secure connection"
+        },
+        "pamFilter": {
+          "label": "Only entries matching"
+        },
+        "pamIncludeSuffix": {
+          "label": "Only suffixes"
+        },
+        "pamExcludeSuffix": {
+          "label": "Except suffixes"
+        },
+        "pamMissingSuffix": {
+          "label": "Missing suffix",
+          "help": "What to do when a listed suffix does not exist."
+        }
+      }
+    },
+    "linked-attributes": {
+      "title": "Linked attribute pairs",
+      "description": "When an entry names another in the link attribute, the server keeps the back-reference in the managed attribute of that entry.",
+      "fields": {
+        "linkType": {
+          "label": "Link attribute",
+          "help": "e.g. manager"
+        },
+        "managedType": {
+          "label": "Managed attribute",
+          "help": "e.g. directReports"
+        },
+        "linkScope": {
+          "label": "Only below",
+          "help": "Empty: every suffix."
+        }
+      }
+    },
+    "dna-ranges": {
+      "title": "Number ranges",
+      "description": "Assigns unique numbers (uidNumber, gidNumber, …) to new entries.",
+      "fields": {
+        "dnaType": {
+          "label": "Attributes"
+        },
+        "dnaScope": {
+          "label": "Below"
+        },
+        "dnaFilter": {
+          "label": "For entries matching"
+        },
+        "dnaNextValue": {
+          "label": "Next value"
+        },
+        "dnaMaxValue": {
+          "label": "Maximum",
+          "help": "-1: no limit."
+        },
+        "dnaInterval": {
+          "label": "Step"
+        },
+        "dnaMagicRegen": {
+          "label": "Magic value",
+          "help": "A client sends this value to get a number assigned, e.g. -1."
+        },
+        "dnaPrefix": {
+          "label": "Prefix"
+        },
+        "dnaExcludeScope": {
+          "label": "Except below"
+        },
+        "dnaThreshold": {
+          "label": "Request a new range below"
+        },
+        "dnaSharedCfgDN": {
+          "label": "Shared configuration",
+          "help": "Entry where replicas publish their remaining ranges."
+        },
+        "dnaNextRange": {
+          "label": "Next range",
+          "help": "e.g. 10000-19999"
+        }
+      }
+    },
+    "automember-definitions": {
+      "title": "Auto membership definitions",
+      "description": "New and changed entries matching a definition are added to groups: to the target groups of the first matching rule, or to the default groups.",
+      "fields": {
+        "autoMemberScope": {
+          "label": "Entries below"
+        },
+        "autoMemberFilter": {
+          "label": "Matching",
+          "help": "e.g. objectClass=posixAccount"
+        },
+        "autoMemberGroupingAttr": {
+          "label": "Membership",
+          "help": "group attribute:entry attribute, e.g. member:dn"
+        },
+        "autoMemberDefaultGroup": {
+          "label": "Default groups",
+          "help": "When no rule matches."
+        }
+      }
+    },
+    "automember-rules": {
+      "title": "Rules",
+      "fields": {
+        "autoMemberTargetGroup": {
+          "label": "Target group"
+        },
+        "autoMemberInclusiveRegex": {
+          "label": "Include if",
+          "help": "attribute=regex, e.g. uid=^adm"
+        },
+        "autoMemberExclusiveRegex": {
+          "label": "Exclude if"
+        },
+        "description": {
+          "label": "Description"
+        }
+      }
+    },
+    "managed-entries": {
+      "title": "Managed entry definitions",
+      "description": "For every entry matching a definition, the server keeps a managed entry built from a template, e.g. a private group for each user. Edit the template entry in the LDAP browser.",
+      "fields": {
+        "originScope": {
+          "label": "Origin entries below"
+        },
+        "originFilter": {
+          "label": "Origin filter"
+        },
+        "managedBase": {
+          "label": "Managed entries in"
+        },
+        "managedTemplate": {
+          "label": "Template entry",
+          "help": "A mepTemplateEntry with mepRDNAttr, mepStaticAttr, mepMappedAttr."
+        }
+      }
     }
   },
   "plugins": {
@@ -1559,6 +1723,44 @@
       "c": "compare",
       "w": "write",
       "o": "delete value"
+    }
+  },
+  "collections": {
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete “{name}”?",
+    "deleteNested": "Delete “{name}” with its rules?",
+    "deleted": "{name} deleted.",
+    "created": "{name} created.",
+    "saved": "{name} saved.",
+    "error": "Could not change",
+    "none": "None yet",
+    "name": "Name",
+    "nameHint": "Becomes the cn of the configuration entry.",
+    "required": "Required: {fields}.",
+    "expand": "Show nested items"
+  },
+  "pluginTasks": {
+    "start": "Start",
+    "started": "{task} started.",
+    "params": {
+      "basedn": "Base DN",
+      "filter": "Filter",
+      "scope": "Scope",
+      "linkdn": "Only this link configuration (DN)"
+    },
+    "memberof-fixup": {
+      "title": "Rebuild memberOf",
+      "description": "Recomputes memberOf of the entries below the base, e.g. after enabling the plug-in on existing data."
+    },
+    "automember-rebuild": {
+      "title": "Rebuild memberships",
+      "description": "Applies the definitions to existing entries (they normally act only on new and changed ones)."
+    },
+    "linkedattrs-fixup": {
+      "title": "Fix up links",
+      "description": "Recreates the managed attributes from the link attributes."
     }
   }
 }

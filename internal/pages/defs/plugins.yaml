@@ -82,3 +82,79 @@ pages:
       - {attr: specAttrName, type: string}
       - {attr: limitAttrName, type: string}
       - {attr: checkAllStateAttrs, type: bool, bool: ["yes", "no"]}
+
+  - id: plugin-pam
+    section: plugins
+    plugin: PAM Pass Through Auth
+    dn: cn=PAM Pass Through Auth,cn=plugins,cn=config
+    sparse: true
+    fields:
+      - {attr: pamService, type: string}
+      - {attr: pamIDMapMethod, type: string}
+      - {attr: pamIDAttr, type: string}
+      - {attr: pamFallback, type: bool, bool: ["TRUE", "FALSE"]}
+      - {attr: pamSecure, type: bool, bool: ["TRUE", "FALSE"]}
+      - {attr: pamFilter, type: string, group: scope}
+      - {attr: pamIncludeSuffix, type: list, group: scope}
+      - {attr: pamExcludeSuffix, type: list, group: scope}
+      - {attr: pamMissingSuffix, type: enum, values: [ERROR, ALLOW, IGNORE], group: scope}
+
+# Plug-ins configured with several entries (definitions): one collection
+# each. Texts: pages.<collection id>.title/.fields.<attr>.
+collections:
+  - id: linked-attributes
+    plugin: Linked Attributes
+    parent: cn=Linked Attributes,cn=plugins,cn=config
+    objectClasses: [top, extensibleObject]
+    fields:
+      - {attr: linkType, type: string, required: true}
+      - {attr: managedType, type: string, required: true}
+      - {attr: linkScope, type: dn}
+
+  - id: dna-ranges
+    plugin: Distributed Numeric Assignment Plugin
+    parent: cn=Distributed Numeric Assignment Plugin,cn=plugins,cn=config
+    objectClasses: [top, extensibleObject]
+    fields:
+      - {attr: dnaType, type: list, required: true}
+      - {attr: dnaScope, type: dn, required: true}
+      - {attr: dnaFilter, type: string, required: true}
+      - {attr: dnaNextValue, type: int, min: 0, required: true}
+      - {attr: dnaMaxValue, type: int, min: -1}
+      - {attr: dnaInterval, type: int, min: 1}
+      - {attr: dnaMagicRegen, type: string}
+      - {attr: dnaPrefix, type: string}
+      - {attr: dnaExcludeScope, type: list}
+      - {attr: dnaThreshold, type: int, min: 1, group: replication}
+      - {attr: dnaSharedCfgDN, type: dn, group: replication}
+      - {attr: dnaNextRange, type: string, group: replication}
+
+  - id: automember-definitions
+    plugin: Auto Membership Plugin
+    parent: cn=Auto Membership Plugin,cn=plugins,cn=config
+    objectClasses: [top, autoMemberDefinition]
+    fields:
+      - {attr: autoMemberScope, type: dn, required: true}
+      - {attr: autoMemberFilter, type: string, required: true}
+      - {attr: autoMemberGroupingAttr, type: string, required: true}
+      - {attr: autoMemberDefaultGroup, type: list}
+
+  - id: automember-rules
+    plugin: Auto Membership Plugin
+    under: automember-definitions
+    objectClasses: [top, autoMemberRegexRule]
+    fields:
+      - {attr: autoMemberTargetGroup, type: dn, required: true}
+      - {attr: autoMemberInclusiveRegex, type: list}
+      - {attr: autoMemberExclusiveRegex, type: list}
+      - {attr: description, type: string}
+
+  - id: managed-entries
+    plugin: Managed Entries
+    parent: cn=Managed Entries,cn=plugins,cn=config
+    objectClasses: [top, extensibleObject]
+    fields:
+      - {attr: originScope, type: dn, required: true}
+      - {attr: originFilter, type: string, required: true}
+      - {attr: managedBase, type: dn, required: true}
+      - {attr: managedTemplate, type: dn, required: true}

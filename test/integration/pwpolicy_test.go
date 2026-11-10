@@ -24,7 +24,7 @@ func TestLocalPasswordPolicies(t *testing.T) {
 		t.Fatal(err)
 	}
 	c := newClient(t)
-	h := api.NewHandler(api.Deps{LDAP: c, Pages: pages.New(defs), Lifecycle: providers.NoLifecycle{}})
+	h := api.NewHandler(api.Deps{LDAP: c, Pages: pages.New(defs, nil), Lifecycle: providers.NoLifecycle{}})
 	do := func(method, path, body string) (int, string) {
 		rec := serve(h, httptestRequest(method, path, body))
 		return rec.Code, rec.Body.String()

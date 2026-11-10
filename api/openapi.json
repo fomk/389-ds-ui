@@ -585,6 +585,93 @@
         ],
         "type": "object"
       },
+      "Collection": {
+        "additionalProperties": false,
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/PageField"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "order": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "plugin": {
+            "description": "cn of the plug-in the items configure",
+            "type": "string"
+          },
+          "under": {
+            "description": "Items live below the items of this collection (?parent=\u003cname\u003e)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "order",
+          "fields"
+        ],
+        "type": "object"
+      },
+      "CollectionState": {
+        "additionalProperties": false,
+        "properties": {
+          "collection": {
+            "$ref": "#/components/schemas/Collection"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array"
+          },
+          "options": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object"
+          },
+          "parent": {
+            "description": "Name of the parent item for nested collections",
+            "type": "string"
+          }
+        },
+        "required": [
+          "collection",
+          "items"
+        ],
+        "type": "object"
+      },
+      "CollectionSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "order": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "plugin": {
+            "type": "string"
+          },
+          "under": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "order"
+        ],
+        "type": "object"
+      },
       "ConnectionInfo": {
         "additionalProperties": false,
         "properties": {
@@ -988,6 +1075,74 @@
           "name",
           "size",
           "modified"
+        ],
+        "type": "object"
+      },
+      "Item": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          },
+          "name": {
+            "description": "cn",
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "dn",
+          "values"
+        ],
+        "type": "object"
+      },
+      "ItemCreateInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "values": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "values"
+        ],
+        "type": "object"
+      },
+      "ItemUpdateInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "values": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "values"
         ],
         "type": "object"
       },
@@ -1508,6 +1663,10 @@
           "readOnly": {
             "type": "boolean"
           },
+          "required": {
+            "description": "Collections: the value cannot be empty",
+            "type": "boolean"
+          },
           "restart": {
             "description": "Takes effect after a server restart",
             "type": "boolean"
@@ -1799,6 +1958,77 @@
         },
         "required": [
           "enabled"
+        ],
+        "type": "object"
+      },
+      "PluginTask": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "params": {
+            "items": {
+              "$ref": "#/components/schemas/PluginTaskParam"
+            },
+            "type": "array"
+          },
+          "plugin": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "plugin",
+          "params"
+        ],
+        "type": "object"
+      },
+      "PluginTaskInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "params": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "params"
+        ],
+        "type": "object"
+      },
+      "PluginTaskParam": {
+        "additionalProperties": false,
+        "properties": {
+          "attr": {
+            "type": "string"
+          },
+          "default": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "dn",
+              "filter",
+              "enum"
+            ],
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "attr",
+          "kind"
         ],
         "type": "object"
       },
@@ -3726,6 +3956,263 @@
         ]
       }
     },
+    "/api/v1/collections": {
+      "get": {
+        "operationId": "listCollections",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CollectionSummary"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Collections of similar entries (plug-in definitions)",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/collections/{id}": {
+      "get": {
+        "operationId": "getCollection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Parent item, for nested collections",
+            "explode": false,
+            "in": "query",
+            "name": "parent",
+            "schema": {
+              "description": "Parent item, for nested collections",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionState"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Items of a collection",
+        "tags": [
+          "settings"
+        ]
+      },
+      "post": {
+        "operationId": "createItem",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "explode": false,
+            "in": "query",
+            "name": "parent",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemCreateInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add an item",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/collections/{id}/items/{name}": {
+      "delete": {
+        "operationId": "deleteItem",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "explode": false,
+            "in": "query",
+            "name": "parent",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete an item with everything below it",
+        "tags": [
+          "settings"
+        ]
+      },
+      "patch": {
+        "operationId": "updateItem",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "explode": false,
+            "in": "query",
+            "name": "parent",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemUpdateInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change an item",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
     "/api/v1/default-indexes": {
       "get": {
         "operationId": "listDefaultIndexes",
@@ -4976,6 +5463,91 @@
         "summary": "Change settings of a page",
         "tags": [
           "settings"
+        ]
+      }
+    },
+    "/api/v1/plugin-tasks": {
+      "get": {
+        "operationId": "listPluginTasks",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PluginTask"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Maintenance tasks of plug-ins (fixup, rebuild)",
+        "tags": [
+          "plugins"
+        ]
+      }
+    },
+    "/api/v1/plugin-tasks/{id}": {
+      "post": {
+        "operationId": "startPluginTask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PluginTaskInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "description": "Accepted"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Start a plug-in task",
+        "tags": [
+          "plugins"
         ]
       }
     },

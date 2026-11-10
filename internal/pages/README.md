@@ -61,6 +61,29 @@ are not in the settings menu.
 
 Facts available to `when`: `dbImpl` (`mdb` or `bdb`).
 
+## Collections
+
+A file may also declare `collections`: sets of similar entries below one
+container, e.g. the definitions of a plug-in. Each item is `cn=<name>,<parent>`
+with the given `objectClasses` and `fields` (`required: true` marks values an
+item must have). A collection with `under: <collection id>` keeps its items
+below the items of that collection (Auto Membership rules below their
+definition) and is addressed with `?parent=<item name>`.
+
+```yaml
+collections:
+  - id: linked-attributes
+    plugin: Linked Attributes
+    parent: cn=Linked Attributes,cn=plugins,cn=config
+    objectClasses: [top, extensibleObject]
+    fields:
+      - {attr: linkType, type: string, required: true}
+```
+
+API: `GET /collections`, `GET/POST /collections/{id}`,
+`PATCH/DELETE /collections/{id}/items/{name}`. Texts: `pages.<id>.title`,
+`.description`, `.fields.<attr>.*` like pages.
+
 ## Reading and writing
 
 `GET` returns the page, the current values (an absent attribute means the

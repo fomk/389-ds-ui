@@ -81,12 +81,12 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 |---|---|---|
 | List, on/off, dynamic plugins | 3 ✅ | required plug-ins (syntaxes, matching rules, ldbm, ACL) cannot be disabled |
 | Referential Integrity, Attribute Uniqueness (default instance), Retro Changelog, Account Policy, Root DN Access | 3 ✅ | YAML pages (`internal/pages/defs/plugins.yaml`); USN is on/off only |
-| MemberOf | 3 ✅ / 4 | settings ✅; fixup task in stage 4 |
-| DNA | 4 | ranges, shared config |
-| Auto Membership | 4 | definitions, regex rules, rebuild |
-| Managed Entries | 4 | templates + definitions |
-| Linked Attributes | 4 | + fixup |
-| PAM Pass-Through | 4 | — |
+| MemberOf | 3 ✅ / 4 ✅ | settings, fixup task |
+| DNA | 4 ✅ | ranges (collection `dna-ranges`), shared config DN; range transfer between replicas — stage 5 |
+| Auto Membership | 4 ✅ | definitions, nested regex rules, rebuild task |
+| Managed Entries | 4 ✅ | definitions; the template entry is edited in the LDAP browser |
+| Linked Attributes | 4 ✅ | link pairs, fixup task |
+| PAM Pass-Through | 4 ✅ | YAML page |
 | Chaining, Winsync | after 1.0 | on request |
 
 All plugins are LDAP-based and available in all modes.

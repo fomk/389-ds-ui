@@ -20,7 +20,9 @@ const list = computed(() =>
     .slice(0, props.limit ?? 20),
 )
 
-const typeLabel = (x: Task) => (te(`tasks.types.${x.type}`) ? t(`tasks.types.${x.type}`) : x.type)
+// Task containers may contain spaces ("memberof task"); keys use hyphens.
+const typeKey = (x: Task) => `tasks.types.${x.type.replace(/ /g, '-')}`
+const typeLabel = (x: Task) => (te(typeKey(x)) ? t(typeKey(x)) : x.type)
 const statusType = (x: Task) =>
   ({ running: 'info', succeeded: 'success', failed: 'error', unknown: 'warning' })[x.status] as 'info' | 'success' | 'error' | 'warning'
 // Server tasks report their own status text; immediate operations (no log,

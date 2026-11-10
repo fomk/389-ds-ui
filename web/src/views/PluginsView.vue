@@ -19,6 +19,7 @@ import {
   NRadioButton,
   NRadioGroup,
   NSkeleton,
+  NSpace,
   NSwitch,
   NTag,
   NTooltip,
@@ -30,6 +31,8 @@ import { Lock, Search, SlidersHorizontal } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { useServerStore } from '@/stores/server'
+import CollectionPanel from '@/components/settings/CollectionPanel.vue'
+import PluginTaskButton from '@/components/settings/PluginTaskButton.vue'
 import SettingsPage from '@/components/settings/SettingsPage.vue'
 
 type Plugin = Schemas['Plugin']
@@ -45,6 +48,8 @@ const server = useServerStore()
 const plugins = ref<Plugin[]>()
 const dynamic = ref(true)
 const pages = ref<Record<string, string>>({}) // plug-in cn → page id
+const collections = ref<Schemas['CollectionSummary'][]>([])
+const pluginTasks = ref<Schemas['PluginTask'][]>([])
 const error = ref<LocalizedError>()
 const query = ref('')
 /** all | configurable | enabled */
@@ -54,7 +59,14 @@ const dirty = ref(false)
 
 async function load() {
   try {
-    const [list, summaries] = await Promise.all([call(api.GET('/api/v1/plugins')), call(api.GET('/api/v1/pages'))])
+    const [list, summaries, cols, ptasks] = await Promise.all([
+      call(api.GET('/api/v1/plugins')),
+      call(api.GET('/api/v1/pages')),
+      call(api.GET('/api/v1/collections')),
+      call(api.GET('/api/v1/plugin-tasks')),
+    ])
+    collections.value = cols
+    pluginTasks.value = ptasks
     plugins.value = list.plugins
     dynamic.value = list.dynamic
     pages.value = Object.fromEntries(summaries.filter((p) => p.plugin).map((p) => [p.plugin!.toLowerCase(), p.id]))
@@ -65,11 +77,17 @@ async function load() {
 onMounted(load)
 
 const pageOf = (p: Plugin) => pages.value[p.name.toLowerCase()]
+const same = (a?: string, b?: string) => !!a && !!b && a.toLowerCase() === b.toLowerCase()
+/** Top-level collections of a plug-in; nested ones are shown inside their parent's items. */
+const collectionsOf = (p: Plugin) => collections.value.filter((c) => same(c.plugin, p.name) && !c.under).sort((a, b) => a.order - b.order)
+const nestedIn = (id: string) => collections.value.filter((c) => c.under === id).map((c) => c.id)
+const tasksOf = (p: Plugin) => pluginTasks.value.filter((x) => same(x.plugin, p.name))
+const configurable = (p: Plugin) => !!pageOf(p) || collectionsOf(p).length > 0 || tasksOf(p).length > 0
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
   return (plugins.value ?? []).filter((p) => {
-    if (show.value === 'configurable' && !pageOf(p)) return false
+    if (show.value === 'configurable' && !configurable(p)) return false
     if (show.value === 'enabled' && !p.enabled) return false
     return !q || p.name.toLowerCase().includes(q) || p.type.toLowerCase().includes(q)
   })
@@ -172,7 +190,7 @@ onBeforeRouteLeave(confirmLeave)
               <span class="item-text">
                 <span class="name">
                   {{ p.name }}
-                  <NIcon v-if="pageOf(p)" :size="13" class="cfg" :title="t('plugins.hasSettings')"><SlidersHorizontal /></NIcon>
+                  <NIcon v-if="configurable(p)" :size="13" class="cfg" :title="t('plugins.hasSettings')"><SlidersHorizontal /></NIcon>
                 </span>
                 <span class="muted">{{ p.type }}</span>
               </span>
@@ -212,11 +230,15 @@ onBeforeRouteLeave(confirmLeave)
             </template>
             <dt>DN</dt><dd class="mono">{{ selected.dn }}</dd>
           </dl>
-          <NAlert v-if="selectedPage && !selected.enabled" type="default" :show-icon="false" class="hint">
+          <NSpace v-if="tasksOf(selected).length" class="tasks">
+            <PluginTaskButton v-for="task in tasksOf(selected)" :key="task.id" :task="task" />
+          </NSpace>
+          <NAlert v-if="configurable(selected) && !selected.enabled" type="default" :show-icon="false" class="hint">
             {{ t('plugins.disabledHint') }}
           </NAlert>
         </NCard>
         <SettingsPage v-if="selectedPage" :id="selectedPage" :key="selectedPage" v-model:dirty="dirty" class="settings" />
+        <CollectionPanel v-for="c in selected ? collectionsOf(selected) : []" :id="c.id" :key="c.id" :nested="nestedIn(c.id)" class="settings" />
       </NGridItem>
     </NGrid>
   </template>
@@ -313,6 +335,10 @@ onBeforeRouteLeave(confirmLeave)
 }
 
 .hint {
+  margin-top: 12px;
+}
+
+.tasks {
   margin-top: 12px;
 }
 

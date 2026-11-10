@@ -63,6 +63,7 @@ type PageField struct {
 	Max         *int64       `yaml:"max,omitempty" json:"max,omitempty"`
 	Unit        string       `yaml:"unit,omitempty" json:"unit,omitempty" doc:"Unit of an int field, shown next to it (MB, ms, …)"`
 	Values      []string     `yaml:"values,omitempty" json:"values,omitempty" doc:"Enum values"`
+	Required    bool         `yaml:"required,omitempty" json:"required,omitempty" doc:"Collections: the value cannot be empty"`
 	Bool        []string     `yaml:"bool,omitempty" json:"bool,omitempty" doc:"Literal for true and false; default on/off"`
 	Flags       []PageFlag   `yaml:"flags,omitempty" json:"flags,omitempty" doc:"Named bits of a flags field"`
 	OptionsFrom *OptionsFrom `yaml:"optionsFrom,omitempty" json:"-"`
@@ -90,52 +91,86 @@ type Page struct {
 
 // file is one YAML definition file.
 type file struct {
-	Fieldsets map[string][]PageField `yaml:"fieldsets"`
-	Pages     []Page                 `yaml:"pages"`
+	Fieldsets   map[string][]PageField `yaml:"fieldsets"`
+	Pages       []Page                 `yaml:"pages"`
+	Collections []Collection           `yaml:"collections"`
 }
 
 var idRE = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 
 // Load reads and validates the embedded page definitions.
-func Load() ([]*Page, error) { return load(defs) }
+func Load() ([]*Page, error) {
+	p, _, err := loadAll(defs)
+	return p, err
+}
+
+// LoadCollections reads and validates the embedded collection definitions.
+func LoadCollections() ([]*Collection, error) {
+	_, c, err := loadAll(defs)
+	return c, err
+}
 
 func load(fsys fs.FS) ([]*Page, error) {
+	p, _, err := loadAll(fsys)
+	return p, err
+}
+
+func loadAll(fsys fs.FS) ([]*Page, []*Collection, error) {
 	files, err := fs.Glob(fsys, "defs/*.yaml")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	sort.Strings(files)
 	var out []*Page
+	var cols []*Collection
 	seen := map[string]bool{}
 	for _, name := range files {
 		b, err := fs.ReadFile(fsys, name)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		var f file
 		dec := yaml.NewDecoder(bytes.NewReader(b))
 		dec.KnownFields(true)
 		if err := dec.Decode(&f); err != nil {
-			return nil, fmt.Errorf("%s: %w", path.Base(name), err)
+			return nil, nil, fmt.Errorf("%s: %w", path.Base(name), err)
 		}
 		for i := range f.Pages {
 			p := &f.Pages[i]
 			for _, u := range p.Use {
 				set, ok := f.Fieldsets[u]
 				if !ok {
-					return nil, fmt.Errorf("%s: page %s: unknown fieldset %q", path.Base(name), p.ID, u)
+					return nil, nil, fmt.Errorf("%s: page %s: unknown fieldset %q", path.Base(name), p.ID, u)
 				}
 				p.Fields = append(p.Fields, slices.Clone(set)...)
 			}
 			p.expand()
 			if err := p.validate(); err != nil {
-				return nil, fmt.Errorf("%s: %w", path.Base(name), err)
+				return nil, nil, fmt.Errorf("%s: %w", path.Base(name), err)
 			}
 			if seen[p.ID] {
-				return nil, fmt.Errorf("%s: duplicate page id %q", path.Base(name), p.ID)
+				return nil, nil, fmt.Errorf("%s: duplicate page id %q", path.Base(name), p.ID)
 			}
 			seen[p.ID] = true
 			out = append(out, p)
+		}
+		for i := range f.Collections {
+			c := &f.Collections[i]
+			for _, u := range c.Use {
+				set, ok := f.Fieldsets[u]
+				if !ok {
+					return nil, nil, fmt.Errorf("%s: collection %s: unknown fieldset %q", path.Base(name), c.ID, u)
+				}
+				c.Fields = append(c.Fields, slices.Clone(set)...)
+			}
+			if err := c.validate(); err != nil {
+				return nil, nil, fmt.Errorf("%s: %w", path.Base(name), err)
+			}
+			if seen["collection:"+c.ID] {
+				return nil, nil, fmt.Errorf("%s: duplicate collection id %q", path.Base(name), c.ID)
+			}
+			seen["collection:"+c.ID] = true
+			cols = append(cols, c)
 		}
 	}
 	sort.SliceStable(out, func(i, j int) bool {
@@ -144,7 +179,13 @@ func load(fsys fs.FS) ([]*Page, error) {
 		}
 		return out[i].Order < out[j].Order
 	})
-	return out, nil
+	// Nested collections must name an existing one.
+	for _, c := range cols {
+		if c.Under != "" && !slices.ContainsFunc(cols, func(x *Collection) bool { return x.ID == c.Under }) {
+			return nil, nil, fmt.Errorf("collection %s: unknown parent collection %q", c.ID, c.Under)
+		}
+	}
+	return out, cols, nil
 }
 
 // expand substitutes {var} in id, dn and attribute names.
@@ -181,35 +222,7 @@ func (p *Page) validate() error {
 	if len(p.Fields) == 0 {
 		return fmt.Errorf("page %s: no fields", p.ID)
 	}
-	attrs := map[string]bool{}
-	for i := range p.Fields {
-		f := &p.Fields[i]
-		if f.Attr == "" || strings.ContainsAny(f.Attr, "{}") {
-			return fmt.Errorf("page %s: field %d: invalid attribute %q", p.ID, i, f.Attr)
-		}
-		if attrs[strings.ToLower(f.Attr)] {
-			return fmt.Errorf("page %s: duplicate field %s", p.ID, f.Attr)
-		}
-		attrs[strings.ToLower(f.Attr)] = true
-		if !types[f.Type] {
-			return fmt.Errorf("page %s: field %s: unknown type %q", p.ID, f.Attr, f.Type)
-		}
-		if f.Type == TypeEnum && len(f.Values) == 0 && f.OptionsFrom == nil {
-			return fmt.Errorf("page %s: enum field %s has no values", p.ID, f.Attr)
-		}
-		if f.Type == TypeBool {
-			if f.Bool == nil {
-				f.Bool = []string{"on", "off"}
-			}
-			if len(f.Bool) != 2 {
-				return fmt.Errorf("page %s: field %s: bool needs [true, false] literals", p.ID, f.Attr)
-			}
-		}
-		if f.Type == TypeFlags && len(f.Flags) == 0 {
-			return fmt.Errorf("page %s: flags field %s has no flags", p.ID, f.Attr)
-		}
-	}
-	return nil
+	return validateFields("page "+p.ID, p.Fields)
 }
 
 // Applies reports whether the page applies to a server with these facts
@@ -283,4 +296,38 @@ func (f *PageField) Normalize(values []string, options []string) ([]string, erro
 		return nil, fmt.Errorf("%w: %s is read-only", ErrInvalidValue, f.Attr)
 	}
 	return out, nil
+}
+
+// validateFields checks the fields of a page or collection and fills
+// defaults (bool literals).
+func validateFields(owner string, fields []PageField) error {
+	attrs := map[string]bool{}
+	for i := range fields {
+		f := &fields[i]
+		if f.Attr == "" || strings.ContainsAny(f.Attr, "{}") {
+			return fmt.Errorf("%s: field %d: invalid attribute %q", owner, i, f.Attr)
+		}
+		if attrs[strings.ToLower(f.Attr)] {
+			return fmt.Errorf("%s: duplicate field %s", owner, f.Attr)
+		}
+		attrs[strings.ToLower(f.Attr)] = true
+		if !types[f.Type] {
+			return fmt.Errorf("%s: field %s: unknown type %q", owner, f.Attr, f.Type)
+		}
+		if f.Type == TypeEnum && len(f.Values) == 0 && f.OptionsFrom == nil {
+			return fmt.Errorf("%s: enum field %s has no values", owner, f.Attr)
+		}
+		if f.Type == TypeBool {
+			if f.Bool == nil {
+				f.Bool = []string{"on", "off"}
+			}
+			if len(f.Bool) != 2 {
+				return fmt.Errorf("%s: field %s: bool needs [true, false] literals", owner, f.Attr)
+			}
+		}
+		if f.Type == TypeFlags && len(f.Flags) == 0 {
+			return fmt.Errorf("%s: flags field %s has no flags", owner, f.Attr)
+		}
+	}
+	return nil
 }

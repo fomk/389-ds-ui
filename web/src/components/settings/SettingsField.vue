@@ -131,7 +131,7 @@ const enumOptions = computed(() => {
   <div class="row">
     <div class="label">
       <label :for="id" class="name" :title="showAttr ? undefined : field.attr">
-        {{ t(`${key}.label`) }}
+        {{ t(`${key}.label`) }}<span v-if="field.required" class="req" aria-hidden="true">*</span>
         <NTooltip v-if="field.restart">
           <template #trigger>
             <NTag size="tiny" :bordered="false" type="info" class="tag">
@@ -286,6 +286,11 @@ const enumOptions = computed(() => {
 
 .tag {
   cursor: default;
+}
+
+.req {
+  margin-left: -4px;
+  color: v-bind('vars.errorColor');
 }
 
 .danger {

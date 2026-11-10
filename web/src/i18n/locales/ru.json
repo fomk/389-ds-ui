@@ -430,7 +430,10 @@
       "disable-plugin": "Плагин выключен",
       "root-password": "Пароль Directory Manager изменён",
       "lock-account": "Учётная запись заблокирована",
-      "unlock-account": "Учётная запись разблокирована"
+      "unlock-account": "Учётная запись разблокирована",
+      "memberof-task": "Пересчёт memberOf",
+      "automember-rebuild-membership": "Пересчёт автоматического членства",
+      "fixup-linked-attributes": "Восстановление связанных атрибутов"
     },
     "progress": "{current} из {total}",
     "completed": "Выполнено."
@@ -591,7 +594,8 @@
       "lockout": "Блокировка",
       "scope": "Область действия",
       "time": "Время",
-      "hosts": "Хосты"
+      "hosts": "Хосты",
+      "replication": "Репликация"
     },
     "_units": {
       "B": "Б",
@@ -1328,6 +1332,166 @@
     "root-password": {
       "title": "Пароль Directory Manager",
       "description": "Пароль root DN. Сервер хранит его хешированным по схеме для Directory Manager из парольной политики."
+    },
+    "plugin-pam": {
+      "title": "Сквозная аутентификация PAM",
+      "description": "Проверяет пароли привязки через PAM на хосте сервера вместо userPassword.",
+      "fields": {
+        "pamService": {
+          "label": "Сервис PAM",
+          "help": "Имя конфигурации PAM, например ldapserver."
+        },
+        "pamIDMapMethod": {
+          "label": "Сопоставление ID",
+          "help": "RDN, DN или ENTRY; несколько через пробел."
+        },
+        "pamIDAttr": {
+          "label": "Атрибут ID",
+          "help": "Для ENTRY: атрибут с именем пользователя PAM."
+        },
+        "pamFallback": {
+          "label": "Откат на LDAP",
+          "help": "Если PAM не прошёл, проверить собственный пароль записи."
+        },
+        "pamSecure": {
+          "label": "Требовать защищённое соединение"
+        },
+        "pamFilter": {
+          "label": "Только записи, подходящие под"
+        },
+        "pamIncludeSuffix": {
+          "label": "Только суффиксы"
+        },
+        "pamExcludeSuffix": {
+          "label": "Кроме суффиксов"
+        },
+        "pamMissingSuffix": {
+          "label": "Отсутствующий суффикс",
+          "help": "Что делать, если указанного суффикса нет."
+        }
+      }
+    },
+    "linked-attributes": {
+      "title": "Пары связанных атрибутов",
+      "description": "Когда запись ссылается на другую через атрибут-ссылку, сервер ведёт обратную ссылку в управляемом атрибуте той записи.",
+      "fields": {
+        "linkType": {
+          "label": "Атрибут-ссылка",
+          "help": "например manager"
+        },
+        "managedType": {
+          "label": "Управляемый атрибут",
+          "help": "например directReports"
+        },
+        "linkScope": {
+          "label": "Только ниже",
+          "help": "Пусто — все суффиксы."
+        }
+      }
+    },
+    "dna-ranges": {
+      "title": "Диапазоны номеров",
+      "description": "Присваивает уникальные номера (uidNumber, gidNumber, …) новым записям.",
+      "fields": {
+        "dnaType": {
+          "label": "Атрибуты"
+        },
+        "dnaScope": {
+          "label": "Ниже"
+        },
+        "dnaFilter": {
+          "label": "Для записей, подходящих под"
+        },
+        "dnaNextValue": {
+          "label": "Следующее значение"
+        },
+        "dnaMaxValue": {
+          "label": "Максимум",
+          "help": "-1 — без предела."
+        },
+        "dnaInterval": {
+          "label": "Шаг"
+        },
+        "dnaMagicRegen": {
+          "label": "Магическое значение",
+          "help": "Клиент передаёт это значение, чтобы получить номер, например -1."
+        },
+        "dnaPrefix": {
+          "label": "Префикс"
+        },
+        "dnaExcludeScope": {
+          "label": "Кроме записей ниже"
+        },
+        "dnaThreshold": {
+          "label": "Запрашивать новый диапазон, когда осталось меньше"
+        },
+        "dnaSharedCfgDN": {
+          "label": "Общая конфигурация",
+          "help": "Запись, где реплики публикуют оставшиеся диапазоны."
+        },
+        "dnaNextRange": {
+          "label": "Следующий диапазон",
+          "help": "например 10000-19999"
+        }
+      }
+    },
+    "automember-definitions": {
+      "title": "Определения автоматического членства",
+      "description": "Новые и изменённые записи, подходящие под определение, добавляются в группы: в целевые группы первого подходящего правила или в группы по умолчанию.",
+      "fields": {
+        "autoMemberScope": {
+          "label": "Записи ниже"
+        },
+        "autoMemberFilter": {
+          "label": "Подходящие под фильтр",
+          "help": "например objectClass=posixAccount"
+        },
+        "autoMemberGroupingAttr": {
+          "label": "Членство",
+          "help": "атрибут группы:атрибут записи, например member:dn"
+        },
+        "autoMemberDefaultGroup": {
+          "label": "Группы по умолчанию",
+          "help": "Если ни одно правило не подошло."
+        }
+      }
+    },
+    "automember-rules": {
+      "title": "Правила",
+      "fields": {
+        "autoMemberTargetGroup": {
+          "label": "Целевая группа"
+        },
+        "autoMemberInclusiveRegex": {
+          "label": "Включать, если",
+          "help": "атрибут=регулярное выражение, например uid=^adm"
+        },
+        "autoMemberExclusiveRegex": {
+          "label": "Исключать, если"
+        },
+        "description": {
+          "label": "Описание"
+        }
+      }
+    },
+    "managed-entries": {
+      "title": "Определения управляемых записей",
+      "description": "Для каждой подходящей записи сервер ведёт управляемую запись по шаблону, например личную группу для каждого пользователя. Шаблон редактируется в LDAP-браузере.",
+      "fields": {
+        "originScope": {
+          "label": "Исходные записи ниже"
+        },
+        "originFilter": {
+          "label": "Фильтр исходных записей"
+        },
+        "managedBase": {
+          "label": "Управляемые записи в"
+        },
+        "managedTemplate": {
+          "label": "Запись-шаблон",
+          "help": "Запись mepTemplateEntry с mepRDNAttr, mepStaticAttr, mepMappedAttr."
+        }
+      }
     }
   },
   "plugins": {
@@ -1559,6 +1723,44 @@
       "c": "сравнение",
       "w": "запись",
       "o": "удаление"
+    }
+  },
+  "collections": {
+    "add": "Добавить",
+    "edit": "Изменить",
+    "delete": "Удалить",
+    "deleteConfirm": "Удалить «{name}»?",
+    "deleteNested": "Удалить «{name}» вместе с правилами?",
+    "deleted": "{name} удалён.",
+    "created": "{name} создан.",
+    "saved": "{name} сохранён.",
+    "error": "Не удалось изменить",
+    "none": "Пока нет",
+    "name": "Имя",
+    "nameHint": "Станет cn записи конфигурации.",
+    "required": "Обязательно: {fields}.",
+    "expand": "Показать вложенные"
+  },
+  "pluginTasks": {
+    "start": "Запустить",
+    "started": "{task}: запущено.",
+    "params": {
+      "basedn": "Базовый DN",
+      "filter": "Фильтр",
+      "scope": "Область",
+      "linkdn": "Только эта конфигурация связи (DN)"
+    },
+    "memberof-fixup": {
+      "title": "Пересчитать memberOf",
+      "description": "Пересчитывает memberOf у записей ниже базы, например после включения плагина на существующих данных."
+    },
+    "automember-rebuild": {
+      "title": "Пересчитать членство",
+      "description": "Применяет определения к существующим записям (обычно они действуют только на новые и изменённые)."
+    },
+    "linkedattrs-fixup": {
+      "title": "Восстановить обратные ссылки",
+      "description": "Заново строит управляемые атрибуты по атрибутам-ссылкам."
     }
   }
 }

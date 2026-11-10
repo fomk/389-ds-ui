@@ -334,6 +334,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/collections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Collections of similar entries (plug-in definitions) */
+        get: operations["listCollections"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/collections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Items of a collection */
+        get: operations["getCollection"];
+        put?: never;
+        /** Add an item */
+        post: operations["createItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/collections/{id}/items/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an item with everything below it */
+        delete: operations["deleteItem"];
+        options?: never;
+        head?: never;
+        /** Change an item */
+        patch: operations["updateItem"];
+        trace?: never;
+    };
     "/api/v1/default-indexes": {
         parameters: {
             query?: never;
@@ -665,6 +718,40 @@ export interface paths {
          * @description Only attributes whose values differ are written, in one modify.
          */
         patch: operations["updatePage"];
+        trace?: never;
+    };
+    "/api/v1/plugin-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Maintenance tasks of plug-ins (fixup, rebuild) */
+        get: operations["listPluginTasks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plugin-tasks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a plug-in task */
+        post: operations["startPluginTask"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/plugins": {
@@ -1218,6 +1305,32 @@ export interface components {
             /** Format: int64 */
             total: number;
         };
+        Collection: {
+            fields: components["schemas"]["PageField"][];
+            id: string;
+            /** Format: int64 */
+            order: number;
+            /** @description cn of the plug-in the items configure */
+            plugin?: string;
+            /** @description Items live below the items of this collection (?parent=<name>) */
+            under?: string;
+        };
+        CollectionState: {
+            collection: components["schemas"]["Collection"];
+            items: components["schemas"]["Item"][];
+            options?: {
+                [key: string]: string[];
+            };
+            /** @description Name of the parent item for nested collections */
+            parent?: string;
+        };
+        CollectionSummary: {
+            id: string;
+            /** Format: int64 */
+            order: number;
+            plugin?: string;
+            under?: string;
+        };
         ConnectionInfo: {
             address: string;
             bindDn: string;
@@ -1360,6 +1473,25 @@ export interface components {
             /** Format: int64 */
             size: number;
         };
+        Item: {
+            dn: string;
+            /** @description cn */
+            name: string;
+            values: {
+                [key: string]: string[];
+            };
+        };
+        ItemCreateInputBody: {
+            name: string;
+            values: {
+                [key: string]: string[];
+            };
+        };
+        ItemUpdateInputBody: {
+            values: {
+                [key: string]: string[];
+            };
+        };
         LocalPolicy: {
             /** @description The passwordPolicy entry (edit it with GET/PATCH /pages/password-policy-local?dn=) */
             dn: string;
@@ -1494,6 +1626,8 @@ export interface components {
             /** Format: int64 */
             min?: number;
             readOnly?: boolean;
+            /** @description Collections: the value cannot be empty */
+            required?: boolean;
             /** @description Takes effect after a server restart */
             restart?: boolean;
             /** @description Shared text key (pages._fields.<text>) instead of pages.<id>.fields.<attr> */
@@ -1580,6 +1714,24 @@ export interface components {
         };
         PluginPatchInputBody: {
             enabled: boolean;
+        };
+        PluginTask: {
+            id: string;
+            params: components["schemas"]["PluginTaskParam"][];
+            plugin: string;
+        };
+        PluginTaskInputBody: {
+            params: {
+                [key: string]: string;
+            };
+        };
+        PluginTaskParam: {
+            attr: string;
+            default?: string;
+            /** @enum {string} */
+            kind: "dn" | "filter" | "enum";
+            required?: boolean;
+            values?: string[];
         };
         ReindexInputBody: {
             /** @description Empty (and no vlv) rebuilds every index of the backend */
@@ -2669,6 +2821,176 @@ export interface operations {
             };
         };
     };
+    listCollections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionSummary"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getCollection: {
+        parameters: {
+            query?: {
+                /** @description Parent item, for nested collections */
+                parent?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionState"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createItem: {
+        parameters: {
+            query?: {
+                parent?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemCreateInputBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Item"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteItem: {
+        parameters: {
+            query?: {
+                parent?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateItem: {
+        parameters: {
+            query?: {
+                parent?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemUpdateInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Item"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listDefaultIndexes: {
         parameters: {
             query?: never;
@@ -3512,6 +3834,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PageUpdate"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listPluginTasks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PluginTask"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    startPluginTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PluginTaskInputBody"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
                 };
             };
             /** @description Error */
