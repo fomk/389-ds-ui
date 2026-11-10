@@ -95,14 +95,14 @@ All plugins are LDAP-based and available in all modes.
 
 | Feature | Mechanism | Stage | A | B | C |
 |---|---|---|---|---|---|
-| Enabling replication, role, replica ID | LDAP | 5 | ✅ | ✅ | ✅ |
-| Changelog | LDAP | 5 | ✅ | ✅ | ✅ |
-| Replication manager | LDAP | 5 | ✅ | ✅ | ✅ |
-| Agreements: CRUD, schedule, fractional | LDAP | 5 | ✅ | ✅ | ✅ |
-| Replica initialization | LDAP | 5 | ✅ | ✅ | ✅ |
-| Agreement status, RUV | LDAP | 5 | ✅ | ✅ | ✅ |
-| CleanAllRUV | Task | 5 | ✅ | ✅ | ✅ |
-| Replication conflicts | LDAP | 5 | ✅ | ✅ | ✅ |
+| Enabling replication, role, replica ID, bind DNs/group — done | LDAP | 5 | ✅ | ✅ | ✅ |
+| Changelog (max age/entries, trim interval) — done | LDAP | 5 | ✅ | ✅ | ✅ |
+| Replication manager — done | LDAP | 5 | ✅ | ✅ | ✅ |
+| Agreements: CRUD, schedule, fractional — done | LDAP | 5 | ✅ | ✅ | ✅ |
+| Replica initialization — done | LDAP | 5 | ✅ | ✅ | ✅ |
+| Agreement status, RUV — done | LDAP | 5 | ✅ | ✅ | ✅ |
+| CleanAllRUV — done | Task | 5 | ✅ | ✅ | ✅ |
+| Replication conflicts (list, delete, keep under a new RDN) — done | LDAP | 5 | ✅ | ✅ | ✅ |
 | Topology lag (RUV comparison) | LDAP to multiple nodes | 7 | ✅ | ✅ | ✅ |
 
 ## TLS (stage 6)

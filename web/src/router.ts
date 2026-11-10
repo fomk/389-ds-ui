@@ -22,6 +22,7 @@ import OverviewView from '@/views/OverviewView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 import PluginsView from '@/views/PluginsView.vue'
 import PoliciesView from '@/views/PoliciesView.vue'
+import ReplicationView from '@/views/ReplicationView.vue'
 import RolesView from '@/views/RolesView.vue'
 import SchemaView from '@/views/SchemaView.vue'
 import SettingsView from '@/views/SettingsView.vue'
@@ -63,7 +64,7 @@ export const nav: NavItem[] = [
   { path: '/schema', key: 'schema', icon: BookOpen, stage: 4, view: SchemaView },
   { path: '/policies', key: 'policies', icon: KeyRound, stage: 4, view: PoliciesView },
   { path: '/roles', key: 'roles', icon: UsersRound, stage: 4, view: RolesView },
-  { path: '/replication', key: 'replication', icon: RefreshCw, stage: 5 },
+  { path: '/replication', key: 'replication', icon: RefreshCw, stage: 5, view: ReplicationView },
   { path: '/security', key: 'security', icon: Lock, stage: 6 },
 ]
 

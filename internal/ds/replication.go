@@ -742,18 +742,21 @@ func ParseRUV(values []string) RUV {
 	return ruv
 }
 
-// GetRUV reads the RUV tombstone of a suffix.
+// GetRUV reads the RUV of a suffix from the replica entry, which holds the
+// live vector; the copy in the RUV tombstone of the suffix is written to the
+// database only from time to time.
 func GetRUV(c *ldap.Conn, suffix string) (*RUV, error) {
-	if _, err := replicaOf(c, suffix); err != nil {
+	r, err := replicaOf(c, suffix)
+	if err != nil {
 		return nil, err
 	}
-	res, err := c.Search(ldap.NewSearchRequest(suffix, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 1, 0, false,
-		"(&(nsuniqueid=ffffffff-ffffffff-ffffffff-ffffffff)(objectclass=nstombstone))", []string{"nsds50ruv"}, nil))
-	if err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
+	res, err := c.Search(ldap.NewSearchRequest(r.DN, ldap.ScopeBaseObject, ldap.NeverDerefAliases, 1, 0, false,
+		"(objectClass=*)", []string{"nsds50ruv"}, nil))
+	if err != nil {
 		return nil, err
 	}
 	var values []string
-	if res != nil && len(res.Entries) > 0 {
+	if len(res.Entries) > 0 {
 		values = res.Entries[0].GetAttributeValues("nsds50ruv")
 	}
 	ruv := ParseRUV(values)

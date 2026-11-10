@@ -131,7 +131,12 @@ Work items:
 
 **Done when:** all listed features work on 389-ds 3.x and are covered by integration tests.
 
-## Stage 5. Replication (3–4 wk) → v0.4
+## Stage 5. Replication (3–4 wk) → v0.4 — ✅ done
+
+**Outcome:** the integration suite (run in CI) starts two DS containers on one network and sets up multi-supplier replication only through the ds-ui API: replication manager, two suppliers, changelog, agreements both ways, initialization, changes in both directions, status, RUV, fractional replication, a real conflict resolved by deleting it, disabling. The UI was checked against a supplier and a temporary consumer. Deviations:
+- The e2e check is the Go integration test against the API, not a browser test (Playwright arrives in stage 7).
+- The RUV is read from the replica entry: the RUV tombstone under the suffix lags by up to ~30 s.
+- TLS transports and SASL/GSSAPI bind methods can be configured but are not tested yet (certificates come in stage 6); deleting a conflict entry is tested, converting one (keep under a new RDN) is not yet.
 
 Work items:
 - Enabling/disabling replication for a suffix: role (supplier/hub/consumer), replica ID, bind DN / bind group.

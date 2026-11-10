@@ -119,7 +119,7 @@ Common attributes: `nsslapd-pluginEnabled`, `nsslapd-pluginPath`, `nsslapd-plugi
 | Agreement | `cn=<name>,cn=replica,cn="<suffix>",cn=mapping tree,cn=config` (oc `nsds5ReplicationAgreement`) | `nsDS5ReplicaHost`, `nsDS5ReplicaPort`, `nsDS5ReplicaTransportInfo` (LDAP/TLS/SSL), `nsDS5ReplicaBindMethod` (SIMPLE/SSLCLIENTAUTH/SASL/GSSAPI), `nsDS5ReplicaBindDN`, `nsDS5ReplicaCredentials`, `nsDS5ReplicaRoot`, `nsDS5ReplicaUpdateSchedule`, `nsDS5ReplicatedAttributeList` (fractional), `nsds5ReplicaEnabled` |
 | Initialization | modify of the agreement | `nsds5BeginReplicaRefresh: start` |
 | Agreement status | same entry (operational) | `nsds5replicaLastUpdateStatus`, `nsds5replicaLastUpdateStart/End`, `nsds5replicaUpdateInProgress`, `nsds5replicaLastInitStatus`, `nsds5replicaLastInitStart/End`, `nsds5replicaChangesSentSinceStartup` |
-| RUV | base search on `<suffix>` with filter `(&(nsuniqueid=ffffffff-ffffffff-ffffffff-ffffffff)(objectclass=nstombstone))` | `nsds50ruv`, `nsruvReplicaLastModified` |
+| RUV | the replica entry (live), or the RUV tombstone `(&(nsuniqueid=ffffffff-ffffffff-ffffffff-ffffffff)(objectclass=nstombstone))` under the suffix (written to the database with a delay of up to ~30 s) | `nsds50ruv`, `nsruvReplicaLastModified` |
 | Conflicts | search `(nsds5ReplConflict=*)` under the suffix | `nsds5ReplConflict` |
 
 ## TLS
