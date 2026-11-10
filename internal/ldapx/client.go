@@ -104,6 +104,23 @@ func New(opts Options) (*Client, error) {
 // Auth reports the authentication method in use.
 func (c *Client) Auth() AuthMethod { return c.auth }
 
+// BindDN is the DN of simple binds ("" for EXTERNAL and anonymous).
+func (c *Client) BindDN() string {
+	if c.auth != AuthSimple {
+		return ""
+	}
+	return c.opts.BindDN
+}
+
+// SetBindPassword replaces the password for future simple binds, e.g. after
+// ds-ui changed the root DN password it binds with. The open connection stays
+// bound.
+func (c *Client) SetBindPassword(pw string) {
+	c.mu.Lock()
+	c.opts.BindPassword = pw
+	c.mu.Unlock()
+}
+
 // URL returns the configured server URL.
 func (c *Client) URL() string { return c.opts.URL }
 

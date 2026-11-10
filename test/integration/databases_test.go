@@ -101,7 +101,7 @@ func TestIndexesAndReindexTask(t *testing.T) {
 	tasks := ds.NewTasks(c, bus, nil)
 	var attrs map[string][]string
 	_ = run(func(l *ldap.Conn) (err error) {
-		attrs, err = ds.ReindexAttrs(l, "userroot", []string{"departmentNumber"})
+		attrs, err = ds.ReindexAttrs(l, "userroot", []string{"departmentNumber"}, nil)
 		return
 	})
 	task, err := tasks.Start(ctx, ds.TaskIndex, "userroot", attrs)

@@ -137,8 +137,26 @@ export interface paths {
         /** VLV indexes of a backend */
         get: operations["listVLV"];
         put?: never;
-        post?: never;
+        /** Add a VLV index (empty until built with reindex) */
+        post: operations["createVLV"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/backends/{name}/vlv/{vlv}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a VLV index */
+        delete: operations["deleteVLV"];
         options?: never;
         head?: never;
         patch?: never;
@@ -208,6 +226,42 @@ export interface paths {
         /** Restore all databases from a backup (online task; backends go offline briefly) */
         post: operations["restoreBackup"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/default-indexes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Indexes that new backends start with */
+        get: operations["listDefaultIndexes"];
+        put?: never;
+        /** Add a default index (existing backends are not changed) */
+        post: operations["createDefaultIndex"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/default-indexes/{attr}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change a default index */
+        put: operations["updateDefaultIndex"];
+        post?: never;
+        /** Delete a default index */
+        delete: operations["deleteDefaultIndex"];
         options?: never;
         head?: never;
         patch?: never;
@@ -543,6 +597,59 @@ export interface paths {
         head?: never;
         /** Enable or disable a plug-in */
         patch: operations["updatePlugin"];
+        trace?: never;
+    };
+    "/api/v1/root-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change the Directory Manager password */
+        post: operations["setRootPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sasl-mappings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** SASL identity mappings, in the order they are tried */
+        get: operations["listSASLMappings"];
+        put?: never;
+        /** Add a SASL mapping */
+        post: operations["createSASLMapping"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sasl-mappings/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change a SASL mapping */
+        put: operations["updateSASLMapping"];
+        post?: never;
+        /** Delete a SASL mapping */
+        delete: operations["deleteSASLMapping"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/schema": {
@@ -1026,6 +1133,15 @@ export interface components {
             attributes: components["schemas"]["NewValues"][];
             dn: string;
         };
+        NewVLV: {
+            base: string;
+            filter: string;
+            name: string;
+            /** @enum {string} */
+            scope: "base" | "one" | "sub";
+            /** @description One sort index per value: attributes separated by spaces, -attr for descending */
+            sorts: string[];
+        };
         NewValues: {
             binary?: boolean;
             name: string;
@@ -1160,8 +1276,10 @@ export interface components {
             enabled: boolean;
         };
         ReindexInputBody: {
-            /** @description Empty rebuilds every index of the backend */
+            /** @description Empty (and no vlv) rebuilds every index of the backend */
             attributes?: string[];
+            /** @description VLV indexes (by name) to build */
+            vlv?: string[];
         };
         RenameRequest: {
             /** @description Remove the old RDN value from the entry */
@@ -1178,6 +1296,29 @@ export interface components {
         ReplaceLDIFInputBody: {
             /** @description One content record for the same DN */
             ldif: string;
+        };
+        RootPasswordInputBody: {
+            password: string;
+        };
+        RootPasswordResult: {
+            /** @description ds-ui binds with this password; update its secret before restarting it */
+            credentialsUpdated: boolean;
+            rootDN: string;
+        };
+        SASLMapping: {
+            /** @description nsSaslMapBaseDNTemplate */
+            baseDN: string;
+            /** @description nsSaslMapFilterTemplate */
+            filter: string;
+            /** @description cn */
+            name: string;
+            /**
+             * Format: int64
+             * @description nsSaslMapPriority: 1 (first) … 100; 0 means unset (100)
+             */
+            priority?: number;
+            /** @description nsSaslMapRegexString */
+            regex: string;
         };
         Sample: {
             /** Format: int64 */
@@ -1360,6 +1501,10 @@ export interface components {
             /** @description Naming attribute */
             rdn: string;
         };
+        UpdateDefaultIndexInputBody: {
+            matchingRules?: string[];
+            types: string[];
+        };
         UpdateIndexInputBody: {
             matchingRules?: string[];
             types: string[];
@@ -1367,6 +1512,7 @@ export interface components {
         VLVIndex: {
             base: string;
             filter: string;
+            indexNames: string[];
             name: string;
             /** @enum {string} */
             scope: "base" | "one" | "sub";
@@ -1777,6 +1923,69 @@ export interface operations {
             };
         };
     };
+    createVLV: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewVLV"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteVLV: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+                vlv: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listBackups: {
         parameters: {
             query?: never;
@@ -1918,6 +2127,128 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Task"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listDefaultIndexes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Index"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createDefaultIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Index"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateDefaultIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attr: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDefaultIndexInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteDefaultIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attr: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -2742,6 +3073,161 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PluginChange"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setRootPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RootPasswordInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RootPasswordResult"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listSASLMappings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SASLMapping"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createSASLMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SASLMapping"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateSASLMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SASLMapping"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteSASLMapping: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

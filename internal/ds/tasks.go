@@ -244,6 +244,7 @@ const (
 	OpRestart       = "restart"
 	OpEnablePlugin  = "enable-plugin"
 	OpDisablePlugin = "disable-plugin"
+	OpRootPassword  = "root-password"
 )
 
 // Record adds a finished operation to the history: ok when err is nil,

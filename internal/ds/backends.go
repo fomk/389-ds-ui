@@ -284,6 +284,9 @@ var indexTypes = []string{"eq", "pres", "sub", "approx"}
 
 func indexContainer(backend string) string { return "cn=index," + backendDN(backend) }
 
+// DNDefaultIndexes holds the indexes every new backend starts with.
+const DNDefaultIndexes = "cn=default indexes,cn=config," + DNLDBM
+
 // ListIndexes returns the indexes of a backend sorted by attribute.
 func ListIndexes(c *ldap.Conn, backend string) ([]Index, error) {
 	// cn=config answers a search under a missing base with success and no
@@ -294,11 +297,19 @@ func ListIndexes(c *ldap.Conn, backend string) ([]Index, error) {
 		}
 		return nil, err
 	}
-	res, err := c.Search(ldap.NewSearchRequest(indexContainer(backend), ldap.ScopeSingleLevel, ldap.NeverDerefAliases, 0, 0, false,
-		"(objectClass=nsIndex)", []string{"cn", "nsIndexType", "nsMatchingRule", "nsSystemIndex"}, nil))
+	list, err := listIndexesIn(c, indexContainer(backend))
 	if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
 		return nil, fmt.Errorf("%w: backend %s", ErrNotFound, backend)
 	}
+	return list, err
+}
+
+// ListDefaultIndexes returns the default indexes for new backends.
+func ListDefaultIndexes(c *ldap.Conn) ([]Index, error) { return listIndexesIn(c, DNDefaultIndexes) }
+
+func listIndexesIn(c *ldap.Conn, container string) ([]Index, error) {
+	res, err := c.Search(ldap.NewSearchRequest(container, ldap.ScopeSingleLevel, ldap.NeverDerefAliases, 0, 0, false,
+		"(objectClass=nsIndex)", []string{"cn", "nsIndexType", "nsMatchingRule", "nsSystemIndex"}, nil))
 	if err != nil {
 		return nil, err
 	}
@@ -343,10 +354,17 @@ func validIndex(ix Index) error {
 
 // CreateIndex adds an index definition. The index is empty until reindexed.
 func CreateIndex(c *ldap.Conn, backend string, ix Index) error {
+	return createIndexIn(c, indexContainer(backend), ix)
+}
+
+// CreateDefaultIndex adds a default index (used by backends created later).
+func CreateDefaultIndex(c *ldap.Conn, ix Index) error { return createIndexIn(c, DNDefaultIndexes, ix) }
+
+func createIndexIn(c *ldap.Conn, container string, ix Index) error {
 	if err := validIndex(ix); err != nil {
 		return err
 	}
-	req := ldap.NewAddRequest("cn="+ldap.EscapeDN(ix.Attribute)+","+indexContainer(backend), nil)
+	req := ldap.NewAddRequest("cn="+ldap.EscapeDN(ix.Attribute)+","+container, nil)
 	req.Attribute("objectClass", []string{"top", "nsIndex"})
 	req.Attribute("cn", []string{ix.Attribute})
 	req.Attribute("nsSystemIndex", []string{"false"})
@@ -359,10 +377,17 @@ func CreateIndex(c *ldap.Conn, backend string, ix Index) error {
 
 // UpdateIndex replaces the types and matching rules of an index.
 func UpdateIndex(c *ldap.Conn, backend string, ix Index) error {
+	return updateIndexIn(c, indexContainer(backend), ix)
+}
+
+// UpdateDefaultIndex replaces the types and matching rules of a default index.
+func UpdateDefaultIndex(c *ldap.Conn, ix Index) error { return updateIndexIn(c, DNDefaultIndexes, ix) }
+
+func updateIndexIn(c *ldap.Conn, container string, ix Index) error {
 	if err := validIndex(ix); err != nil {
 		return err
 	}
-	req := ldap.NewModifyRequest("cn="+ldap.EscapeDN(ix.Attribute)+","+indexContainer(backend), nil)
+	req := ldap.NewModifyRequest("cn="+ldap.EscapeDN(ix.Attribute)+","+container, nil)
 	req.Replace("nsIndexType", ix.Types)
 	req.Replace("nsMatchingRule", ix.MatchingRules)
 	return c.Modify(req)
@@ -374,20 +399,53 @@ func DeleteIndex(c *ldap.Conn, backend, attr string) error {
 	if err != nil {
 		return err
 	}
+	return deleteIndexIn(c, indexContainer(backend), list, attr)
+}
+
+// DeleteDefaultIndex removes a non-system default index.
+func DeleteDefaultIndex(c *ldap.Conn, attr string) error {
+	list, err := ListDefaultIndexes(c)
+	if err != nil {
+		return err
+	}
+	return deleteIndexIn(c, DNDefaultIndexes, list, attr)
+}
+
+func deleteIndexIn(c *ldap.Conn, container string, list []Index, attr string) error {
 	for _, ix := range list {
 		if strings.EqualFold(ix.Attribute, attr) {
 			if ix.System {
 				return ErrSystemIndex
 			}
-			return c.Del(ldap.NewDelRequest("cn="+ldap.EscapeDN(ix.Attribute)+","+indexContainer(backend), nil))
+			return c.Del(ldap.NewDelRequest("cn="+ldap.EscapeDN(ix.Attribute)+","+container, nil))
 		}
 	}
 	return fmt.Errorf("%w: index %s", ErrNotFound, attr)
 }
 
 // ReindexAttrs builds the attributes of an index task for a backend.
-// With no attributes, every index of the backend is rebuilt.
-func ReindexAttrs(c *ldap.Conn, backend string, attrs []string) (map[string][]string, error) {
+// With no attributes and no VLV indexes, every index of the backend is
+// rebuilt; vlv names VLV searches whose sort indexes are rebuilt.
+func ReindexAttrs(c *ldap.Conn, backend string, attrs, vlv []string) (map[string][]string, error) {
+	if len(vlv) > 0 {
+		all, err := ListVLV(c, backend)
+		if err != nil {
+			return nil, err
+		}
+		var names []string
+		for _, v := range vlv {
+			i := slices.IndexFunc(all, func(x VLVIndex) bool { return strings.EqualFold(x.Name, v) })
+			if i < 0 {
+				return nil, fmt.Errorf("%w: VLV index %s", ErrNotFound, v)
+			}
+			names = append(names, all[i].IndexNames...)
+		}
+		task := map[string][]string{"nsInstance": {backend}, "nsIndexVLVAttribute": names}
+		if len(attrs) > 0 {
+			task["nsIndexAttribute"] = attrs
+		}
+		return task, nil
+	}
 	if len(attrs) == 0 {
 		list, err := ListIndexes(c, backend)
 		if err != nil {
@@ -414,6 +472,17 @@ type VLVIndex struct {
 	Scope  string   `json:"scope" enum:"base,one,sub"`
 	Filter string   `json:"filter"`
 	Sorts  []string `json:"sorts" doc:"vlvSort values of the child vlvIndex entries"`
+	// cn of the vlvIndex entries, which the index task names.
+	IndexNames []string `json:"indexNames"`
+}
+
+// NewVLV is a VLV index to create.
+type NewVLV struct {
+	Name   string   `json:"name" minLength:"1"`
+	Base   string   `json:"base" minLength:"1"`
+	Scope  string   `json:"scope" enum:"base,one,sub"`
+	Filter string   `json:"filter" minLength:"1"`
+	Sorts  []string `json:"sorts" minItems:"1" doc:"One sort index per value: attributes separated by spaces, -attr for descending"`
 }
 
 // ListVLV returns the VLV searches of a backend.
@@ -429,7 +498,7 @@ func ListVLV(c *ldap.Conn, backend string) ([]VLVIndex, error) {
 		if slices.ContainsFunc(e.GetAttributeValues("objectClass"), func(s string) bool { return strings.EqualFold(s, "vlvSearch") }) {
 			scope := map[string]string{"0": "base", "1": "one", "2": "sub"}[e.GetAttributeValue("vlvScope")]
 			searches[strings.ToLower(e.DN)] = &VLVIndex{Name: e.GetAttributeValue("cn"), Base: e.GetAttributeValue("vlvBase"),
-				Scope: scope, Filter: e.GetAttributeValue("vlvFilter"), Sorts: []string{}}
+				Scope: scope, Filter: e.GetAttributeValue("vlvFilter"), Sorts: []string{}, IndexNames: []string{}}
 			order = append(order, strings.ToLower(e.DN))
 		}
 	}
@@ -438,6 +507,7 @@ func ListVLV(c *ldap.Conn, backend string) ([]VLVIndex, error) {
 			parent := strings.ToLower(strings.SplitN(e.DN, ",", 2)[1])
 			if s := searches[parent]; s != nil {
 				s.Sorts = append(s.Sorts, v)
+				s.IndexNames = append(s.IndexNames, e.GetAttributeValue("cn"))
 			}
 		}
 	}
@@ -455,4 +525,111 @@ func ServerDirs(c *ldap.Conn) (bakDir, ldifDir string, err error) {
 		return "", "", err
 	}
 	return e.GetAttributeValue("nsslapd-bakdir"), e.GetAttributeValue("nsslapd-ldifdir"), nil
+}
+
+var (
+	vlvNameRE = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9 _.-]*$`)
+	vlvScopes = map[string]string{"base": "0", "one": "1", "sub": "2"}
+)
+
+// validSort checks a vlvSort value: attributes separated by spaces, each
+// optionally prefixed with "-" for descending order.
+func validSort(s string) bool {
+	f := strings.Fields(s)
+	if len(f) == 0 {
+		return false
+	}
+	for _, a := range f {
+		if !attrRE.MatchString(strings.TrimPrefix(a, "-")) {
+			return false
+		}
+	}
+	return true
+}
+
+func vlvSearchDN(backend, name string) string {
+	return "cn=" + ldap.EscapeDN(name) + "," + backendDN(backend)
+}
+
+// CreateVLV adds a VLV search with one sort index per value of Sorts. The
+// indexes are empty until built with a reindex task.
+func CreateVLV(c *ldap.Conn, backend string, v VLVIndex) error {
+	v.Name = strings.TrimSpace(v.Name)
+	if !vlvNameRE.MatchString(v.Name) {
+		return fmt.Errorf("%w: VLV name %q", ErrInvalidName, v.Name)
+	}
+	if _, err := ldap.ParseDN(v.Base); err != nil || strings.TrimSpace(v.Base) == "" {
+		return fmt.Errorf("%w: base %q is not a DN", ErrInvalidValue, v.Base)
+	}
+	scope, ok := vlvScopes[v.Scope]
+	if !ok {
+		return fmt.Errorf("%w: scope %q", ErrInvalidValue, v.Scope)
+	}
+	if _, err := ldap.CompileFilter(v.Filter); err != nil {
+		return fmt.Errorf("%w: filter: %v", ErrInvalidValue, err)
+	}
+	if len(v.Sorts) == 0 {
+		return fmt.Errorf("%w: at least one sort order is needed", ErrInvalidValue)
+	}
+	for _, s := range v.Sorts {
+		if !validSort(s) {
+			return fmt.Errorf("%w: sort order %q", ErrInvalidValue, s)
+		}
+	}
+	if _, err := readEntry(c, backendDN(backend), "1.1"); err != nil {
+		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
+			return fmt.Errorf("%w: backend %s", ErrNotFound, backend)
+		}
+		return err
+	}
+	dn := vlvSearchDN(backend, v.Name)
+	req := ldap.NewAddRequest(dn, nil)
+	req.Attribute("objectClass", []string{"top", "vlvSearch"})
+	req.Attribute("cn", []string{v.Name})
+	req.Attribute("vlvBase", []string{v.Base})
+	req.Attribute("vlvScope", []string{scope})
+	req.Attribute("vlvFilter", []string{v.Filter})
+	if err := c.Add(req); err != nil {
+		return err
+	}
+	for i, s := range v.Sorts {
+		name := fmt.Sprintf("%s sort %d", v.Name, i+1)
+		ix := ldap.NewAddRequest("cn="+ldap.EscapeDN(name)+","+dn, nil)
+		ix.Attribute("objectClass", []string{"top", "vlvIndex"})
+		ix.Attribute("cn", []string{name})
+		ix.Attribute("vlvSort", []string{strings.Join(strings.Fields(s), " ")})
+		if err := c.Add(ix); err != nil {
+			_ = deleteVLVEntries(c, dn)
+			return err
+		}
+	}
+	return nil
+}
+
+// DeleteVLV removes a VLV search and its sort indexes.
+func DeleteVLV(c *ldap.Conn, backend, name string) error {
+	all, err := ListVLV(c, backend)
+	if err != nil {
+		return err
+	}
+	if !slices.ContainsFunc(all, func(x VLVIndex) bool { return strings.EqualFold(x.Name, name) }) {
+		return fmt.Errorf("%w: VLV index %s", ErrNotFound, name)
+	}
+	return deleteVLVEntries(c, vlvSearchDN(backend, name))
+}
+
+func deleteVLVEntries(c *ldap.Conn, dn string) error {
+	res, err := c.Search(ldap.NewSearchRequest(dn, ldap.ScopeSingleLevel, ldap.NeverDerefAliases, 0, 0, false,
+		"(objectClass=*)", []string{"1.1"}, nil))
+	if err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
+		return err
+	}
+	if res != nil {
+		for _, e := range res.Entries {
+			if err := c.Del(ldap.NewDelRequest(e.DN, nil)); err != nil {
+				return err
+			}
+		}
+	}
+	return c.Del(ldap.NewDelRequest(dn, nil))
 }

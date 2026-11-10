@@ -75,6 +75,8 @@ func toHTTPError(err error) error {
 		return problem(http.StatusConflict, err.Error())
 	case errors.Is(err, files.ErrOutsideRoot):
 		return problem(http.StatusNotImplemented, err.Error())
+	case errors.Is(err, ds.ErrInvalidValue):
+		return problem(http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, ds.ErrInvalidName):
 		return problem(http.StatusBadRequest, err.Error())
 	case errors.Is(err, ds.ErrNotFound), errors.Is(err, ds.ErrTaskNotFound):

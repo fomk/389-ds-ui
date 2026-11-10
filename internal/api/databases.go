@@ -43,7 +43,8 @@ type updateIndexInput struct {
 type reindexInput struct {
 	Name string `path:"name"`
 	Body struct {
-		Attributes []string `json:"attributes,omitempty" doc:"Empty rebuilds every index of the backend"`
+		Attributes []string `json:"attributes,omitempty" doc:"Empty (and no vlv) rebuilds every index of the backend"`
+		VLV        []string `json:"vlv,omitempty" doc:"VLV indexes (by name) to build"`
 	}
 }
 type taskOutput struct {
@@ -51,6 +52,25 @@ type taskOutput struct {
 	Body   *ds.Task
 }
 type vlvOutput struct{ Body []ds.VLVIndex }
+type vlvInput struct {
+	Name string `path:"name"`
+	Body ds.NewVLV
+}
+type vlvPath struct {
+	Name string `path:"name"`
+	VLV  string `path:"vlv"`
+}
+type defaultIndexInput struct{ Body ds.Index }
+type defaultIndexPath struct {
+	Attr string `path:"attr"`
+}
+type updateDefaultIndexInput struct {
+	Attr string `path:"attr"`
+	Body struct {
+		Types         []string `json:"types" minItems:"1"`
+		MatchingRules []string `json:"matchingRules,omitempty"`
+	}
+}
 type tasksOutput struct{ Body []*ds.Task }
 type taskPath struct {
 	ID string `path:"id"`
@@ -166,7 +186,10 @@ func registerDatabases(api huma.API, d Deps) {
 		Summary: "Start a reindex task", Tags: tags, DefaultStatus: http.StatusAccepted},
 		func(ctx context.Context, in *reindexInput) (*taskOutput, error) {
 			var attrs map[string][]string
-			err := conn(ctx, func(c *ldap.Conn) (err error) { attrs, err = ds.ReindexAttrs(c, in.Name, in.Body.Attributes); return })
+			err := conn(ctx, func(c *ldap.Conn) (err error) {
+				attrs, err = ds.ReindexAttrs(c, in.Name, in.Body.Attributes, in.Body.VLV)
+				return
+			})
 			if err != nil {
 				return nil, toHTTPError(err)
 			}
@@ -186,6 +209,64 @@ func registerDatabases(api huma.API, d Deps) {
 				return nil, toHTTPError(err)
 			}
 			return &vlvOutput{Body: list}, nil
+		})
+
+	huma.Register(api, huma.Operation{OperationID: "createVLV", Method: http.MethodPost, Path: apiPrefix + "/backends/{name}/vlv",
+		Summary: "Add a VLV index (empty until built with reindex)", Tags: tags, DefaultStatus: http.StatusCreated},
+		func(ctx context.Context, in *vlvInput) (*noContent, error) {
+			v := ds.VLVIndex{Name: in.Body.Name, Base: in.Body.Base, Scope: in.Body.Scope, Filter: in.Body.Filter, Sorts: in.Body.Sorts}
+			if err := conn(ctx, func(c *ldap.Conn) error { return ds.CreateVLV(c, in.Name, v) }); err != nil {
+				return nil, toHTTPError(err)
+			}
+			return &noContent{}, nil
+		})
+
+	huma.Register(api, huma.Operation{OperationID: "deleteVLV", Method: http.MethodDelete, Path: apiPrefix + "/backends/{name}/vlv/{vlv}",
+		Summary: "Delete a VLV index", Tags: tags, DefaultStatus: http.StatusNoContent},
+		func(ctx context.Context, in *vlvPath) (*noContent, error) {
+			if err := conn(ctx, func(c *ldap.Conn) error { return ds.DeleteVLV(c, in.Name, in.VLV) }); err != nil {
+				return nil, toHTTPError(err)
+			}
+			return &noContent{}, nil
+		})
+
+	huma.Register(api, huma.Operation{OperationID: "listDefaultIndexes", Method: http.MethodGet, Path: apiPrefix + "/default-indexes",
+		Summary: "Indexes that new backends start with", Tags: tags},
+		func(ctx context.Context, _ *struct{}) (*indexesOutput, error) {
+			var list []ds.Index
+			err := conn(ctx, func(c *ldap.Conn) (err error) { list, err = ds.ListDefaultIndexes(c); return })
+			if err != nil {
+				return nil, toHTTPError(err)
+			}
+			return &indexesOutput{Body: list}, nil
+		})
+
+	huma.Register(api, huma.Operation{OperationID: "createDefaultIndex", Method: http.MethodPost, Path: apiPrefix + "/default-indexes",
+		Summary: "Add a default index (existing backends are not changed)", Tags: tags, DefaultStatus: http.StatusCreated},
+		func(ctx context.Context, in *defaultIndexInput) (*noContent, error) {
+			if err := conn(ctx, func(c *ldap.Conn) error { return ds.CreateDefaultIndex(c, in.Body) }); err != nil {
+				return nil, toHTTPError(err)
+			}
+			return &noContent{}, nil
+		})
+
+	huma.Register(api, huma.Operation{OperationID: "updateDefaultIndex", Method: http.MethodPut, Path: apiPrefix + "/default-indexes/{attr}",
+		Summary: "Change a default index", Tags: tags, DefaultStatus: http.StatusNoContent},
+		func(ctx context.Context, in *updateDefaultIndexInput) (*noContent, error) {
+			ix := ds.Index{Attribute: in.Attr, Types: in.Body.Types, MatchingRules: in.Body.MatchingRules}
+			if err := conn(ctx, func(c *ldap.Conn) error { return ds.UpdateDefaultIndex(c, ix) }); err != nil {
+				return nil, toHTTPError(err)
+			}
+			return &noContent{}, nil
+		})
+
+	huma.Register(api, huma.Operation{OperationID: "deleteDefaultIndex", Method: http.MethodDelete, Path: apiPrefix + "/default-indexes/{attr}",
+		Summary: "Delete a default index", Tags: tags, DefaultStatus: http.StatusNoContent},
+		func(ctx context.Context, in *defaultIndexPath) (*noContent, error) {
+			if err := conn(ctx, func(c *ldap.Conn) error { return ds.DeleteDefaultIndex(c, in.Attr) }); err != nil {
+				return nil, toHTTPError(err)
+			}
+			return &noContent{}, nil
 		})
 
 	huma.Register(api, huma.Operation{OperationID: "listTasks", Method: http.MethodGet, Path: apiPrefix + "/tasks",

@@ -954,6 +954,47 @@
         ],
         "type": "object"
       },
+      "NewVLV": {
+        "additionalProperties": false,
+        "properties": {
+          "base": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "filter": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "base",
+              "one",
+              "sub"
+            ],
+            "type": "string"
+          },
+          "sorts": {
+            "description": "One sort index per value: attributes separated by spaces, -attr for descending",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "base",
+          "scope",
+          "filter",
+          "sorts"
+        ],
+        "type": "object"
+      },
       "NewValues": {
         "additionalProperties": false,
         "properties": {
@@ -1422,7 +1463,14 @@
         "additionalProperties": false,
         "properties": {
           "attributes": {
-            "description": "Empty rebuilds every index of the backend",
+            "description": "Empty (and no vlv) rebuilds every index of the backend",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "vlv": {
+            "description": "VLV indexes (by name) to build",
             "items": {
               "type": "string"
             },
@@ -1483,6 +1531,71 @@
         },
         "required": [
           "ldif"
+        ],
+        "type": "object"
+      },
+      "RootPasswordInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "password": {
+            "minLength": 8,
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "type": "object"
+      },
+      "RootPasswordResult": {
+        "additionalProperties": false,
+        "properties": {
+          "credentialsUpdated": {
+            "description": "ds-ui binds with this password; update its secret before restarting it",
+            "type": "boolean"
+          },
+          "rootDN": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "rootDN",
+          "credentialsUpdated"
+        ],
+        "type": "object"
+      },
+      "SASLMapping": {
+        "additionalProperties": false,
+        "properties": {
+          "baseDN": {
+            "description": "nsSaslMapBaseDNTemplate",
+            "type": "string"
+          },
+          "filter": {
+            "description": "nsSaslMapFilterTemplate",
+            "type": "string"
+          },
+          "name": {
+            "description": "cn",
+            "type": "string"
+          },
+          "priority": {
+            "description": "nsSaslMapPriority: 1 (first) … 100; 0 means unset (100)",
+            "format": "int64",
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "regex": {
+            "description": "nsSaslMapRegexString",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "regex",
+          "baseDN",
+          "filter"
         ],
         "type": "object"
       },
@@ -2046,6 +2159,28 @@
         ],
         "type": "object"
       },
+      "UpdateDefaultIndexInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "matchingRules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "types": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "types"
+        ],
+        "type": "object"
+      },
       "UpdateIndexInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -2077,6 +2212,12 @@
           "filter": {
             "type": "string"
           },
+          "indexNames": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "name": {
             "type": "string"
           },
@@ -2101,7 +2242,8 @@
           "base",
           "scope",
           "filter",
-          "sorts"
+          "sorts",
+          "indexNames"
         ],
         "type": "object"
       }
@@ -2653,6 +2795,90 @@
         "tags": [
           "databases"
         ]
+      },
+      "post": {
+        "operationId": "createVLV",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewVLV"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add a VLV index (empty until built with reindex)",
+        "tags": [
+          "databases"
+        ]
+      }
+    },
+    "/api/v1/backends/{name}/vlv/{vlv}": {
+      "delete": {
+        "operationId": "deleteVLV",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "vlv",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a VLV index",
+        "tags": [
+          "databases"
+        ]
       }
     },
     "/api/v1/backups": {
@@ -2837,6 +3063,148 @@
         "summary": "Restore all databases from a backup (online task; backends go offline briefly)",
         "tags": [
           "backups"
+        ]
+      }
+    },
+    "/api/v1/default-indexes": {
+      "get": {
+        "operationId": "listDefaultIndexes",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Index"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Indexes that new backends start with",
+        "tags": [
+          "databases"
+        ]
+      },
+      "post": {
+        "operationId": "createDefaultIndex",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Index"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add a default index (existing backends are not changed)",
+        "tags": [
+          "databases"
+        ]
+      }
+    },
+    "/api/v1/default-indexes/{attr}": {
+      "delete": {
+        "operationId": "deleteDefaultIndex",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attr",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a default index",
+        "tags": [
+          "databases"
+        ]
+      },
+      "put": {
+        "operationId": "updateDefaultIndex",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "attr",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDefaultIndexInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change a default index",
+        "tags": [
+          "databases"
         ]
       }
     },
@@ -4051,6 +4419,189 @@
         "summary": "Enable or disable a plug-in",
         "tags": [
           "plugins"
+        ]
+      }
+    },
+    "/api/v1/root-password": {
+      "post": {
+        "operationId": "setRootPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RootPasswordInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RootPasswordResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change the Directory Manager password",
+        "tags": [
+          "security"
+        ]
+      }
+    },
+    "/api/v1/sasl-mappings": {
+      "get": {
+        "operationId": "listSASLMappings",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SASLMapping"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "SASL identity mappings, in the order they are tried",
+        "tags": [
+          "security"
+        ]
+      },
+      "post": {
+        "operationId": "createSASLMapping",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SASLMapping"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add a SASL mapping",
+        "tags": [
+          "security"
+        ]
+      }
+    },
+    "/api/v1/sasl-mappings/{name}": {
+      "delete": {
+        "operationId": "deleteSASLMapping",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a SASL mapping",
+        "tags": [
+          "security"
+        ]
+      },
+      "put": {
+        "operationId": "updateSASLMapping",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SASLMapping"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change a SASL mapping",
+        "tags": [
+          "security"
         ]
       }
     },
