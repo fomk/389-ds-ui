@@ -387,6 +387,43 @@ export interface paths {
         patch: operations["updateItem"];
         trace?: never;
     };
+    "/api/v1/cos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Class of Service definitions with their templates */
+        get: operations["listCoS"];
+        put?: never;
+        /** Create a pointer, indirect or classic CoS definition */
+        post: operations["createCoS"];
+        /** Delete a CoS definition (templates stay) */
+        delete: operations["deleteCoS"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cos/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Create a CoS template or replace its values */
+        put: operations["setCoSTemplate"];
+        post?: never;
+        /** Delete a CoS template */
+        delete: operations["deleteCoSTemplate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/default-indexes": {
         parameters: {
             query?: never;
@@ -806,6 +843,44 @@ export interface paths {
         post: operations["createLocalPolicy"];
         /** Delete a subtree or user password policy */
         delete: operations["deleteLocalPolicy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Role definitions of all suffixes */
+        get: operations["listRoles"];
+        put?: never;
+        /** Create a managed, filtered or nested role */
+        post: operations["createRole"];
+        /** Delete a role */
+        delete: operations["deleteRole"];
+        options?: never;
+        head?: never;
+        /** Change a role */
+        patch: operations["updateRole"];
+        trace?: never;
+    };
+    "/api/v1/roles/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Entries that have the role (nsRole) */
+        get: operations["listRoleMembers"];
+        put?: never;
+        /** Add or remove a member of a managed role */
+        post: operations["setRoleMember"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1305,6 +1380,35 @@ export interface components {
             /** Format: int64 */
             total: number;
         };
+        CoSDefinition: {
+            /** @description cosAttribute values: name [default|override|operational|operational-default|merge-schemes] */
+            attributes: string[];
+            description?: string;
+            dn: string;
+            /** @description Indirect: attribute holding the template DN */
+            indirectSpecifier?: string;
+            /** @enum {string} */
+            kind: "pointer" | "indirect" | "classic";
+            name: string;
+            /** @description Classic: attribute whose value names the template */
+            specifier?: string;
+            /** @description Pointer: the template; classic: the container of the templates */
+            templateDN?: string;
+            templates: components["schemas"]["CoSTemplate"][];
+        };
+        CoSTemplate: {
+            dn: string;
+            name: string;
+            /**
+             * Format: int64
+             * @description cosPriority: 0 wins over higher numbers
+             */
+            priority?: number;
+            /** @description Values of the CoS attributes */
+            values: {
+                [key: string]: string[];
+            };
+        };
         Collection: {
             fields: components["schemas"]["PageField"][];
             id: string;
@@ -1547,6 +1651,17 @@ export interface components {
             /** @description e.g. dc=example,dc=org */
             suffix: string;
         };
+        NewCoS: {
+            attributes: string[];
+            description?: string;
+            indirectSpecifier?: string;
+            /** @enum {string} */
+            kind: "pointer" | "indirect" | "classic";
+            name: string;
+            parent: string;
+            specifier?: string;
+            templateDN?: string;
+        };
         NewEntry: {
             attributes: components["schemas"]["NewValues"][];
             dn: string;
@@ -1555,6 +1670,16 @@ export interface components {
             /** @enum {string} */
             kind: "subtree" | "user";
             target: string;
+        };
+        NewRole: {
+            description?: string;
+            filter?: string;
+            /** @enum {string} */
+            kind: "managed" | "filtered" | "nested";
+            name: string;
+            /** @description Entry below which the role is defined; it applies to that subtree */
+            parent: string;
+            roles?: string[];
         };
         NewVLV: {
             base: string;
@@ -1754,6 +1879,34 @@ export interface components {
         ReplaceLDIFInputBody: {
             /** @description One content record for the same DN */
             ldif: string;
+        };
+        Role: {
+            description?: string;
+            dn: string;
+            /** @description nsRoleFilter (filtered roles) */
+            filter?: string;
+            /** @enum {string} */
+            kind: "managed" | "filtered" | "nested";
+            name: string;
+            /** @description nsRoleDN: the roles a nested role contains */
+            roles: string[];
+            /** @description nsRoleScopeDN: extends the role beyond its subtree */
+            scope?: string;
+        };
+        RoleMemberInputBody: {
+            /** @description false removes the member */
+            add: boolean;
+            member: string;
+        };
+        RoleMembers: {
+            members: string[];
+            truncated: boolean;
+        };
+        RolePatch: {
+            description?: string;
+            filter?: string;
+            /** @description Replaces the contained roles (nested roles) */
+            roles?: string[];
         };
         RootPasswordInputBody: {
             password: string;
@@ -1959,6 +2112,13 @@ export interface components {
             password?: boolean;
             /** @description Naming attribute */
             rdn: string;
+        };
+        TemplateValues: {
+            /** Format: int64 */
+            priority?: number;
+            values: {
+                [key: string]: string[];
+            };
         };
         UpdateDefaultIndexInputBody: {
             matchingRules?: string[];
@@ -2979,6 +3139,160 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Item"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listCoS: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoSDefinition"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createCoS: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewCoS"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CoSDefinition"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteCoS: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setCoSTemplate: {
+        parameters: {
+            query: {
+                /** @description Template entry (created if missing) */
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateValues"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteCoSTemplate: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -4080,6 +4394,198 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Role"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewRole"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Role"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteRole: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateRole: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RolePatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Role"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listRoleMembers: {
+        parameters: {
+            query: {
+                dn: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleMembers"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setRoleMember: {
+        parameters: {
+            query: {
+                /** @description The managed role */
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleMemberInputBody"];
+            };
+        };
         responses: {
             /** @description No Content */
             204: {

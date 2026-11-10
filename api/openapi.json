@@ -585,6 +585,93 @@
         ],
         "type": "object"
       },
+      "CoSDefinition": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "description": "cosAttribute values: name [default|override|operational|operational-default|merge-schemes]",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": {
+            "type": "string"
+          },
+          "dn": {
+            "type": "string"
+          },
+          "indirectSpecifier": {
+            "description": "Indirect: attribute holding the template DN",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "pointer",
+              "indirect",
+              "classic"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "specifier": {
+            "description": "Classic: attribute whose value names the template",
+            "type": "string"
+          },
+          "templateDN": {
+            "description": "Pointer: the template; classic: the container of the templates",
+            "type": "string"
+          },
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/CoSTemplate"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "dn",
+          "name",
+          "kind",
+          "attributes",
+          "templates"
+        ],
+        "type": "object"
+      },
+      "CoSTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "priority": {
+            "description": "cosPriority: 0 wins over higher numbers",
+            "format": "int64",
+            "type": "integer"
+          },
+          "values": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "description": "Values of the CoS attributes",
+            "type": "object"
+          }
+        },
+        "required": [
+          "dn",
+          "name",
+          "values"
+        ],
+        "type": "object"
+      },
       "Collection": {
         "additionalProperties": false,
         "properties": {
@@ -1347,6 +1434,53 @@
         ],
         "type": "object"
       },
+      "NewCoS": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "description": {
+            "type": "string"
+          },
+          "indirectSpecifier": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "pointer",
+              "indirect",
+              "classic"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "parent": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "specifier": {
+            "type": "string"
+          },
+          "templateDN": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "parent",
+          "name",
+          "kind",
+          "attributes"
+        ],
+        "type": "object"
+      },
       "NewEntry": {
         "additionalProperties": false,
         "properties": {
@@ -1386,6 +1520,46 @@
         "required": [
           "kind",
           "target"
+        ],
+        "type": "object"
+      },
+      "NewRole": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "filter": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "managed",
+              "filtered",
+              "nested"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "parent": {
+            "description": "Entry below which the role is defined; it applies to that subtree",
+            "minLength": 1,
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "parent",
+          "name",
+          "kind"
         ],
         "type": "object"
       },
@@ -2107,6 +2281,106 @@
         ],
         "type": "object"
       },
+      "Role": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "dn": {
+            "type": "string"
+          },
+          "filter": {
+            "description": "nsRoleFilter (filtered roles)",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "managed",
+              "filtered",
+              "nested"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "roles": {
+            "description": "nsRoleDN: the roles a nested role contains",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "scope": {
+            "description": "nsRoleScopeDN: extends the role beyond its subtree",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn",
+          "name",
+          "kind",
+          "roles"
+        ],
+        "type": "object"
+      },
+      "RoleMemberInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "add": {
+            "description": "false removes the member",
+            "type": "boolean"
+          },
+          "member": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "member",
+          "add"
+        ],
+        "type": "object"
+      },
+      "RoleMembers": {
+        "additionalProperties": false,
+        "properties": {
+          "members": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "members",
+          "truncated"
+        ],
+        "type": "object"
+      },
+      "RolePatch": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "filter": {
+            "type": "string"
+          },
+          "roles": {
+            "description": "Replaces the contained roles (nested roles)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "RootPasswordInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -2736,6 +3010,28 @@
           "objectClasses",
           "rdn",
           "fields"
+        ],
+        "type": "object"
+      },
+      "TemplateValues": {
+        "additionalProperties": false,
+        "properties": {
+          "priority": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "values": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "values"
         ],
         "type": "object"
       },
@@ -4210,6 +4506,192 @@
         "summary": "Change an item",
         "tags": [
           "settings"
+        ]
+      }
+    },
+    "/api/v1/cos": {
+      "delete": {
+        "operationId": "deleteCoS",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a CoS definition (templates stay)",
+        "tags": [
+          "roles and CoS"
+        ]
+      },
+      "get": {
+        "operationId": "listCoS",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CoSDefinition"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Class of Service definitions with their templates",
+        "tags": [
+          "roles and CoS"
+        ]
+      },
+      "post": {
+        "operationId": "createCoS",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewCoS"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoSDefinition"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create a pointer, indirect or classic CoS definition",
+        "tags": [
+          "roles and CoS"
+        ]
+      }
+    },
+    "/api/v1/cos/templates": {
+      "delete": {
+        "operationId": "deleteCoSTemplate",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a CoS template",
+        "tags": [
+          "roles and CoS"
+        ]
+      },
+      "put": {
+        "operationId": "setCoSTemplate",
+        "parameters": [
+          {
+            "description": "Template entry (created if missing)",
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "description": "Template entry (created if missing)",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateValues"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create a CoS template or replace its values",
+        "tags": [
+          "roles and CoS"
         ]
       }
     },
@@ -5780,6 +6262,261 @@
         "summary": "Create a subtree or user password policy",
         "tags": [
           "password policies"
+        ]
+      }
+    },
+    "/api/v1/roles": {
+      "delete": {
+        "operationId": "deleteRole",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a role",
+        "tags": [
+          "roles and CoS"
+        ]
+      },
+      "get": {
+        "operationId": "listRoles",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Role"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Role definitions of all suffixes",
+        "tags": [
+          "roles and CoS"
+        ]
+      },
+      "patch": {
+        "operationId": "updateRole",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RolePatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change a role",
+        "tags": [
+          "roles and CoS"
+        ]
+      },
+      "post": {
+        "operationId": "createRole",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewRole"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Role"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create a managed, filtered or nested role",
+        "tags": [
+          "roles and CoS"
+        ]
+      }
+    },
+    "/api/v1/roles/members": {
+      "get": {
+        "operationId": "listRoleMembers",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "explode": false,
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 200,
+              "format": "int64",
+              "maximum": 2000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoleMembers"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Entries that have the role (nsRole)",
+        "tags": [
+          "roles and CoS"
+        ]
+      },
+      "post": {
+        "operationId": "setRoleMember",
+        "parameters": [
+          {
+            "description": "The managed role",
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "description": "The managed role",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleMemberInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add or remove a member of a managed role",
+        "tags": [
+          "roles and CoS"
         ]
       }
     },
