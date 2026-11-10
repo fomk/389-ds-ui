@@ -550,6 +550,7 @@
     "_leave": "Discard",
     "_stay": "Keep editing",
     "_showAttrs": "Attribute names",
+    "_flagsTotal": "Numeric value",
     "_sections": {
       "server": "Server",
       "database": "Database",
@@ -824,7 +825,11 @@
         },
         "nsslapd-backend-implement": {
           "label": "Database implementation",
-          "help": "Changing it requires exporting and re-importing all data."
+          "help": "Changing it requires exporting and re-importing all data.",
+          "values": {
+            "mdb": "LMDB",
+            "bdb": "Berkeley DB"
+          }
         }
       }
     },

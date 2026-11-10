@@ -1,10 +1,8 @@
 <script setup lang="ts">
 /** One attribute of a declarative settings page: label column + control. */
-import { computed, ref, watch } from 'vue'
+import { computed, h, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  NCheckbox,
-  NCheckboxGroup,
   NIcon,
   NInput,
   NInputNumber,
@@ -13,6 +11,7 @@ import {
   NTag,
   NTooltip,
   useThemeVars,
+  type SelectOption,
 } from 'naive-ui'
 import { RotateCw, TriangleAlert } from '@lucide/vue'
 import {
@@ -83,15 +82,25 @@ function setUnit(k: string) {
 
 const unitOptions = computed(() => units.value?.map((u) => ({ value: u.key, label: t(`pages._units.${u.key}`) })) ?? [])
 
-// The documented minimum applies to the stored value; special values like -1
-// must stay reachable in any unit.
-const minScaled = computed(() => props.field.min)
+// Bounds are in the stored unit and must be scaled like the value. Zero and
+// negative bounds stay as they are: special values (-1, 0) are never scaled.
+const minScaled = computed(() => {
+  const m = props.field.min
+  return m === undefined || m <= 0 ? m : m / (unit.value?.factor ?? 1)
+})
 const maxScaled = computed(() => (props.field.max === undefined ? undefined : props.field.max / (unit.value?.factor ?? 1)))
 
 // --- flags -----------------------------------------------------------------
 
 const flags = computed(() => props.field.flags ?? [])
 const flagNames = computed(() => flagsSet(num.value ?? 0, flags.value))
+const flagOptions = computed(() =>
+  flags.value.map((f) => ({ value: f.name, label: t(`pages.${props.pageId}.flags.${f.name}`), bit: f.value })),
+)
+/** Option label with its bit value (the menu is teleported: inline style). */
+function renderFlag(o: SelectOption & { bit?: number }) {
+  return [String(o.label), h('span', { style: { marginLeft: '6px', fontSize: '11px', opacity: 0.55, fontVariantNumeric: 'tabular-nums' } }, String(o.bit ?? ''))]
+}
 function setFlags(names: (string | number)[]) {
   const keep = unknownBits(num.value ?? 0, flags.value)
   set(String(flagsValue(names.map(String), flags.value, keep)))
@@ -101,6 +110,12 @@ function setFlags(names: (string | number)[]) {
 
 const boolLiterals = computed(() => props.field.bool ?? ['on', 'off'])
 const checked = computed(() => single.value.toLowerCase() === boolLiterals.value[0]!.toLowerCase())
+
+const readOnlyText = computed(() => {
+  const v = single.value
+  if (!v) return '—'
+  return te(`${key.value}.values.${v}`) ? t(`${key.value}.values.${v}`) : v
+})
 
 const enumOptions = computed(() => {
   const vals = [...(props.field.values ?? []), ...(props.options ?? [])]
@@ -136,8 +151,10 @@ const enumOptions = computed(() => {
     </div>
 
     <div class="control">
+      <span v-if="field.readOnly" :id="id" class="ro">{{ readOnlyText }}</span>
+
       <NSwitch
-        v-if="field.type === 'bool'"
+        v-else-if="field.type === 'bool'"
         :value="checked"
         :disabled="disabled"
         @update:value="(v: boolean) => set(v ? boolLiterals[0] : boolLiterals[1])"
@@ -155,26 +172,26 @@ const enumOptions = computed(() => {
       />
 
       <div v-else-if="field.type === 'flags'" class="flags">
-        <NCheckboxGroup :value="flagNames" :disabled="disabled" @update:value="setFlags">
-          <div class="flag-grid">
-            <NCheckbox v-for="f in flags" :key="f.name" :value="f.name">
-              {{ t(`pages.${pageId}.flags.${f.name}`) }}
-              <span class="bit">{{ f.value }}</span>
-            </NCheckbox>
-          </div>
-        </NCheckboxGroup>
-        <div class="flag-total">
-          <NInputNumber
-            :value="num"
-            :min="0"
-            :show-button="false"
-            :disabled="disabled"
-            :input-props="{ id }"
-            size="small"
-            class="w-flag"
-            @update:value="(v: number | null) => set(v === null ? null : String(v))"
-          />
-        </div>
+        <NSelect
+          :value="flagNames"
+          :options="flagOptions"
+          :render-label="renderFlag"
+          :disabled="disabled"
+          multiple
+          filterable
+          class="w-flags"
+          @update:value="setFlags"
+        />
+        <NInputNumber
+          :value="num"
+          :min="0"
+          :show-button="false"
+          :disabled="disabled"
+          :input-props="{ id, 'aria-label': t('pages._flagsTotal') }"
+          :title="t('pages._flagsTotal')"
+          class="w-flag"
+          @update:value="(v: number | null) => set(v === null ? null : String(v))"
+        />
       </div>
 
       <div v-else-if="field.type === 'int' || units" class="number">
@@ -310,10 +327,6 @@ const enumOptions = computed(() => {
   max-width: 480px;
 }
 
-.w-flag {
-  width: 140px;
-}
-
 .raw {
   font-size: 12px;
   color: v-bind('vars.textColor3');
@@ -322,17 +335,28 @@ const enumOptions = computed(() => {
 
 .flags {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
   width: 100%;
 }
 
-.flag-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 4px 16px;
+.w-flags {
+  flex: 1;
+  min-width: 0;
+  max-width: 520px;
 }
 
+.w-flag {
+  width: 110px;
+  flex: none;
+}
+
+.ro {
+  line-height: 34px;
+  font-weight: 500;
+}
+
+:deep(.bit),
 .bit {
   margin-left: 4px;
   font-size: 11px;
