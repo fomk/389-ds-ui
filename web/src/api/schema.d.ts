@@ -669,6 +669,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/schema/attributetypes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a user-defined attribute type */
+        post: operations["createAttributeType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schema/attributetypes/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change a user-defined attribute type (the OID stays) */
+        put: operations["updateAttributeType"];
+        post?: never;
+        /** Delete an unused user-defined attribute type */
+        delete: operations["deleteAttributeType"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schema/objectclasses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a user-defined object class */
+        post: operations["createObjectClass"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/schema/objectclasses/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change a user-defined object class (the OID stays) */
+        put: operations["updateObjectClass"];
+        post?: never;
+        /** Delete an unused user-defined object class */
+        delete: operations["deleteObjectClass"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/search": {
         parameters: {
             query?: never;
@@ -858,6 +928,19 @@ export interface components {
             syntax?: string;
             /** @enum {string} */
             usage?: "userApplications" | "directoryOperation" | "distributedOperation" | "dSAOperation";
+        };
+        AttributeTypeDef: {
+            desc?: string;
+            equality?: string;
+            names: string[];
+            /** @description Numeric OID, or name-oid */
+            oid: string;
+            ordering?: string;
+            singleValue?: boolean;
+            substr?: string;
+            sup?: string;
+            /** @description Syntax OID; required unless sup is set */
+            syntax?: string;
         };
         Backend: {
             /**
@@ -1104,6 +1187,12 @@ export interface components {
             /** @description Writes into the same file as another log */
             sameAs?: string;
         };
+        MatchingRule: {
+            names: string[];
+            oid: string;
+            /** @description Assertion syntax OID */
+            syntax?: string;
+        };
         ModifyInputBody: {
             changes: components["schemas"]["Change"][];
         };
@@ -1161,6 +1250,16 @@ export interface components {
             obsolete?: boolean;
             oid: string;
             origin?: string[];
+            sup?: string[];
+        };
+        ObjectClassDef: {
+            desc?: string;
+            /** @enum {string} */
+            kind: "structural" | "auxiliary" | "abstract";
+            may: string[];
+            must: string[];
+            names: string[];
+            oid: string;
             sup?: string[];
         };
         Page: {
@@ -1339,6 +1438,7 @@ export interface components {
         };
         Schema: {
             attributeTypes: components["schemas"]["AttributeType"][];
+            matchingRules: components["schemas"]["MatchingRule"][];
             objectClasses: components["schemas"]["ObjectClass"][];
             syntaxes: components["schemas"]["Syntax"][];
         };
@@ -3261,6 +3361,194 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Schema"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createAttributeType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AttributeTypeDef"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateAttributeType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AttributeTypeDef"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteAttributeType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name or OID */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createObjectClass: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObjectClassDef"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateObjectClass: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ObjectClassDef"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteObjectClass: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name or OID */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

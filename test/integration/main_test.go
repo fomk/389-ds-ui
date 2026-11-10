@@ -9,7 +9,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,6 +20,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
+	"github.com/fomk/389-ds-ui/internal/api"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 )
 
@@ -132,4 +136,18 @@ func loadFixtures(ctx context.Context, ds testcontainers.Container) error {
 		return fmt.Errorf("ldapadd exit %d: %s", code, b)
 	}
 	return nil
+}
+
+// httptestRequest builds an API request with the CSRF header set.
+func httptestRequest(method, path, body string) *http.Request {
+	req := httptest.NewRequest(method, path, strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set(api.CSRFHeader, "ds-ui")
+	return req
+}
+
+func serve(h http.Handler, req *http.Request) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	return rec
 }

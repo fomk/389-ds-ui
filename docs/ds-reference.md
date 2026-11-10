@@ -81,6 +81,11 @@ Status (in the same entry): `nsTaskStatus` (text), `nsTaskLog`, `nsTaskExitCode`
 
 Read: `attributeTypes`, `objectClasses`, `matchingRules`, `ldapSyntaxes`, `nsSchemaCSN`. Modify: `modify add/delete` of `attributeTypes`/`objectClasses` values (stored in `99user.ldif`, attribute `X-ORIGIN 'user defined'`). The standard schema cannot be deleted.
 
+Observed on 3.1.2:
+- *Changing* a definition: `add` a value with the same OID — the server replaces the old one. `replace` is refused on the subschema entry ("Replace is not allowed"), and `delete`+`add` in one modify is refused while a class references the attribute type.
+- *Deleting* needs the stored value (`delete: attributeTypes` with `( OID )` alone fails with "Is unknown"), so ds-ui reads the value first.
+- Deleting an attribute type listed in a class's MUST/MAY is refused by the server; ds-ui checks classes, subtypes and entries before trying.
+
 ## Plugins — `cn=<Plugin Name>,cn=plugins,cn=config`
 
 Common attributes: `nsslapd-pluginEnabled`, `nsslapd-pluginPath`, `nsslapd-pluginInitfunc`, `nsslapd-pluginType`, `nsslapd-pluginId`, `nsslapd-pluginVersion`, `nsslapd-plugin-depends-on-*`, `nsslapd-pluginConfigArea` (shared config).

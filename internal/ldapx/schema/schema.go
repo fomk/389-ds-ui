@@ -128,6 +128,13 @@ func (o *ObjectClass) Name() string {
 	return o.OID
 }
 
+// MatchingRule is a matching rule description.
+type MatchingRule struct {
+	OID    string   `json:"oid"`
+	Names  []string `json:"names"`
+	Syntax string   `json:"syntax,omitempty" doc:"Assertion syntax OID"`
+}
+
 // Syntax is an LDAP syntax description.
 type Syntax struct {
 	OID  string `json:"oid"`
@@ -139,6 +146,7 @@ type Schema struct {
 	AttributeTypes []*AttributeType `json:"attributeTypes"`
 	ObjectClasses  []*ObjectClass   `json:"objectClasses"`
 	Syntaxes       []Syntax         `json:"syntaxes"`
+	MatchingRules  []MatchingRule   `json:"matchingRules"`
 
 	attrs   map[string]*AttributeType
 	classes map[string]*ObjectClass
@@ -149,6 +157,7 @@ type Raw struct {
 	AttributeTypes []string
 	ObjectClasses  []string
 	Syntaxes       []string
+	MatchingRules  []string
 }
 
 // Parse builds a Schema. Definitions that fail to parse are skipped and
@@ -160,6 +169,7 @@ func Parse(raw Raw) (*Schema, []error) {
 		AttributeTypes: []*AttributeType{},
 		ObjectClasses:  []*ObjectClass{},
 		Syntaxes:       []Syntax{},
+		MatchingRules:  []MatchingRule{},
 	}
 	var errs []error
 
@@ -170,6 +180,15 @@ func Parse(raw Raw) (*Schema, []error) {
 			continue
 		}
 		s.Syntaxes = append(s.Syntaxes, Syntax{OID: d.oid, Desc: d.first("DESC")})
+	}
+
+	for _, v := range raw.MatchingRules {
+		d, err := parseDefinition(v)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		s.MatchingRules = append(s.MatchingRules, MatchingRule{OID: d.oid, Names: nonNil(d.fields["NAME"]), Syntax: d.first("SYNTAX")})
 	}
 
 	for _, v := range raw.AttributeTypes {

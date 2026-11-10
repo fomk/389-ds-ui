@@ -182,6 +182,49 @@
         ],
         "type": "object"
       },
+      "AttributeTypeDef": {
+        "additionalProperties": false,
+        "properties": {
+          "desc": {
+            "type": "string"
+          },
+          "equality": {
+            "type": "string"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "oid": {
+            "description": "Numeric OID, or name-oid",
+            "type": "string"
+          },
+          "ordering": {
+            "type": "string"
+          },
+          "singleValue": {
+            "type": "boolean"
+          },
+          "substr": {
+            "type": "string"
+          },
+          "sup": {
+            "type": "string"
+          },
+          "syntax": {
+            "description": "Syntax OID; required unless sup is set",
+            "type": "string"
+          }
+        },
+        "required": [
+          "oid",
+          "names"
+        ],
+        "type": "object"
+      },
       "Backend": {
         "additionalProperties": false,
         "properties": {
@@ -840,6 +883,29 @@
         ],
         "type": "object"
       },
+      "MatchingRule": {
+        "additionalProperties": false,
+        "properties": {
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "oid": {
+            "type": "string"
+          },
+          "syntax": {
+            "description": "Assertion syntax OID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "oid",
+          "names"
+        ],
+        "type": "object"
+      },
       "ModifyInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -1075,6 +1141,58 @@
               "type": "string"
             },
             "type": "array"
+          },
+          "sup": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "oid",
+          "names",
+          "kind",
+          "must",
+          "may"
+        ],
+        "type": "object"
+      },
+      "ObjectClassDef": {
+        "additionalProperties": false,
+        "properties": {
+          "desc": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "structural",
+              "auxiliary",
+              "abstract"
+            ],
+            "type": "string"
+          },
+          "may": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "must": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "oid": {
+            "type": "string"
           },
           "sup": {
             "items": {
@@ -1647,6 +1765,12 @@
             },
             "type": "array"
           },
+          "matchingRules": {
+            "items": {
+              "$ref": "#/components/schemas/MatchingRule"
+            },
+            "type": "array"
+          },
           "objectClasses": {
             "items": {
               "$ref": "#/components/schemas/ObjectClass"
@@ -1663,7 +1787,8 @@
         "required": [
           "attributeTypes",
           "objectClasses",
-          "syntaxes"
+          "syntaxes",
+          "matchingRules"
         ],
         "type": "object"
       },
@@ -4652,6 +4777,230 @@
           }
         },
         "summary": "Parsed LDAP schema with resolved inheritance",
+        "tags": [
+          "schema"
+        ]
+      }
+    },
+    "/api/v1/schema/attributetypes": {
+      "post": {
+        "operationId": "createAttributeType",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttributeTypeDef"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add a user-defined attribute type",
+        "tags": [
+          "schema"
+        ]
+      }
+    },
+    "/api/v1/schema/attributetypes/{name}": {
+      "delete": {
+        "operationId": "deleteAttributeType",
+        "parameters": [
+          {
+            "description": "Name or OID",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "Name or OID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete an unused user-defined attribute type",
+        "tags": [
+          "schema"
+        ]
+      },
+      "put": {
+        "operationId": "updateAttributeType",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttributeTypeDef"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change a user-defined attribute type (the OID stays)",
+        "tags": [
+          "schema"
+        ]
+      }
+    },
+    "/api/v1/schema/objectclasses": {
+      "post": {
+        "operationId": "createObjectClass",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObjectClassDef"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add a user-defined object class",
+        "tags": [
+          "schema"
+        ]
+      }
+    },
+    "/api/v1/schema/objectclasses/{name}": {
+      "delete": {
+        "operationId": "deleteObjectClass",
+        "parameters": [
+          {
+            "description": "Name or OID",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "Name or OID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete an unused user-defined object class",
+        "tags": [
+          "schema"
+        ]
+      },
+      "put": {
+        "operationId": "updateObjectClass",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObjectClassDef"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change a user-defined object class (the OID stays)",
         "tags": [
           "schema"
         ]

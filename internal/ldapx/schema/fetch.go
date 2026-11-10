@@ -25,7 +25,7 @@ func Fetch(conn *ldap.Conn) (s *Schema, version string, parseErrs []error, err e
 	}
 	res, err := conn.Search(ldap.NewSearchRequest(dn, ldap.ScopeBaseObject, ldap.NeverDerefAliases,
 		1, 0, false, "(objectClass=subschema)",
-		[]string{"attributeTypes", "objectClasses", "ldapSyntaxes"}, nil))
+		[]string{"attributeTypes", "objectClasses", "ldapSyntaxes", "matchingRules"}, nil))
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -37,6 +37,7 @@ func Fetch(conn *ldap.Conn) (s *Schema, version string, parseErrs []error, err e
 		AttributeTypes: e.GetAttributeValues("attributeTypes"),
 		ObjectClasses:  e.GetAttributeValues("objectClasses"),
 		Syntaxes:       e.GetAttributeValues("ldapSyntaxes"),
+		MatchingRules:  e.GetAttributeValues("matchingRules"),
 	}
 	s, parseErrs = Parse(raw)
 	return s, hashRaw(raw), parseErrs, nil
@@ -44,7 +45,7 @@ func Fetch(conn *ldap.Conn) (s *Schema, version string, parseErrs []error, err e
 
 func hashRaw(r Raw) string {
 	h := sha256.New()
-	for _, list := range [][]string{r.AttributeTypes, r.ObjectClasses, r.Syntaxes} {
+	for _, list := range [][]string{r.AttributeTypes, r.ObjectClasses, r.Syntaxes, r.MatchingRules} {
 		for _, v := range list {
 			h.Write([]byte(v))
 			h.Write([]byte{0})

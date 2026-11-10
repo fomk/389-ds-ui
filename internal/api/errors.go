@@ -11,6 +11,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/entries"
 	"github.com/fomk/389-ds-ui/internal/files"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
+	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
 	"github.com/fomk/389-ds-ui/internal/logs"
 	"github.com/fomk/389-ds-ui/internal/pages"
 	"github.com/fomk/389-ds-ui/internal/providers"
@@ -75,6 +76,10 @@ func toHTTPError(err error) error {
 		return problem(http.StatusConflict, err.Error())
 	case errors.Is(err, files.ErrOutsideRoot):
 		return problem(http.StatusNotImplemented, err.Error())
+	case errors.Is(err, schema.ErrInvalidDefinition):
+		return problem(http.StatusUnprocessableEntity, err.Error())
+	case errors.Is(err, ds.ErrSchemaInUse), errors.Is(err, ds.ErrSchemaNotUser), errors.Is(err, ds.ErrSchemaExists):
+		return problem(http.StatusConflict, err.Error())
 	case errors.Is(err, ds.ErrInvalidValue):
 		return problem(http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, ds.ErrInvalidName):
