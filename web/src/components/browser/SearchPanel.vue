@@ -12,7 +12,6 @@ import {
   NFormItem,
   NIcon,
   NInput,
-  NInputNumber,
   NSelect,
   NSpace,
   useThemeVars,
@@ -47,6 +46,8 @@ const filter = computed(() => {
 })
 const attrsText = ref('cn, uid, mail')
 const limit = ref(500)
+// The API caps interactive searches at 5000 entries; use export for more.
+const limitOptions = [100, 500, 1000, 2000, 5000].map((n) => ({ value: n, label: String(n) }))
 const busy = ref(false)
 const error = ref<LocalizedError>()
 const hits = ref<Hit[]>()
@@ -153,7 +154,7 @@ const exportQuery = computed(() => ({ base: base.value.trim(), scope: scope.valu
             <NSelect v-model:value="scope" :options="scopeOptions" class="scope" />
           </NFormItem>
           <NFormItem :label="t('search.limit')" :show-feedback="false">
-            <NInputNumber v-model:value="limit" :min="1" :max="5000" class="limit" />
+            <NSelect v-model:value="limit" :options="limitOptions" class="limit" />
           </NFormItem>
         </div>
       </NForm>
