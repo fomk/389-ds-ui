@@ -65,9 +65,9 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 
 | Feature | Mechanism | Stage | A | B | C |
 |---|---|---|---|---|---|
-| Schema browsing | LDAP | 4 | ✅ | ✅ | ✅ |
-| Creating/deleting custom AT/OC | LDAP (`cn=schema`) | 4 | ✅ | ✅ | ✅ |
-| Schema reload | Task | 4 | ✅ | ✅ | ✅ |
+| Schema browsing (search, dependencies, inherited attributes) — done | LDAP | 4 | ✅ | ✅ | ✅ |
+| Creating/changing/deleting custom AT/OC — done (deletion only while unused) | LDAP (`cn=schema`) | 4 | ✅ | ✅ | ✅ |
+| Schema reload (after editing schema files on disk; needs the Schema Reload plug-in) | Task | later | ✅ | ✅ | ✅ |
 | Global password policy | LDAP | 3 | ✅ | ✅ | ✅ |
 | Local password policies | LDAP (CoS) | 4 | ✅ | ✅ | ✅ |
 | Account status, lock/unlock | LDAP | 4 | ✅ | ✅ | ✅ |
