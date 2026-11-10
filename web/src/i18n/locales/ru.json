@@ -424,7 +424,8 @@
       "delete-backend": "Удаление суффикса",
       "restart": "Перезапуск сервера"
     },
-    "progress": "{current} из {total}"
+    "progress": "{current} из {total}",
+    "completed": "Выполнено."
   },
   "backups": {
     "tab": "Резервные копии",

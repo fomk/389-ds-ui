@@ -424,7 +424,8 @@
       "delete-backend": "Suffix deleted",
       "restart": "Server restart"
     },
-    "progress": "{current} of {total}"
+    "progress": "{current} of {total}",
+    "completed": "Completed."
   },
   "backups": {
     "tab": "Backups",

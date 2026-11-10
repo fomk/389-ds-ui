@@ -23,6 +23,9 @@ const list = computed(() =>
 const typeLabel = (x: Task) => (te(`tasks.types.${x.type}`) ? t(`tasks.types.${x.type}`) : x.type)
 const statusType = (x: Task) =>
   ({ running: 'info', succeeded: 'success', failed: 'error', unknown: 'warning' })[x.status] as 'info' | 'success' | 'error' | 'warning'
+// Server tasks report their own status text; immediate operations (no log,
+// no server message) get a generic one so every row has the same shape.
+const summary = (x: Task) => x.message || (x.status === 'succeeded' ? t('tasks.completed') : '')
 const time = (s: string) => new Intl.DateTimeFormat(currentLocale.value, { timeStyle: 'medium' }).format(new Date(s))
 </script>
 
@@ -34,7 +37,10 @@ const time = (s: string) => new Intl.DateTimeFormat(currentLocale.value, { timeS
       <span class="name">{{ typeLabel(x) }}</span>
       <span class="muted mono">{{ x.target }}</span>
       <span class="muted time">{{ time(x.started) }}</span>
-      <NButton v-if="x.log.length" text size="tiny" @click="open = open === x.id ? undefined : x.id">{{ t('tasks.log') }}</NButton>
+      <!-- Fixed slot so the time lines up whether or not a task has a log. -->
+      <span class="log-slot">
+        <NButton v-if="x.log.length" text size="tiny" @click="open = open === x.id ? undefined : x.id">{{ t('tasks.log') }}</NButton>
+      </span>
     </div>
     <NProgress
       v-if="x.status === 'running' && (x.total ?? 0) > 0"
@@ -43,7 +49,7 @@ const time = (s: string) => new Intl.DateTimeFormat(currentLocale.value, { timeS
       :height="4"
       :show-indicator="false"
     />
-    <div v-if="x.message" class="muted msg">{{ x.message }}</div>
+    <div v-if="summary(x)" class="muted msg">{{ summary(x) }}</div>
     <pre v-if="open === x.id" class="log mono">{{ x.log.join('\n') }}</pre>
   </div>
 </template>
@@ -69,6 +75,11 @@ const time = (s: string) => new Intl.DateTimeFormat(currentLocale.value, { timeS
 .time {
   margin-left: auto;
   font-size: 12px;
+}
+
+.log-slot {
+  width: 36px;
+  text-align: right;
 }
 
 .msg {
