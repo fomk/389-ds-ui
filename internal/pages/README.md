@@ -49,6 +49,12 @@ and in `go test`.
 | `danger` | A wrong value can cut ds-ui off from the server; the UI asks for confirmation |
 | `readOnly` | Shown but not editable |
 
+Page-level keys besides the ones above: `plugin` (the cn of the plug-in the
+page configures; such pages appear on the Plugins page, not in the settings
+menu) and `sparse` (attributes may be absent until set; the integration test
+then checks that the entry's object classes allow them instead of requiring
+them on the server).
+
 Facts available to `when`: `dbImpl` (`mdb` or `bdb`).
 
 ## Reading and writing

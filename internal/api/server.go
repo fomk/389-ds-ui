@@ -128,6 +128,7 @@ func register(api huma.API, d Deps) {
 	registerBackups(api, d)
 	registerLogs(api, d)
 	registerPages(api, d)
+	registerPlugins(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

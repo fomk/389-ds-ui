@@ -242,6 +242,8 @@ const (
 	OpCreateBackend = "create-backend"
 	OpDeleteBackend = "delete-backend"
 	OpRestart       = "restart"
+	OpEnablePlugin  = "enable-plugin"
+	OpDisablePlugin = "disable-plugin"
 )
 
 // Record adds a finished operation to the history: ok when err is nil,

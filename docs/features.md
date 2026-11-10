@@ -79,9 +79,9 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 
 | Plugin | Stage | Notes |
 |---|---|---|
-| List, on/off, dynamic plugins | 3 | — |
-| Referential Integrity, Attribute Uniqueness, USN, Retro Changelog, Account Policy, Root DN Access | 3 | YAML pages |
-| MemberOf | 3/4 | + fixup task |
+| List, on/off, dynamic plugins | 3 ✅ | required plug-ins (syntaxes, matching rules, ldbm, ACL) cannot be disabled |
+| Referential Integrity, Attribute Uniqueness (default instance), Retro Changelog, Account Policy, Root DN Access | 3 ✅ | YAML pages (`internal/pages/defs/plugins.yaml`); USN is on/off only |
+| MemberOf | 3 ✅ / 4 | settings ✅; fixup task in stage 4 |
 | DNA | 4 | ranges, shared config |
 | Auto Membership | 4 | definitions, regex rules, rebuild |
 | Managed Entries | 4 | templates + definitions |

@@ -6,7 +6,7 @@ import { NAlert, NButton, NCard, NSkeleton, NSpace, useDialog, useMessage, useTh
 import { api, call, type Schemas } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { useServerStore } from '@/stores/server'
-import { changedAttrs, fieldKey, type PageField } from '@/settings/fields'
+import { changedAttrs, clean, fieldKey, type PageField } from '@/settings/fields'
 import SettingsField from './SettingsField.vue'
 
 type PageState = Schemas['PageState']
@@ -28,7 +28,8 @@ const saving = ref(false)
 function reset() {
   const s = state.value
   if (!s) return
-  form.value = Object.fromEntries(s.page.fields.map((f) => [f.attr, [...(s.values[f.attr] ?? [])]]))
+  // Blank values ("attr:" in cn=config) mean unset; keep them out of the controls.
+  form.value = Object.fromEntries(s.page.fields.map((f) => [f.attr, clean(s.values[f.attr])]))
 }
 
 async function load() {

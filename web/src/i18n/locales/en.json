@@ -422,7 +422,9 @@
       "delete-ldif": "LDIF deleted",
       "create-backend": "Suffix created",
       "delete-backend": "Suffix deleted",
-      "restart": "Server restart"
+      "restart": "Server restart",
+      "enable-plugin": "Plug-in enabled",
+      "disable-plugin": "Plug-in disabled"
     },
     "progress": "{current} of {total}",
     "completed": "Completed."
@@ -555,7 +557,8 @@
       "server": "Server",
       "database": "Database",
       "logging": "Logging",
-      "security": "Security"
+      "security": "Security",
+      "plugins": "Plug-ins"
     },
     "_groups": {
       "network": "Network",
@@ -577,7 +580,10 @@
       "changes": "Changes and history",
       "expiration": "Expiration",
       "syntax": "Syntax",
-      "lockout": "Lockout"
+      "lockout": "Lockout",
+      "scope": "Scope",
+      "time": "Time",
+      "hosts": "Hosts"
     },
     "_units": {
       "B": "B",
@@ -716,6 +722,10 @@
         },
         "nsslapd-return-exact-case": {
           "label": "Return attribute names as in schema"
+        },
+        "nsslapd-dynamic-plugins": {
+          "label": "Dynamic plug-ins",
+          "help": "Plug-in changes take effect without a restart."
         }
       }
     },
@@ -1127,6 +1137,199 @@
           "label": "Lockout duration"
         }
       }
+    },
+    "plugin-referint": {
+      "title": "Referential Integrity",
+      "description": "Updates or removes references (member, owner, …) when the referenced entry is renamed or deleted.",
+      "fields": {
+        "referint-membership-attr": {
+          "label": "Reference attributes",
+          "help": "Must be indexed for equality in every backend."
+        },
+        "referint-update-delay": {
+          "label": "Update delay",
+          "help": "0 updates synchronously; a delay batches updates in the background."
+        },
+        "referint-logfile": {
+          "label": "Work file",
+          "help": "Pending changes when a delay is set."
+        },
+        "nsslapd-pluginEntryScope": {
+          "label": "Only entries under",
+          "help": "Empty: every suffix."
+        },
+        "nsslapd-pluginExcludeEntryScope": {
+          "label": "Except entries under"
+        },
+        "nsslapd-pluginContainerScope": {
+          "label": "References only from",
+          "help": "Only fix references held by entries in these subtrees."
+        }
+      }
+    },
+    "plugin-memberof": {
+      "title": "MemberOf",
+      "description": "Maintains memberOf in user entries from the member attributes of groups.",
+      "fields": {
+        "memberOfGroupAttr": {
+          "label": "Group member attributes"
+        },
+        "memberOfAttr": {
+          "label": "Attribute to maintain"
+        },
+        "memberOfAllBackends": {
+          "label": "Across all backends",
+          "help": "Groups and members may be in different suffixes."
+        },
+        "memberOfSkipNested": {
+          "label": "Skip nested groups",
+          "help": "Faster when groups are not nested."
+        },
+        "memberOfAutoAddOC": {
+          "label": "Object class to add",
+          "help": "Added to members that do not allow memberOf."
+        },
+        "memberOfEntryScope": {
+          "label": "Only entries under"
+        },
+        "memberOfEntryScopeExcludeSubtree": {
+          "label": "Except entries under"
+        }
+      }
+    },
+    "plugin-uniqueness": {
+      "title": "Attribute Uniqueness",
+      "description": "Rejects changes that would give two entries the same value of an attribute (the default uid instance).",
+      "fields": {
+        "uniqueness-attribute-name": {
+          "label": "Unique attributes"
+        },
+        "uniqueness-subtrees": {
+          "label": "Subtrees",
+          "help": "Empty: every suffix."
+        },
+        "uniqueness-exclude-subtrees": {
+          "label": "Except subtrees"
+        },
+        "uniqueness-across-all-subtrees": {
+          "label": "Unique across all subtrees",
+          "help": "Otherwise each subtree is checked on its own."
+        },
+        "uniqueness-top-entry-oc": {
+          "label": "Top entry class",
+          "help": "Instead of subtrees: unique below entries of this class."
+        },
+        "uniqueness-subtree-entries-oc": {
+          "label": "Checked entries class"
+        }
+      }
+    },
+    "plugin-rootdn": {
+      "title": "Root DN Access Control",
+      "description": "Limits when and from where Directory Manager may bind. ds-ui itself works as Directory Manager.",
+      "fields": {
+        "rootdn-open-time": {
+          "label": "From",
+          "help": "HHMM, e.g. 0800."
+        },
+        "rootdn-close-time": {
+          "label": "Until",
+          "help": "HHMM, e.g. 1700."
+        },
+        "rootdn-days-allowed": {
+          "label": "Days",
+          "help": "e.g. Mon, Tue, Wed, Thu, Fri"
+        },
+        "rootdn-allow-ip": {
+          "label": "Allowed IP addresses",
+          "help": "Wildcards allowed: 10.0.*"
+        },
+        "rootdn-deny-ip": {
+          "label": "Denied IP addresses"
+        },
+        "rootdn-allow-host": {
+          "label": "Allowed host names",
+          "help": "e.g. *.example.org"
+        },
+        "rootdn-deny-host": {
+          "label": "Denied host names"
+        }
+      }
+    },
+    "plugin-retrocl": {
+      "title": "Retro Changelog",
+      "description": "Records changes in cn=changelog for applications that poll for them.",
+      "fields": {
+        "nsslapd-changelogmaxage": {
+          "label": "Keep records for",
+          "help": "e.g. 2d, 12h; empty keeps them forever."
+        },
+        "nsslapd-changelogtrim-interval": {
+          "label": "Trim interval"
+        },
+        "nsslapd-include-suffix": {
+          "label": "Only suffixes"
+        },
+        "nsslapd-exclude-suffix": {
+          "label": "Except suffixes"
+        },
+        "nsslapd-attribute": {
+          "label": "Extra attributes",
+          "help": "attribute[:alias] recorded with each change, e.g. nsUniqueId:targetUniqueId"
+        }
+      }
+    },
+    "plugin-account-policy": {
+      "title": "Account Policy",
+      "description": "Records logins and locks out accounts that have been inactive for too long.",
+      "fields": {
+        "alwaysRecordLogin": {
+          "label": "Record every login",
+          "help": "Otherwise only for accounts with a policy."
+        },
+        "alwaysRecordLoginAttr": {
+          "label": "Login time attribute"
+        },
+        "stateAttrName": {
+          "label": "State attribute"
+        },
+        "altStateAttrName": {
+          "label": "Fallback state attribute"
+        },
+        "specAttrName": {
+          "label": "Policy reference attribute"
+        },
+        "limitAttrName": {
+          "label": "Inactivity limit attribute"
+        },
+        "checkAllStateAttrs": {
+          "label": "Check all state attributes"
+        }
+      }
     }
+  },
+  "plugins": {
+    "loadError": "Could not load plug-ins",
+    "search": "Name or type",
+    "showConfigurable": "Configurable",
+    "showEnabled": "Enabled",
+    "showAll": "All",
+    "none": "No plug-ins match",
+    "hasSettings": "Has settings",
+    "protected": "Required by the server; cannot be disabled here.",
+    "on": "enabled",
+    "off": "disabled",
+    "enabled": "{name} enabled.",
+    "disabled": "{name} disabled.",
+    "afterRestart": "Takes effect after a restart.",
+    "toggleError": "Could not change the plug-in",
+    "notDynamic": "Dynamic plug-ins are off: enabling, disabling and reconfiguring plug-ins takes effect after a server restart.",
+    "notDynamicLink": "Change",
+    "type": "Type",
+    "version": "Version",
+    "vendor": "Vendor",
+    "path": "Library",
+    "dependsOn": "Depends on",
+    "disabledHint": "The plug-in is disabled: its settings are kept but have no effect."
   }
 }

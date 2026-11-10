@@ -1,0 +1,84 @@
+# Configuration of simple plug-ins: one entry each. Shown on the Plugins page
+# (not in the settings menu). Plug-in attributes are mostly absent until set,
+# hence sparse: the integration test checks them against the schema instead.
+pages:
+  - id: plugin-referint
+    section: plugins
+    plugin: referential integrity postoperation
+    dn: cn=referential integrity postoperation,cn=plugins,cn=config
+    sparse: true
+    fields:
+      - {attr: referint-membership-attr, type: list}
+      - {attr: referint-update-delay, type: duration, min: -1}
+      - {attr: referint-logfile, type: string}
+      - {attr: nsslapd-pluginEntryScope, type: list, group: scope}
+      - {attr: nsslapd-pluginExcludeEntryScope, type: list, group: scope}
+      - {attr: nsslapd-pluginContainerScope, type: list, group: scope}
+
+  - id: plugin-memberof
+    section: plugins
+    plugin: MemberOf Plugin
+    dn: cn=MemberOf Plugin,cn=plugins,cn=config
+    sparse: true
+    fields:
+      - {attr: memberOfGroupAttr, type: list}
+      - {attr: memberOfAttr, type: string}
+      - {attr: memberOfAllBackends, type: bool}
+      - {attr: memberOfSkipNested, type: bool}
+      - {attr: memberOfAutoAddOC, type: string}
+      - {attr: memberOfEntryScope, type: list, group: scope}
+      - {attr: memberOfEntryScopeExcludeSubtree, type: list, group: scope}
+
+  - id: plugin-uniqueness
+    section: plugins
+    plugin: attribute uniqueness
+    dn: cn=attribute uniqueness,cn=plugins,cn=config
+    sparse: true
+    fields:
+      - {attr: uniqueness-attribute-name, type: list}
+      - {attr: uniqueness-subtrees, type: list, group: scope}
+      - {attr: uniqueness-exclude-subtrees, type: list, group: scope}
+      - {attr: uniqueness-across-all-subtrees, type: bool, group: scope}
+      - {attr: uniqueness-top-entry-oc, type: string, group: scope}
+      - {attr: uniqueness-subtree-entries-oc, type: string, group: scope}
+
+  - id: plugin-rootdn
+    section: plugins
+    plugin: RootDN Access Control
+    dn: cn=RootDN Access Control,cn=plugins,cn=config
+    sparse: true
+    fields:
+      # Directory Manager is what ds-ui binds as: a wrong rule locks it out.
+      - {attr: rootdn-open-time, type: string, group: time, danger: true}
+      - {attr: rootdn-close-time, type: string, group: time, danger: true}
+      - {attr: rootdn-days-allowed, type: string, group: time, danger: true}
+      - {attr: rootdn-allow-ip, type: list, group: hosts, danger: true}
+      - {attr: rootdn-deny-ip, type: list, group: hosts, danger: true}
+      - {attr: rootdn-allow-host, type: list, group: hosts, danger: true}
+      - {attr: rootdn-deny-host, type: list, group: hosts, danger: true}
+
+  - id: plugin-retrocl
+    section: plugins
+    plugin: Retro Changelog Plugin
+    dn: cn=Retro Changelog Plugin,cn=plugins,cn=config
+    sparse: true
+    fields:
+      - {attr: nsslapd-changelogmaxage, type: string, restart: true}
+      - {attr: nsslapd-changelogtrim-interval, type: duration, min: 1, restart: true}
+      - {attr: nsslapd-include-suffix, type: list, restart: true}
+      - {attr: nsslapd-exclude-suffix, type: list, restart: true}
+      - {attr: nsslapd-attribute, type: list, restart: true}
+
+  - id: plugin-account-policy
+    section: plugins
+    plugin: Account Policy Plugin
+    dn: cn=config,cn=Account Policy Plugin,cn=plugins,cn=config
+    sparse: true
+    fields:
+      - {attr: alwaysRecordLogin, type: bool, bool: ["yes", "no"]}
+      - {attr: alwaysRecordLoginAttr, type: string}
+      - {attr: stateAttrName, type: string}
+      - {attr: altStateAttrName, type: string}
+      - {attr: specAttrName, type: string}
+      - {attr: limitAttrName, type: string}
+      - {attr: checkAllStateAttrs, type: bool, bool: ["yes", "no"]}

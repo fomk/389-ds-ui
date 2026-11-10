@@ -1070,6 +1070,10 @@
             "format": "int64",
             "type": "integer"
           },
+          "plugin": {
+            "description": "cn of the plug-in this page configures; shown on the Plugins page",
+            "type": "string"
+          },
           "section": {
             "description": "Menu section: server, database, logging, security, …",
             "type": "string"
@@ -1223,6 +1227,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "plugin": {
+            "type": "string"
+          },
           "section": {
             "type": "string"
           }
@@ -1305,6 +1312,110 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "Plugin": {
+        "additionalProperties": false,
+        "properties": {
+          "dependsOn": {
+            "description": "Named plug-ins and plug-in types this one depends on",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "description": {
+            "type": "string"
+          },
+          "dn": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "id": {
+            "description": "nsslapd-pluginId",
+            "type": "string"
+          },
+          "name": {
+            "description": "cn",
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "protected": {
+            "description": "The server needs it; it cannot be disabled here",
+            "type": "boolean"
+          },
+          "type": {
+            "description": "nsslapd-pluginType",
+            "type": "string"
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "dn",
+          "enabled",
+          "type",
+          "dependsOn",
+          "protected"
+        ],
+        "type": "object"
+      },
+      "PluginChange": {
+        "additionalProperties": false,
+        "properties": {
+          "plugin": {
+            "$ref": "#/components/schemas/Plugin"
+          },
+          "restart": {
+            "description": "The change applies after a server restart",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "plugin",
+          "restart"
+        ],
+        "type": "object"
+      },
+      "PluginList": {
+        "additionalProperties": false,
+        "properties": {
+          "dynamic": {
+            "description": "nsslapd-dynamic-plugins: changes apply without a restart",
+            "type": "boolean"
+          },
+          "plugins": {
+            "items": {
+              "$ref": "#/components/schemas/Plugin"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "dynamic",
+          "plugins"
+        ],
+        "type": "object"
+      },
+      "PluginPatchInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
         "type": "object"
       },
       "ReindexInputBody": {
@@ -3817,6 +3928,129 @@
         "summary": "Change settings of a page",
         "tags": [
           "settings"
+        ]
+      }
+    },
+    "/api/v1/plugins": {
+      "get": {
+        "operationId": "listPlugins",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginList"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Server plug-ins",
+        "tags": [
+          "plugins"
+        ]
+      }
+    },
+    "/api/v1/plugins/{name}": {
+      "get": {
+        "operationId": "getPlugin",
+        "parameters": [
+          {
+            "description": "Plug-in cn",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "Plug-in cn",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plugin"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "One plug-in",
+        "tags": [
+          "plugins"
+        ]
+      },
+      "patch": {
+        "operationId": "updatePlugin",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PluginPatchInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluginChange"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Enable or disable a plug-in",
+        "tags": [
+          "plugins"
         ]
       }
     },

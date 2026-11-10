@@ -26,6 +26,7 @@ type PageSummary struct {
 	ID      string `json:"id"`
 	Section string `json:"section"`
 	Order   int    `json:"order"`
+	Plugin  string `json:"plugin,omitempty"`
 }
 
 // PageState is a page together with the current values on the server.
@@ -60,7 +61,7 @@ func (s *Service) List(c *ldap.Conn) ([]PageSummary, error) {
 	out := []PageSummary{}
 	for _, p := range s.pages {
 		if p.Applies(facts) {
-			out = append(out, PageSummary{ID: p.ID, Section: p.Section, Order: p.Order})
+			out = append(out, PageSummary{ID: p.ID, Section: p.Section, Order: p.Order, Plugin: p.Plugin})
 		}
 	}
 	return out, nil

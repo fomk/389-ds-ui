@@ -422,7 +422,9 @@
       "delete-ldif": "Удаление LDIF",
       "create-backend": "Создание суффикса",
       "delete-backend": "Удаление суффикса",
-      "restart": "Перезапуск сервера"
+      "restart": "Перезапуск сервера",
+      "enable-plugin": "Плагин включён",
+      "disable-plugin": "Плагин выключен"
     },
     "progress": "{current} из {total}",
     "completed": "Выполнено."
@@ -555,7 +557,8 @@
       "server": "Сервер",
       "database": "База данных",
       "logging": "Журналы",
-      "security": "Безопасность"
+      "security": "Безопасность",
+      "plugins": "Плагины"
     },
     "_groups": {
       "network": "Сеть",
@@ -577,7 +580,10 @@
       "changes": "Смена и история",
       "expiration": "Срок действия",
       "syntax": "Требования к паролю",
-      "lockout": "Блокировка"
+      "lockout": "Блокировка",
+      "scope": "Область действия",
+      "time": "Время",
+      "hosts": "Хосты"
     },
     "_units": {
       "B": "Б",
@@ -716,6 +722,10 @@
         },
         "nsslapd-return-exact-case": {
           "label": "Имена атрибутов как в схеме"
+        },
+        "nsslapd-dynamic-plugins": {
+          "label": "Динамические плагины",
+          "help": "Изменения плагинов вступают в силу без перезапуска."
         }
       }
     },
@@ -1127,6 +1137,199 @@
           "label": "Длительность блокировки"
         }
       }
+    },
+    "plugin-referint": {
+      "title": "Ссылочная целостность",
+      "description": "Обновляет или удаляет ссылки (member, owner, …), когда запись, на которую они указывают, переименована или удалена.",
+      "fields": {
+        "referint-membership-attr": {
+          "label": "Атрибуты-ссылки",
+          "help": "Должны иметь индекс равенства во всех бэкендах."
+        },
+        "referint-update-delay": {
+          "label": "Задержка обновления",
+          "help": "0 — синхронно; задержка — пакетами в фоне."
+        },
+        "referint-logfile": {
+          "label": "Рабочий файл",
+          "help": "Отложенные изменения при ненулевой задержке."
+        },
+        "nsslapd-pluginEntryScope": {
+          "label": "Только записи в",
+          "help": "Пусто — все суффиксы."
+        },
+        "nsslapd-pluginExcludeEntryScope": {
+          "label": "Кроме записей в"
+        },
+        "nsslapd-pluginContainerScope": {
+          "label": "Ссылки только из",
+          "help": "Исправлять только ссылки в записях этих поддеревьев."
+        }
+      }
+    },
+    "plugin-memberof": {
+      "title": "MemberOf",
+      "description": "Ведёт атрибут memberOf у пользователей по атрибутам членства групп.",
+      "fields": {
+        "memberOfGroupAttr": {
+          "label": "Атрибуты членства в группах"
+        },
+        "memberOfAttr": {
+          "label": "Вычисляемый атрибут"
+        },
+        "memberOfAllBackends": {
+          "label": "Во всех бэкендах",
+          "help": "Группы и участники могут быть в разных суффиксах."
+        },
+        "memberOfSkipNested": {
+          "label": "Без вложенных групп",
+          "help": "Быстрее, если вложенных групп нет."
+        },
+        "memberOfAutoAddOC": {
+          "label": "Добавляемый objectClass",
+          "help": "Добавляется участникам, у которых memberOf не разрешён."
+        },
+        "memberOfEntryScope": {
+          "label": "Только записи в"
+        },
+        "memberOfEntryScopeExcludeSubtree": {
+          "label": "Кроме записей в"
+        }
+      }
+    },
+    "plugin-uniqueness": {
+      "title": "Уникальность атрибутов",
+      "description": "Отклоняет изменения, при которых у двух записей окажется одинаковое значение атрибута (стандартный экземпляр для uid).",
+      "fields": {
+        "uniqueness-attribute-name": {
+          "label": "Уникальные атрибуты"
+        },
+        "uniqueness-subtrees": {
+          "label": "Поддеревья",
+          "help": "Пусто — все суффиксы."
+        },
+        "uniqueness-exclude-subtrees": {
+          "label": "Кроме поддеревьев"
+        },
+        "uniqueness-across-all-subtrees": {
+          "label": "Уникальность во всех поддеревьях",
+          "help": "Иначе каждое поддерево проверяется отдельно."
+        },
+        "uniqueness-top-entry-oc": {
+          "label": "Класс корневой записи",
+          "help": "Вместо поддеревьев: уникальность под записями этого класса."
+        },
+        "uniqueness-subtree-entries-oc": {
+          "label": "Класс проверяемых записей"
+        }
+      }
+    },
+    "plugin-rootdn": {
+      "title": "Доступ Directory Manager",
+      "description": "Ограничивает, когда и откуда может привязываться Directory Manager. Сам ds-ui работает от его имени.",
+      "fields": {
+        "rootdn-open-time": {
+          "label": "С",
+          "help": "ЧЧММ, например 0800."
+        },
+        "rootdn-close-time": {
+          "label": "До",
+          "help": "ЧЧММ, например 1700."
+        },
+        "rootdn-days-allowed": {
+          "label": "Дни",
+          "help": "например Mon, Tue, Wed, Thu, Fri"
+        },
+        "rootdn-allow-ip": {
+          "label": "Разрешённые IP",
+          "help": "Можно с маской: 10.0.*"
+        },
+        "rootdn-deny-ip": {
+          "label": "Запрещённые IP"
+        },
+        "rootdn-allow-host": {
+          "label": "Разрешённые хосты",
+          "help": "например *.example.org"
+        },
+        "rootdn-deny-host": {
+          "label": "Запрещённые хосты"
+        }
+      }
+    },
+    "plugin-retrocl": {
+      "title": "Retro Changelog",
+      "description": "Записывает изменения в cn=changelog для приложений, которые их опрашивают.",
+      "fields": {
+        "nsslapd-changelogmaxage": {
+          "label": "Хранить записи",
+          "help": "например 2d, 12h; пусто — бессрочно."
+        },
+        "nsslapd-changelogtrim-interval": {
+          "label": "Интервал очистки"
+        },
+        "nsslapd-include-suffix": {
+          "label": "Только суффиксы"
+        },
+        "nsslapd-exclude-suffix": {
+          "label": "Кроме суффиксов"
+        },
+        "nsslapd-attribute": {
+          "label": "Доп. атрибуты",
+          "help": "attribute[:alias] к каждой записи, например nsUniqueId:targetUniqueId"
+        }
+      }
+    },
+    "plugin-account-policy": {
+      "title": "Политика учётных записей",
+      "description": "Записывает входы и блокирует учётные записи, неактивные слишком долго.",
+      "fields": {
+        "alwaysRecordLogin": {
+          "label": "Записывать каждый вход",
+          "help": "Иначе только для записей с политикой."
+        },
+        "alwaysRecordLoginAttr": {
+          "label": "Атрибут времени входа"
+        },
+        "stateAttrName": {
+          "label": "Атрибут состояния"
+        },
+        "altStateAttrName": {
+          "label": "Запасной атрибут состояния"
+        },
+        "specAttrName": {
+          "label": "Атрибут ссылки на политику"
+        },
+        "limitAttrName": {
+          "label": "Атрибут предела неактивности"
+        },
+        "checkAllStateAttrs": {
+          "label": "Проверять все атрибуты состояния"
+        }
+      }
     }
+  },
+  "plugins": {
+    "loadError": "Не удалось загрузить плагины",
+    "search": "Имя или тип",
+    "showConfigurable": "Настраиваемые",
+    "showEnabled": "Включённые",
+    "showAll": "Все",
+    "none": "Нет подходящих плагинов",
+    "hasSettings": "Есть настройки",
+    "protected": "Нужен серверу; здесь его отключить нельзя.",
+    "on": "включён",
+    "off": "выключен",
+    "enabled": "{name}: включён.",
+    "disabled": "{name}: выключен.",
+    "afterRestart": "Вступит в силу после перезапуска.",
+    "toggleError": "Не удалось изменить плагин",
+    "notDynamic": "Динамические плагины выключены: включение, отключение и настройка плагинов вступают в силу после перезапуска сервера.",
+    "notDynamicLink": "Изменить",
+    "type": "Тип",
+    "version": "Версия",
+    "vendor": "Поставщик",
+    "path": "Библиотека",
+    "dependsOn": "Зависит от",
+    "disabledHint": "Плагин выключен: настройки сохраняются, но не действуют."
   }
 }

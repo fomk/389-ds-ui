@@ -44,7 +44,8 @@ const SECTION_ICONS: Record<string, typeof Server> = { server: Server, database:
 
 const sections = computed(() => {
   const out: { name: string; pages: PageSummary[] }[] = []
-  for (const p of list.value ?? []) {
+  // Plug-in pages live on the Plugins page.
+  for (const p of (list.value ?? []).filter((x) => !x.plugin)) {
     let s = out.find((x) => x.name === p.section)
     if (!s) out.push((s = { name: p.section, pages: [] }))
     s.pages.push(p)

@@ -80,6 +80,8 @@ type Page struct {
 	When    map[string]string `yaml:"when,omitempty" json:"-" doc:"Conditions such as dbImpl: mdb"`
 	Vars    map[string]string `yaml:"vars,omitempty" json:"-" doc:"Substitutions for {name} in id, dn and attributes"`
 	Use     []string          `yaml:"use,omitempty" json:"-" doc:"Fieldsets of the file appended to fields"`
+	Plugin  string            `yaml:"plugin,omitempty" json:"plugin,omitempty" doc:"cn of the plug-in this page configures; shown on the Plugins page"`
+	Sparse  bool              `yaml:"sparse,omitempty" json:"-" doc:"Attributes may be absent until set (plug-in configuration)"`
 	Fields  []PageField       `yaml:"fields" json:"fields"`
 }
 

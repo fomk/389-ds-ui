@@ -79,7 +79,7 @@ func toHTTPError(err error) error {
 		return problem(http.StatusBadRequest, err.Error())
 	case errors.Is(err, ds.ErrNotFound), errors.Is(err, ds.ErrTaskNotFound):
 		return problem(http.StatusNotFound, err.Error())
-	case errors.Is(err, ds.ErrSystemIndex):
+	case errors.Is(err, ds.ErrSystemIndex), errors.Is(err, ds.ErrProtectedPlugin):
 		return problem(http.StatusConflict, err.Error())
 	case errors.Is(err, pages.ErrNotFound):
 		return problem(http.StatusNotFound, err.Error())

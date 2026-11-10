@@ -510,6 +510,41 @@ export interface paths {
         patch: operations["updatePage"];
         trace?: never;
     };
+    "/api/v1/plugins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Server plug-ins */
+        get: operations["listPlugins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plugins/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One plug-in */
+        get: operations["getPlugin"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Enable or disable a plug-in */
+        patch: operations["updatePlugin"];
+        trace?: never;
+    };
     "/api/v1/schema": {
         parameters: {
             query?: never;
@@ -1018,6 +1053,8 @@ export interface components {
             id: string;
             /** Format: int64 */
             order: number;
+            /** @description cn of the plug-in this page configures; shown on the Plugins page */
+            plugin?: string;
             /** @description Menu section: server, database, logging, security, … */
             section: string;
         };
@@ -1067,6 +1104,7 @@ export interface components {
             id: string;
             /** Format: int64 */
             order: number;
+            plugin?: string;
             section: string;
         };
         PageUpdate: {
@@ -1089,6 +1127,37 @@ export interface components {
         };
         PasswordResult: {
             generated?: string;
+        };
+        Plugin: {
+            /** @description Named plug-ins and plug-in types this one depends on */
+            dependsOn: string[];
+            description?: string;
+            dn: string;
+            enabled: boolean;
+            /** @description nsslapd-pluginId */
+            id?: string;
+            /** @description cn */
+            name: string;
+            path?: string;
+            /** @description The server needs it; it cannot be disabled here */
+            protected: boolean;
+            /** @description nsslapd-pluginType */
+            type: string;
+            vendor?: string;
+            version?: string;
+        };
+        PluginChange: {
+            plugin: components["schemas"]["Plugin"];
+            /** @description The change applies after a server restart */
+            restart: boolean;
+        };
+        PluginList: {
+            /** @description nsslapd-dynamic-plugins: changes apply without a restart */
+            dynamic: boolean;
+            plugins: components["schemas"]["Plugin"][];
+        };
+        PluginPatchInputBody: {
+            enabled: boolean;
         };
         ReindexInputBody: {
             /** @description Empty rebuilds every index of the backend */
@@ -2576,6 +2645,102 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PageUpdate"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listPlugins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PluginList"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getPlugin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Plug-in cn */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Plugin"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updatePlugin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PluginPatchInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PluginChange"];
                 };
             };
             /** @description Error */
