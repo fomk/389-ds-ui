@@ -848,6 +848,183 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/replication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Replication configuration of a suffix */
+        get: operations["getReplica"];
+        put?: never;
+        /** Enable replication for a suffix */
+        post: operations["enableReplication"];
+        /** Disable replication (deletes the agreements) */
+        delete: operations["disableReplication"];
+        options?: never;
+        head?: never;
+        /** Change role, replica ID, bind DNs or purge delay */
+        patch: operations["updateReplica"];
+        trace?: never;
+    };
+    "/api/v1/replication/agreements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agreements of a suffix with status */
+        get: operations["listAgreements"];
+        put?: never;
+        /** Create an agreement */
+        post: operations["createAgreement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/replication/agreements/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an agreement */
+        delete: operations["deleteAgreement"];
+        options?: never;
+        head?: never;
+        /** Change an agreement */
+        patch: operations["updateAgreement"];
+        trace?: never;
+    };
+    "/api/v1/replication/agreements/{name}/init": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Initialize the consumer (total update) */
+        post: operations["initAgreement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/replication/changelog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Replication changelog of the suffix's backend */
+        get: operations["getChangelog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change changelog limits */
+        patch: operations["updateChangelog"];
+        trace?: never;
+    };
+    "/api/v1/replication/cleanallruv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove a retired replica ID from the topology (task) */
+        post: operations["cleanAllRUV"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/replication/conflicts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Replication conflict and glue entries */
+        get: operations["listConflicts"];
+        put?: never;
+        post?: never;
+        /** Delete a conflict entry */
+        delete: operations["deleteConflict"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/replication/conflicts/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Keep a conflict entry under a new RDN */
+        post: operations["convertConflict"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/replication/manager": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create the replication manager account or set its password */
+        post: operations["setReplManager"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/replication/ruv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Replica update vector of a suffix */
+        get: operations["getRUV"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/roles": {
         parameters: {
             query?: never;
@@ -1203,6 +1380,66 @@ export interface components {
             /** @description All ACIs of the entry; empty removes them */
             acis: string[];
         };
+        Agreement: {
+            bindDN?: string;
+            /** @enum {string} */
+            bindMethod: "SIMPLE" | "SSLCLIENTAUTH" | "SASL/GSSAPI" | "SASL/DIGEST-MD5";
+            description?: string;
+            dn: string;
+            enabled: boolean;
+            /** @description Fractional replication: attributes not sent */
+            excluded: string[];
+            host: string;
+            name: string;
+            /** Format: int64 */
+            port: number;
+            /** @description nsDS5ReplicaUpdateSchedule, e.g. 0800-1700 12345; empty: always */
+            schedule?: string;
+            status: components["schemas"]["AgreementStatus"];
+            /**
+             * @description nsDS5ReplicaTransportInfo: LDAP, TLS (StartTLS), SSL (LDAPS)
+             * @enum {string}
+             */
+            transport: "LDAP" | "StartTLS" | "LDAPS";
+        };
+        AgreementInput: {
+            bindDN?: string;
+            /** @enum {string} */
+            bindMethod?: "SIMPLE" | "SSLCLIENTAUTH" | "SASL/GSSAPI" | "SASL/DIGEST-MD5";
+            /** @description Password for SIMPLE/DIGEST-MD5; empty keeps the current one */
+            credentials?: string;
+            description?: string;
+            enabled?: boolean;
+            excluded?: string[];
+            host?: string;
+            name?: string;
+            /** Format: int64 */
+            port?: number;
+            schedule?: string;
+            /** @enum {string} */
+            transport?: "LDAP" | "StartTLS" | "LDAPS";
+        };
+        AgreementStatus: {
+            /** @description nsds5replicaChangesSentSinceStartup */
+            changesSent?: string;
+            inProgress: boolean;
+            /** @enum {string} */
+            initState: "ok" | "error" | "busy" | "never" | "unknown";
+            /** @description nsds5replicaLastInitStatus */
+            lastInit?: string;
+            /** Format: date-time */
+            lastInitEnd?: string;
+            /** @description nsds5replicaLastUpdateStatus */
+            lastUpdate?: string;
+            /** Format: date-time */
+            lastUpdateEnd?: string;
+            reapActive?: boolean;
+            /**
+             * @description From the last update status
+             * @enum {string}
+             */
+            state: "ok" | "error" | "busy" | "never" | "unknown";
+        };
         ApplyLDIFInputBody: {
             /** @description Content or change records (add, modify, delete); URL values are not allowed */
             ldif: string;
@@ -1371,6 +1608,29 @@ export interface components {
             op: "add" | "delete" | "replace";
             values?: string[];
         };
+        Changelog: {
+            dn: string;
+            exists: boolean;
+            /** @description nsslapd-changelogmaxage, e.g. 7d */
+            maxAge?: string;
+            /**
+             * Format: int64
+             * @description nsslapd-changelogmaxentries; 0: unlimited
+             */
+            maxEntries?: number;
+            /**
+             * Format: int64
+             * @description nsslapd-changelogtrim-interval (seconds)
+             */
+            trimInterval?: number;
+        };
+        ChangelogPatch: {
+            maxAge?: string;
+            /** Format: int64 */
+            maxEntries?: number;
+            /** Format: int64 */
+            trimInterval?: number;
+        };
         ChildrenPage: {
             items: components["schemas"]["Summary"][];
             /** @description Pass as cursor to get the next page */
@@ -1379,6 +1639,12 @@ export interface components {
             sorted: boolean;
             /** Format: int64 */
             total: number;
+        };
+        CleanAllRUVInputBody: {
+            /** @description Clean even if some replicas cannot be reached */
+            force?: boolean;
+            /** Format: int64 */
+            replicaId: number;
         };
         CoSDefinition: {
             /** @description cosAttribute values: name [default|override|operational|operational-default|merge-schemes] */
@@ -1435,6 +1701,17 @@ export interface components {
             plugin?: string;
             under?: string;
         };
+        Conflict: {
+            dn: string;
+            /** @description A glue entry created for orphaned children */
+            glue: boolean;
+            /** @description nsds5ReplConflict */
+            reason: string;
+        };
+        ConflictConvertInputBody: {
+            /** @description New RDN, e.g. cn=jdoe-2 */
+            rdn: string;
+        };
         ConnectionInfo: {
             address: string;
             bindDn: string;
@@ -1476,6 +1753,17 @@ export interface components {
             /** @description Empty: anonymous */
             subject: string;
             target: string;
+        };
+        EnableReplica: {
+            bindDNs?: string[];
+            bindGroup?: string;
+            /**
+             * Format: int64
+             * @description 1–65534, suppliers only
+             */
+            replicaId?: number;
+            /** @enum {string} */
+            role: "supplier" | "hub" | "consumer";
         };
         Entry: {
             attributes: components["schemas"]["Attribute"][];
@@ -1858,6 +2146,22 @@ export interface components {
             required?: boolean;
             values?: string[];
         };
+        RUV: {
+            generation?: string;
+            replicas: components["schemas"]["RUVElement"][];
+        };
+        RUVElement: {
+            maxCSN?: string;
+            /**
+             * Format: date-time
+             * @description Time of the latest change from this replica
+             */
+            maxTime?: string;
+            minCSN?: string;
+            /** Format: int64 */
+            replicaId: number;
+            url?: string;
+        };
         ReindexInputBody: {
             /** @description Empty (and no vlv) rebuilds every index of the backend */
             attributes?: string[];
@@ -1876,9 +2180,49 @@ export interface components {
         RenameResult: {
             dn: string;
         };
+        ReplManager: {
+            dn: string;
+        };
+        ReplManagerInputBody: {
+            /** @description Default: cn=replication manager,cn=config */
+            dn?: string;
+            password: string;
+        };
         ReplaceLDIFInputBody: {
             /** @description One content record for the same DN */
             ldif: string;
+        };
+        Replica: {
+            backend: string;
+            /** @description nsDS5ReplicaBindDN: accounts suppliers bind as */
+            bindDNs: string[];
+            /** @description nsDS5ReplicaBindDNGroup: members may bind as suppliers */
+            bindGroup?: string;
+            dn?: string;
+            enabled: boolean;
+            /**
+             * Format: int64
+             * @description nsds5ReplicaPurgeDelay (seconds)
+             */
+            purgeDelay?: number;
+            /** Format: int64 */
+            replicaId?: number;
+            /** @enum {string} */
+            role?: "supplier" | "hub" | "consumer";
+            suffix: string;
+        };
+        ReplicaPatch: {
+            bindDNs?: string[];
+            bindGroup?: string;
+            /** Format: int64 */
+            purgeDelay?: number;
+            /** Format: int64 */
+            replicaId?: number;
+            /**
+             * @description Promote or demote
+             * @enum {string}
+             */
+            role?: "supplier" | "hub" | "consumer";
         };
         Role: {
             description?: string;
@@ -4401,6 +4745,561 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getReplica: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Replica"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    enableReplication: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnableReplica"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Replica"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    disableReplication: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateReplica: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplicaPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Replica"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listAgreements: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agreement"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createAgreement: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgreementInput"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agreement"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteAgreement: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateAgreement: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgreementInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agreement"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    initAgreement: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Agreement"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getChangelog: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Changelog"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateChangelog: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangelogPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Changelog"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    cleanAllRUV: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CleanAllRUVInputBody"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listConflicts: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Conflict"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteConflict: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    convertConflict: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConflictConvertInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setReplManager: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplManagerInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReplManager"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getRUV: {
+        parameters: {
+            query: {
+                suffix: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RUV"];
+                };
             };
             /** @description Error */
             default: {

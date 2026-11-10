@@ -81,6 +81,8 @@ func toHTTPError(err error) error {
 	case errors.Is(err, ds.ErrSchemaInUse), errors.Is(err, ds.ErrSchemaNotUser), errors.Is(err, ds.ErrSchemaExists),
 		errors.Is(err, ds.ErrExists):
 		return problem(http.StatusConflict, err.Error())
+	case errors.Is(err, ds.ErrNotReplicated):
+		return problem(http.StatusConflict, err.Error())
 	case errors.Is(err, ds.ErrInvalidValue):
 		return problem(http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, ds.ErrInvalidName):

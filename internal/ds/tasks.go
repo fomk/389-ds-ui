@@ -23,6 +23,8 @@ const (
 	TaskRestore = "restore"
 	TaskExport  = "export"
 	TaskImport  = "import"
+	// TaskCleanAllRUV removes a replica ID from every RUV of the topology.
+	TaskCleanAllRUV = "cleanallruv"
 )
 
 // TaskStatus is the lifecycle state of a task.
@@ -261,6 +263,7 @@ const (
 	OpRootPassword  = "root-password"
 	OpLockAccount   = "lock-account"
 	OpUnlockAccount = "unlock-account"
+	OpInitReplica   = "init-replica"
 )
 
 // Record adds a finished operation to the history: ok when err is nil,

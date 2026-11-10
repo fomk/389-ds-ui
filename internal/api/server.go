@@ -136,6 +136,7 @@ func register(api huma.API, d Deps) {
 	registerACI(api, d)
 	registerCollections(api, d)
 	registerRoles(api, d)
+	registerReplication(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

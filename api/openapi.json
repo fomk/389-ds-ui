@@ -77,6 +77,190 @@
         ],
         "type": "object"
       },
+      "Agreement": {
+        "additionalProperties": false,
+        "properties": {
+          "bindDN": {
+            "type": "string"
+          },
+          "bindMethod": {
+            "enum": [
+              "SIMPLE",
+              "SSLCLIENTAUTH",
+              "SASL/GSSAPI",
+              "SASL/DIGEST-MD5"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "dn": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "excluded": {
+            "description": "Fractional replication: attributes not sent",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "host": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "port": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "schedule": {
+            "description": "nsDS5ReplicaUpdateSchedule, e.g. 0800-1700 12345; empty: always",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgreementStatus"
+          },
+          "transport": {
+            "description": "nsDS5ReplicaTransportInfo: LDAP, TLS (StartTLS), SSL (LDAPS)",
+            "enum": [
+              "LDAP",
+              "StartTLS",
+              "LDAPS"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "dn",
+          "host",
+          "port",
+          "transport",
+          "bindMethod",
+          "enabled",
+          "excluded",
+          "status"
+        ],
+        "type": "object"
+      },
+      "AgreementInput": {
+        "additionalProperties": false,
+        "properties": {
+          "bindDN": {
+            "type": "string"
+          },
+          "bindMethod": {
+            "enum": [
+              "SIMPLE",
+              "SSLCLIENTAUTH",
+              "SASL/GSSAPI",
+              "SASL/DIGEST-MD5"
+            ],
+            "type": "string"
+          },
+          "credentials": {
+            "description": "Password for SIMPLE/DIGEST-MD5; empty keeps the current one",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "excluded": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "host": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "port": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "schedule": {
+            "type": "string"
+          },
+          "transport": {
+            "enum": [
+              "LDAP",
+              "StartTLS",
+              "LDAPS"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AgreementStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "changesSent": {
+            "description": "nsds5replicaChangesSentSinceStartup",
+            "type": "string"
+          },
+          "inProgress": {
+            "type": "boolean"
+          },
+          "initState": {
+            "enum": [
+              "ok",
+              "error",
+              "busy",
+              "never",
+              "unknown"
+            ],
+            "type": "string"
+          },
+          "lastInit": {
+            "description": "nsds5replicaLastInitStatus",
+            "type": "string"
+          },
+          "lastInitEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastUpdate": {
+            "description": "nsds5replicaLastUpdateStatus",
+            "type": "string"
+          },
+          "lastUpdateEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reapActive": {
+            "type": "boolean"
+          },
+          "state": {
+            "description": "From the last update status",
+            "enum": [
+              "ok",
+              "error",
+              "busy",
+              "never",
+              "unknown"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "inProgress",
+          "initState"
+        ],
+        "type": "object"
+      },
       "ApplyLDIFInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -556,6 +740,53 @@
         ],
         "type": "object"
       },
+      "Changelog": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          },
+          "exists": {
+            "type": "boolean"
+          },
+          "maxAge": {
+            "description": "nsslapd-changelogmaxage, e.g. 7d",
+            "type": "string"
+          },
+          "maxEntries": {
+            "description": "nsslapd-changelogmaxentries; 0: unlimited",
+            "format": "int64",
+            "type": "integer"
+          },
+          "trimInterval": {
+            "description": "nsslapd-changelogtrim-interval (seconds)",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dn",
+          "exists"
+        ],
+        "type": "object"
+      },
+      "ChangelogPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "maxAge": {
+            "type": "string"
+          },
+          "maxEntries": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "trimInterval": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "ChildrenPage": {
         "additionalProperties": false,
         "properties": {
@@ -582,6 +813,23 @@
           "items",
           "total",
           "sorted"
+        ],
+        "type": "object"
+      },
+      "CleanAllRUVInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "force": {
+            "description": "Clean even if some replicas cannot be reached",
+            "type": "boolean"
+          },
+          "replicaId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "replicaId"
         ],
         "type": "object"
       },
@@ -759,6 +1007,42 @@
         ],
         "type": "object"
       },
+      "Conflict": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          },
+          "glue": {
+            "description": "A glue entry created for orphaned children",
+            "type": "boolean"
+          },
+          "reason": {
+            "description": "nsds5ReplConflict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn",
+          "reason",
+          "glue"
+        ],
+        "type": "object"
+      },
+      "ConflictConvertInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "rdn": {
+            "description": "New RDN, e.g. cn=jdoe-2",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "rdn"
+        ],
+        "type": "object"
+      },
       "ConnectionInfo": {
         "additionalProperties": false,
         "properties": {
@@ -880,6 +1164,37 @@
           "subject",
           "entry",
           "attributes"
+        ],
+        "type": "object"
+      },
+      "EnableReplica": {
+        "additionalProperties": false,
+        "properties": {
+          "bindDNs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "bindGroup": {
+            "type": "string"
+          },
+          "replicaId": {
+            "description": "1–65534, suppliers only",
+            "format": "int64",
+            "type": "integer"
+          },
+          "role": {
+            "enum": [
+              "supplier",
+              "hub",
+              "consumer"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
         ],
         "type": "object"
       },
@@ -2206,6 +2521,51 @@
         ],
         "type": "object"
       },
+      "RUV": {
+        "additionalProperties": false,
+        "properties": {
+          "generation": {
+            "type": "string"
+          },
+          "replicas": {
+            "items": {
+              "$ref": "#/components/schemas/RUVElement"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "replicas"
+        ],
+        "type": "object"
+      },
+      "RUVElement": {
+        "additionalProperties": false,
+        "properties": {
+          "maxCSN": {
+            "type": "string"
+          },
+          "maxTime": {
+            "description": "Time of the latest change from this replica",
+            "format": "date-time",
+            "type": "string"
+          },
+          "minCSN": {
+            "type": "string"
+          },
+          "replicaId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "replicaId"
+        ],
+        "type": "object"
+      },
       "ReindexInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -2266,6 +2626,35 @@
         ],
         "type": "object"
       },
+      "ReplManager": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn"
+        ],
+        "type": "object"
+      },
+      "ReplManagerInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "description": "Default: cn=replication manager,cn=config",
+            "type": "string"
+          },
+          "password": {
+            "minLength": 8,
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "type": "object"
+      },
       "ReplaceLDIFInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -2279,6 +2668,90 @@
         "required": [
           "ldif"
         ],
+        "type": "object"
+      },
+      "Replica": {
+        "additionalProperties": false,
+        "properties": {
+          "backend": {
+            "type": "string"
+          },
+          "bindDNs": {
+            "description": "nsDS5ReplicaBindDN: accounts suppliers bind as",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "bindGroup": {
+            "description": "nsDS5ReplicaBindDNGroup: members may bind as suppliers",
+            "type": "string"
+          },
+          "dn": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "purgeDelay": {
+            "description": "nsds5ReplicaPurgeDelay (seconds)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "replicaId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "role": {
+            "enum": [
+              "supplier",
+              "hub",
+              "consumer"
+            ],
+            "type": "string"
+          },
+          "suffix": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "suffix",
+          "backend",
+          "enabled",
+          "bindDNs"
+        ],
+        "type": "object"
+      },
+      "ReplicaPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "bindDNs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "bindGroup": {
+            "type": "string"
+          },
+          "purgeDelay": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "replicaId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "role": {
+            "description": "Promote or demote",
+            "enum": [
+              "supplier",
+              "hub",
+              "consumer"
+            ],
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "Role": {
@@ -6262,6 +6735,777 @@
         "summary": "Create a subtree or user password policy",
         "tags": [
           "password policies"
+        ]
+      }
+    },
+    "/api/v1/replication": {
+      "delete": {
+        "operationId": "disableReplication",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Disable replication (deletes the agreements)",
+        "tags": [
+          "replication"
+        ]
+      },
+      "get": {
+        "operationId": "getReplica",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Replica"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replication configuration of a suffix",
+        "tags": [
+          "replication"
+        ]
+      },
+      "patch": {
+        "operationId": "updateReplica",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplicaPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Replica"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change role, replica ID, bind DNs or purge delay",
+        "tags": [
+          "replication"
+        ]
+      },
+      "post": {
+        "operationId": "enableReplication",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnableReplica"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Replica"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Enable replication for a suffix",
+        "tags": [
+          "replication"
+        ]
+      }
+    },
+    "/api/v1/replication/agreements": {
+      "get": {
+        "operationId": "listAgreements",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Agreement"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Agreements of a suffix with status",
+        "tags": [
+          "replication"
+        ]
+      },
+      "post": {
+        "operationId": "createAgreement",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgreementInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agreement"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create an agreement",
+        "tags": [
+          "replication"
+        ]
+      }
+    },
+    "/api/v1/replication/agreements/{name}": {
+      "delete": {
+        "operationId": "deleteAgreement",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete an agreement",
+        "tags": [
+          "replication"
+        ]
+      },
+      "patch": {
+        "operationId": "updateAgreement",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgreementInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agreement"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change an agreement",
+        "tags": [
+          "replication"
+        ]
+      }
+    },
+    "/api/v1/replication/agreements/{name}/init": {
+      "post": {
+        "operationId": "initAgreement",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agreement"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Initialize the consumer (total update)",
+        "tags": [
+          "replication"
+        ]
+      }
+    },
+    "/api/v1/replication/changelog": {
+      "get": {
+        "operationId": "getChangelog",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Changelog"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replication changelog of the suffix's backend",
+        "tags": [
+          "replication"
+        ]
+      },
+      "patch": {
+        "operationId": "updateChangelog",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangelogPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Changelog"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change changelog limits",
+        "tags": [
+          "replication"
+        ]
+      }
+    },
+    "/api/v1/replication/cleanallruv": {
+      "post": {
+        "operationId": "cleanAllRUV",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CleanAllRUVInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "description": "Accepted"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Remove a retired replica ID from the topology (task)",
+        "tags": [
+          "replication"
+        ]
+      }
+    },
+    "/api/v1/replication/conflicts": {
+      "delete": {
+        "operationId": "deleteConflict",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a conflict entry",
+        "tags": [
+          "replication"
+        ]
+      },
+      "get": {
+        "operationId": "listConflicts",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Conflict"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replication conflict and glue entries",
+        "tags": [
+          "replication"
+        ]
+      }
+    },
+    "/api/v1/replication/conflicts/convert": {
+      "post": {
+        "operationId": "convertConflict",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConflictConvertInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Keep a conflict entry under a new RDN",
+        "tags": [
+          "replication"
+        ]
+      }
+    },
+    "/api/v1/replication/manager": {
+      "post": {
+        "operationId": "setReplManager",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplManagerInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplManager"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create the replication manager account or set its password",
+        "tags": [
+          "replication"
+        ]
+      }
+    },
+    "/api/v1/replication/ruv": {
+      "get": {
+        "operationId": "getRUV",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "suffix",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RUV"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replica update vector of a suffix",
+        "tags": [
+          "replication"
         ]
       }
     },
