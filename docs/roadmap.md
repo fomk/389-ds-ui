@@ -113,7 +113,13 @@ Work items:
 
 **Done when:** the general server, database, logging, SASL, LDAPI and password-policy settings listed above are editable via YAML pages; adding a new page requires no Go code.
 
-## Stage 4. Complex screens (3–4 wk) → v0.3
+## Stage 4. Complex screens (3–4 wk) → v0.3 — ✅ done
+
+**Outcome:** every item below works on 389-ds 3.1 and has integration tests. Deviations:
+- *Schema reload* is not offered: changes over LDAP do not need it, and it needs the Schema Reload plug-in (off by default); it matters only after editing schema files on disk.
+- *Plug-ins with several configuration entries* are YAML "collections" (no per-plug-in code); the Managed Entries template is edited in the LDAP browser; DNA range transfer between replicas comes with replication (stage 5).
+- *Accounts* and *ACI* live in the LDAP browser (cards on the entry), password reset already existed there; Account Policy inactivity is shown as the last login, not computed against the limit.
+- *Role members* are found from nsRoleDN or the role filter in the role's subtree: filtering on the computed nsRole scans every entry (seconds on a large suffix).
 
 Work items:
 - Schema: viewing (search, dependencies), creating/deleting custom attributeTypes/objectClasses, schema reload task.

@@ -12,6 +12,7 @@ import {
   RefreshCw,
   ScrollText,
   Settings,
+  UsersRound,
 } from '@lucide/vue'
 import BrowserView from '@/views/BrowserView.vue'
 import DatabasesView from '@/views/DatabasesView.vue'
@@ -21,6 +22,7 @@ import OverviewView from '@/views/OverviewView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 import PluginsView from '@/views/PluginsView.vue'
 import PoliciesView from '@/views/PoliciesView.vue'
+import RolesView from '@/views/RolesView.vue'
 import SchemaView from '@/views/SchemaView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 
@@ -35,6 +37,7 @@ export type NavKey =
   | 'plugins'
   | 'schema'
   | 'policies'
+  | 'roles'
   | 'replication'
   | 'security'
 
@@ -59,6 +62,7 @@ export const nav: NavItem[] = [
   { path: '/plugins', key: 'plugins', icon: Puzzle, stage: 3, view: PluginsView },
   { path: '/schema', key: 'schema', icon: BookOpen, stage: 4, view: SchemaView },
   { path: '/policies', key: 'policies', icon: KeyRound, stage: 4, view: PoliciesView },
+  { path: '/roles', key: 'roles', icon: UsersRound, stage: 4, view: RolesView },
   { path: '/replication', key: 'replication', icon: RefreshCw, stage: 5 },
   { path: '/security', key: 'security', icon: Lock, stage: 6 },
 ]

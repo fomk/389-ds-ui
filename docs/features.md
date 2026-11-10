@@ -71,7 +71,7 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 | Global password policy — done | LDAP | 3 | ✅ | ✅ | ✅ |
 | Local password policies (subtree via CoS, user via `pwdpolicysubentry`) — done | LDAP (CoS) | 4 | ✅ | ✅ | ✅ |
 | Account status (lock, role/CoS lock, lockout, expiry, must-change, policy, last login), lock/unlock — done (LDAP browser) | LDAP | 4 | ✅ | ✅ | ✅ |
-| Roles, CoS | LDAP | 4 | ✅ | ✅ | ✅ |
+| Roles (managed/filtered/nested, members) and CoS (pointer/classic/indirect, templates) — done | LDAP | 4 | ✅ | ✅ | ✅ |
 | ACI: view/edit with highlighting and syntax check, inherited ACIs, effective rights (GER) — done (LDAP browser) | LDAP | 4 | ✅ | ✅ | ✅ |
 | Permission check (Get Effective Rights) | LDAP (control) | 4 | ✅ | ✅ | ✅ |
 

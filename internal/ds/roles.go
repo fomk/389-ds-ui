@@ -249,24 +249,83 @@ func DeleteRole(c *ldap.Conn, dn string) error {
 	return c.Del(ldap.NewDelRequest(r.DN, nil))
 }
 
-// RoleMembers lists entries that have the role (nsRole), up to limit.
+// roleQuery is one search that finds members of a role.
+type roleQuery struct{ base, filter string }
+
+// memberQueries turns a role into searches on real attributes, which the
+// server can answer from indexes; filtering on the computed nsRole would scan
+// every entry. A role applies to the subtree of its parent (or nsRoleScopeDN).
+func memberQueries(c *ldap.Conn, r *Role, depth int, seen map[string]bool) ([]roleQuery, error) {
+	if depth > 8 || seen[strings.ToLower(r.DN)] {
+		return nil, nil
+	}
+	seen[strings.ToLower(r.DN)] = true
+	base, err := parentDN(r.DN)
+	if err != nil {
+		return nil, err
+	}
+	if r.Scope != "" {
+		base = r.Scope
+	}
+	switch r.Kind {
+	case RoleManaged:
+		return []roleQuery{{base, "(nsRoleDN=" + ldap.EscapeFilter(r.DN) + ")"}}, nil
+	case RoleFiltered:
+		return []roleQuery{{base, r.Filter}}, nil
+	case RoleNested:
+		var out []roleQuery
+		for _, dn := range r.Roles {
+			sub, err := GetRole(c, dn)
+			if err != nil {
+				continue // a deleted role contributes nothing
+			}
+			q, err := memberQueries(c, sub, depth+1, seen)
+			if err != nil {
+				return nil, err
+			}
+			out = append(out, q...)
+		}
+		return out, nil
+	}
+	return nil, nil
+}
+
+// RoleMembers lists entries that have the role, up to limit.
 func RoleMembers(c *ldap.Conn, dn string, limit int) ([]string, bool, error) {
 	r, err := GetRole(c, dn)
 	if err != nil {
 		return nil, false, err
 	}
-	entries, err := searchSuffixes(c, "(nsRole="+ldap.EscapeFilter(r.DN)+")", []string{"1.1"}, limit+1)
+	queries, err := memberQueries(c, r, 0, map[string]bool{})
 	if err != nil {
 		return nil, false, err
 	}
-	out := []string{}
-	for _, e := range entries {
-		out = append(out, e.DN)
+	found := map[string]string{}
+	truncated := false
+	for _, q := range queries {
+		res, err := c.Search(ldap.NewSearchRequest(q.base, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
+			limit+1, 15, false, q.filter, []string{"1.1"}, nil))
+		switch {
+		case ldap.IsErrorWithCode(err, ldap.LDAPResultSizeLimitExceeded), ldap.IsErrorWithCode(err, ldap.LDAPResultTimeLimitExceeded):
+			truncated = true
+		case ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject):
+			continue
+		case err != nil:
+			return nil, false, err
+		}
+		if res != nil {
+			for _, e := range res.Entries {
+				found[strings.ToLower(e.DN)] = e.DN
+			}
+		}
+	}
+	out := make([]string, 0, len(found))
+	for _, v := range found {
+		out = append(out, v)
 	}
 	slices.SortFunc(out, func(a, b string) int { return strings.Compare(strings.ToLower(a), strings.ToLower(b)) })
-	truncated := len(out) > limit
-	if truncated {
-		out = out[:limit]
+	if len(out) > limit {
+		out, truncated = out[:limit], true
 	}
 	return out, truncated, nil
 }
