@@ -1,0 +1,26 @@
+# Global database settings (all backends).
+pages:
+  - id: db-global
+    section: database
+    order: 10
+    dn: cn=config,cn=ldbm database,cn=plugins,cn=config
+    fields:
+      - {attr: nsslapd-lookthroughlimit, type: int, min: -1, group: limits}
+      - {attr: nsslapd-idlistscanlimit, type: int, min: -1, group: limits, restart: true}
+      - {attr: nsslapd-pagedlookthroughlimit, type: int, min: -1, group: limits}
+      - {attr: nsslapd-pagedidlistscanlimit, type: int, min: -1, group: limits}
+      - {attr: nsslapd-rangelookthroughlimit, type: int, min: -1, group: limits}
+      - {attr: nsslapd-import-cachesize, type: size, min: 0, group: import}
+      - {attr: nsslapd-search-use-vlv-index, type: bool, group: behaviour}
+      - {attr: nsslapd-backend-implement, type: enum, values: [mdb, bdb], group: behaviour, readOnly: true}
+
+  - id: db-mdb
+    section: database
+    order: 20
+    dn: cn=mdb,cn=config,cn=ldbm database,cn=plugins,cn=config
+    when: {dbImpl: mdb}
+    fields:
+      - {attr: nsslapd-mdb-max-size, type: size, min: 1, restart: true}
+      - {attr: nsslapd-mdb-max-readers, type: int, min: 0, restart: true}
+      - {attr: nsslapd-mdb-max-dbs, type: int, min: 0, restart: true}
+      - {attr: nsslapd-db-durable-transaction, type: bool, restart: true}

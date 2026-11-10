@@ -1,0 +1,83 @@
+# Binds, LDAPI and the global password policy.
+pages:
+  - id: security-binds
+    section: security
+    order: 10
+    dn: cn=config
+    fields:
+      - {attr: nsslapd-allow-anonymous-access, type: enum, values: ["on", "off", rootdse], group: binds}
+      - {attr: nsslapd-anonlimitsdn, type: dn, group: binds}
+      - {attr: nsslapd-require-secure-binds, type: bool, group: binds}
+      - {attr: nsslapd-close-on-failed-bind, type: bool, group: binds}
+      - {attr: nsslapd-minssf, type: int, min: 0, group: ssf}
+      - {attr: nsslapd-minssf-exclude-rootdse, type: bool, group: ssf}
+      - {attr: nsslapd-localssf, type: int, min: 0, group: ssf}
+      - {attr: nsslapd-allowed-sasl-mechanisms, type: list, group: sasl}
+
+  - id: ldapi
+    section: security
+    order: 20
+    dn: cn=config
+    fields:
+      # ds-ui itself talks to the server over LDAPI with autobind in the
+      # sidecar deployment: these can cut it off.
+      - {attr: nsslapd-ldapilisten, type: bool, restart: true, danger: true}
+      - {attr: nsslapd-ldapifilepath, type: string, restart: true, danger: true}
+      - {attr: nsslapd-ldapiautobind, type: bool, danger: true}
+      - {attr: nsslapd-ldapimaprootdn, type: dn, danger: true}
+      - {attr: nsslapd-ldapimaptoentries, type: bool, group: mapping}
+      - {attr: nsslapd-ldapiuidnumbertype, type: string, group: mapping}
+      - {attr: nsslapd-ldapigidnumbertype, type: string, group: mapping}
+      - {attr: nsslapd-ldapientrysearchbase, type: dn, group: mapping}
+      - {attr: nsslapd-ldapidnmappingbase, type: dn, group: mapping}
+
+  - id: password-policy
+    section: security
+    order: 30
+    dn: cn=config
+    fields:
+      - attr: passwordStorageScheme
+        type: enum
+        group: storage
+        optionsFrom: {base: "cn=Password Storage Schemes,cn=plugins,cn=config", attr: cn}
+      - attr: nsslapd-rootpwstoragescheme
+        type: enum
+        group: storage
+        optionsFrom: {base: "cn=Password Storage Schemes,cn=plugins,cn=config", attr: cn}
+      - {attr: nsslapd-pwpolicy-local, type: bool, group: storage}
+      - {attr: passwordChange, type: bool, group: changes}
+      - {attr: passwordMustChange, type: bool, group: changes}
+      - {attr: passwordMinAge, type: duration, min: 0, group: changes}
+      - {attr: passwordHistory, type: bool, group: changes}
+      - {attr: passwordInHistory, type: int, min: 0, max: 24, group: changes}
+      - {attr: passwordTrackUpdateTime, type: bool, group: changes}
+      - {attr: passwordAdminDN, type: dn, group: changes}
+      - {attr: passwordExp, type: bool, group: expiration}
+      - {attr: passwordMaxAge, type: duration, min: 1, group: expiration}
+      - {attr: passwordWarning, type: duration, min: 0, group: expiration}
+      - {attr: passwordGraceLimit, type: int, min: 0, group: expiration}
+      - {attr: passwordSendExpiringTime, type: bool, group: expiration}
+      - {attr: passwordCheckSyntax, type: bool, group: syntax}
+      - {attr: passwordMinLength, type: int, min: 2, max: 512, group: syntax}
+      - {attr: passwordMinDigits, type: int, min: 0, max: 64, group: syntax}
+      - {attr: passwordMinAlphas, type: int, min: 0, max: 64, group: syntax}
+      - {attr: passwordMinUppers, type: int, min: 0, max: 64, group: syntax}
+      - {attr: passwordMinLowers, type: int, min: 0, max: 64, group: syntax}
+      - {attr: passwordMinSpecials, type: int, min: 0, max: 64, group: syntax}
+      - {attr: passwordMin8Bit, type: int, min: 0, max: 64, group: syntax}
+      - {attr: passwordMinCategories, type: int, min: 0, max: 5, group: syntax}
+      - {attr: passwordMinTokenLength, type: int, min: 1, max: 64, group: syntax}
+      - {attr: passwordMaxRepeats, type: int, min: 0, max: 64, group: syntax}
+      - {attr: passwordMaxSequence, type: int, min: 0, group: syntax}
+      - {attr: passwordMaxSeqSets, type: int, min: 0, group: syntax}
+      - {attr: passwordMaxClassChars, type: int, min: 0, group: syntax}
+      - {attr: passwordPalindrome, type: bool, group: syntax}
+      - {attr: passwordDictCheck, type: bool, group: syntax}
+      - {attr: passwordDictPath, type: string, group: syntax}
+      - {attr: passwordBadWords, type: string, group: syntax}
+      - {attr: passwordUserAttributes, type: string, group: syntax}
+      - {attr: passwordLockout, type: bool, group: lockout}
+      - {attr: passwordMaxFailure, type: int, min: 1, max: 32767, group: lockout}
+      - {attr: passwordResetFailureCount, type: duration, min: 0, group: lockout}
+      - {attr: passwordUnlock, type: bool, group: lockout}
+      - {attr: passwordLockoutDuration, type: duration, min: 0, group: lockout}

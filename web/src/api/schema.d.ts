@@ -472,6 +472,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Settings pages that apply to this server */
+        get: operations["listPages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/pages/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A settings page with the current values */
+        get: operations["getPage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change settings of a page
+         * @description Only attributes whose values differ are written, in one modify.
+         */
+        patch: operations["updatePage"];
+        trace?: never;
+    };
     "/api/v1/schema": {
         parameters: {
             query?: never;
@@ -973,6 +1011,76 @@ export interface components {
             oid: string;
             origin?: string[];
             sup?: string[];
+        };
+        Page: {
+            dn: string;
+            fields: components["schemas"]["PageField"][];
+            id: string;
+            /** Format: int64 */
+            order: number;
+            /** @description Menu section: server, database, logging, security, … */
+            section: string;
+        };
+        PageField: {
+            attr: string;
+            /** @description Literal for true and false; default on/off */
+            bool?: string[];
+            /** @description A wrong value can cut ds-ui off from the server */
+            danger?: boolean;
+            /** @description Named bits of a flags field */
+            flags?: components["schemas"]["PageFlag"][];
+            /** @description Heading the field is shown under (pages._groups.<group>) */
+            group?: string;
+            /** Format: int64 */
+            max?: number;
+            /** Format: int64 */
+            min?: number;
+            readOnly?: boolean;
+            /** @description Takes effect after a server restart */
+            restart?: boolean;
+            /** @description Shared text key (pages._fields.<text>) instead of pages.<id>.fields.<attr> */
+            text?: string;
+            /** @enum {string} */
+            type: "string" | "int" | "bool" | "enum" | "dn" | "list" | "duration" | "size" | "flags";
+            /** @description Unit of an int field, shown next to it (MB, ms, …) */
+            unit?: string;
+            /** @description Enum values */
+            values?: string[];
+        };
+        PageFlag: {
+            name: string;
+            /** Format: int64 */
+            value: number;
+        };
+        PageState: {
+            /** @description Enum values read from the server, by attribute */
+            options?: {
+                [key: string]: string[];
+            };
+            page: components["schemas"]["Page"];
+            /** @description Current values by attribute; absent means the server default */
+            values: {
+                [key: string]: string[];
+            };
+        };
+        PageSummary: {
+            id: string;
+            /** Format: int64 */
+            order: number;
+            section: string;
+        };
+        PageUpdate: {
+            /** @description Attributes that were modified */
+            changed: string[];
+            /** @description Changed attributes that apply only after a server restart */
+            restart: string[];
+            state: components["schemas"]["PageState"];
+        };
+        PageUpdateInputBody: {
+            /** @description New values by attribute; an empty list returns the attribute to the server default */
+            values: {
+                [key: string]: string[];
+            };
         };
         PasswordRequest: {
             dn: string;
@@ -2372,6 +2480,102 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HistoryOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listPages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageSummary"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Page id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageState"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updatePage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PageUpdateInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PageUpdate"];
                 };
             };
             /** @description Error */

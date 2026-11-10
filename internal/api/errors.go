@@ -12,6 +12,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/files"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 	"github.com/fomk/389-ds-ui/internal/logs"
+	"github.com/fomk/389-ds-ui/internal/pages"
 	"github.com/fomk/389-ds-ui/internal/providers"
 )
 
@@ -80,6 +81,10 @@ func toHTTPError(err error) error {
 		return problem(http.StatusNotFound, err.Error())
 	case errors.Is(err, ds.ErrSystemIndex):
 		return problem(http.StatusConflict, err.Error())
+	case errors.Is(err, pages.ErrNotFound):
+		return problem(http.StatusNotFound, err.Error())
+	case errors.Is(err, pages.ErrInvalidValue):
+		return problem(http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, entries.ErrPagingExpired):
 		return problem(http.StatusConflict, err.Error())
 	case errors.Is(err, entries.ErrPreconditionFailed):

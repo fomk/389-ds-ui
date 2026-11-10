@@ -1051,6 +1051,236 @@
         ],
         "type": "object"
       },
+      "Page": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/PageField"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "order": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "section": {
+            "description": "Menu section: server, database, logging, security, …",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "section",
+          "order",
+          "dn",
+          "fields"
+        ],
+        "type": "object"
+      },
+      "PageField": {
+        "additionalProperties": false,
+        "properties": {
+          "attr": {
+            "type": "string"
+          },
+          "bool": {
+            "description": "Literal for true and false; default on/off",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "danger": {
+            "description": "A wrong value can cut ds-ui off from the server",
+            "type": "boolean"
+          },
+          "flags": {
+            "description": "Named bits of a flags field",
+            "items": {
+              "$ref": "#/components/schemas/PageFlag"
+            },
+            "type": "array"
+          },
+          "group": {
+            "description": "Heading the field is shown under (pages._groups.\u003cgroup\u003e)",
+            "type": "string"
+          },
+          "max": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "min": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "readOnly": {
+            "type": "boolean"
+          },
+          "restart": {
+            "description": "Takes effect after a server restart",
+            "type": "boolean"
+          },
+          "text": {
+            "description": "Shared text key (pages._fields.\u003ctext\u003e) instead of pages.\u003cid\u003e.fields.\u003cattr\u003e",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "string",
+              "int",
+              "bool",
+              "enum",
+              "dn",
+              "list",
+              "duration",
+              "size",
+              "flags"
+            ],
+            "type": "string"
+          },
+          "unit": {
+            "description": "Unit of an int field, shown next to it (MB, ms, …)",
+            "type": "string"
+          },
+          "values": {
+            "description": "Enum values",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "attr",
+          "type"
+        ],
+        "type": "object"
+      },
+      "PageFlag": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "type": "object"
+      },
+      "PageState": {
+        "additionalProperties": false,
+        "properties": {
+          "options": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "description": "Enum values read from the server, by attribute",
+            "type": "object"
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          },
+          "values": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "description": "Current values by attribute; absent means the server default",
+            "type": "object"
+          }
+        },
+        "required": [
+          "page",
+          "values"
+        ],
+        "type": "object"
+      },
+      "PageSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "order": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "section": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "section",
+          "order"
+        ],
+        "type": "object"
+      },
+      "PageUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "changed": {
+            "description": "Attributes that were modified",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "restart": {
+            "description": "Changed attributes that apply only after a server restart",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "state": {
+            "$ref": "#/components/schemas/PageState"
+          }
+        },
+        "required": [
+          "state",
+          "changed",
+          "restart"
+        ],
+        "type": "object"
+      },
+      "PageUpdateInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "values": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "description": "New values by attribute; an empty list returns the attribute to the server default",
+            "type": "object"
+          }
+        },
+        "required": [
+          "values"
+        ],
+        "type": "object"
+      },
       "PasswordRequest": {
         "additionalProperties": false,
         "properties": {
@@ -3460,6 +3690,133 @@
         "summary": "Recent samples of cumulative counters (kept in memory)",
         "tags": [
           "monitor"
+        ]
+      }
+    },
+    "/api/v1/pages": {
+      "get": {
+        "operationId": "listPages",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PageSummary"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Settings pages that apply to this server",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
+    "/api/v1/pages/{id}": {
+      "get": {
+        "operationId": "getPage",
+        "parameters": [
+          {
+            "description": "Page id",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "Page id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageState"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "A settings page with the current values",
+        "tags": [
+          "settings"
+        ]
+      },
+      "patch": {
+        "description": "Only attributes whose values differ are written, in one modify.",
+        "operationId": "updatePage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PageUpdateInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageUpdate"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change settings of a page",
+        "tags": [
+          "settings"
         ]
       }
     },

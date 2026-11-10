@@ -23,6 +23,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
 	"github.com/fomk/389-ds-ui/internal/monitor"
+	"github.com/fomk/389-ds-ui/internal/pages"
 	"github.com/fomk/389-ds-ui/internal/providers"
 	"github.com/fomk/389-ds-ui/internal/templates"
 	"github.com/fomk/389-ds-ui/internal/webui"
@@ -123,6 +124,10 @@ func serve() error {
 	if err != nil {
 		return fmt.Errorf("entry templates: %w", err)
 	}
+	pageDefs, err := pages.Load()
+	if err != nil {
+		return fmt.Errorf("settings pages: %w", err)
+	}
 	schemas := schema.NewCache(time.Minute, log)
 	// One hour of counters at 2 s resolution, for the monitoring charts (the
 	// UI refreshes as often as every second).
@@ -135,6 +140,7 @@ func serve() error {
 		Templates:      tpls,
 		History:        history,
 		Restart:        &ds.RestartRegistry{},
+		Pages:          pages.New(pageDefs),
 		Tasks:          ds.NewTasks(client, bus, log),
 		Events:         bus,
 		Files:          files,

@@ -1,0 +1,99 @@
+# One page per server log; the shared fields come from fieldsets and use the
+# shared texts pages._fields.log.*. {log} is the attribute infix.
+fieldsets:
+  file:
+    - {attr: "nsslapd-{log}-logging-enabled", type: bool, text: log.enabled, group: general}
+    - {attr: "nsslapd-{log}-mode", type: string, text: log.mode, group: general}
+    - {attr: "nsslapd-{log}-compress", type: bool, text: log.compress, group: general}
+  rotation:
+    - {attr: "nsslapd-{log}-maxlogsperdir", type: int, min: 1, text: log.maxlogsperdir, group: rotation}
+    - {attr: "nsslapd-{log}-maxlogsize", type: int, min: -1, unit: MB, text: log.maxlogsize, group: rotation}
+    - {attr: "nsslapd-{log}-logrotationtime", type: int, min: -1, text: log.rotationtime, group: rotation}
+    - {attr: "nsslapd-{log}-logrotationtimeunit", type: enum, values: [minute, hour, day, week, month], text: log.rotationtimeunit, group: rotation}
+    - {attr: "nsslapd-{log}-logrotationsync-enabled", type: bool, text: log.rotationsync, group: rotation}
+    - {attr: "nsslapd-{log}-logrotationsynchour", type: int, min: 0, max: 23, text: log.rotationsynchour, group: rotation}
+    - {attr: "nsslapd-{log}-logrotationsyncmin", type: int, min: 0, max: 59, text: log.rotationsyncmin, group: rotation}
+  retention:
+    - {attr: "nsslapd-{log}-logexpirationtime", type: int, min: -1, text: log.expirationtime, group: retention}
+    - {attr: "nsslapd-{log}-logexpirationtimeunit", type: enum, values: [day, week, month], text: log.expirationtimeunit, group: retention}
+    - {attr: "nsslapd-{log}-logmaxdiskspace", type: int, min: -1, unit: MB, text: log.maxdiskspace, group: retention}
+    - {attr: "nsslapd-{log}-logminfreediskspace", type: int, min: -1, unit: MB, text: log.minfreediskspace, group: retention}
+
+pages:
+  - id: log-access
+    section: logging
+    order: 10
+    dn: cn=config
+    vars: {log: accesslog}
+    fields:
+      - attr: nsslapd-accesslog-level
+        type: flags
+        group: general
+        flags:
+          - {name: internal, value: 4}
+          - {name: default, value: 256}
+          - {name: entries, value: 512}
+          - {name: microseconds, value: 131072}
+      - {attr: nsslapd-accesslog-logbuffering, type: bool, text: log.buffering, group: general}
+      - {attr: nsslapd-accesslog-log-format, type: enum, values: [default, json, json-pretty], text: log.format, group: general}
+    use: [file, rotation, retention]
+
+  - id: log-errors
+    section: logging
+    order: 20
+    dn: cn=config
+    vars: {log: errorlog}
+    fields:
+      - attr: nsslapd-errorlog-level
+        type: flags
+        group: general
+        flags:
+          - {name: trace, value: 1}
+          - {name: packets, value: 2}
+          - {name: heavyTrace, value: 4}
+          - {name: connections, value: 8}
+          - {name: berPackets, value: 16}
+          - {name: filters, value: 32}
+          - {name: config, value: 64}
+          - {name: acl, value: 128}
+          - {name: entryParsing, value: 2048}
+          - {name: housekeeping, value: 4096}
+          - {name: replication, value: 8192}
+          - {name: default, value: 16384}
+          - {name: entryCache, value: 32768}
+          - {name: plugins, value: 65536}
+          - {name: aclSummary, value: 262144}
+          - {name: backend, value: 524288}
+          - {name: pwpolicy, value: 1048576}
+      - {attr: nsslapd-errorlog-logbuffering, type: bool, text: log.buffering, group: general}
+    use: [file, rotation, retention]
+
+  - id: log-audit
+    section: logging
+    order: 30
+    dn: cn=config
+    vars: {log: auditlog}
+    fields:
+      - {attr: nsslapd-auditlog-logbuffering, type: bool, text: log.buffering, group: general}
+      - {attr: nsslapd-auditlog-logging-hide-unhashed-pw, type: bool, text: log.hideUnhashedPw, group: general}
+      - {attr: nsslapd-auditlog-display-attrs, type: string, group: general}
+      - {attr: nsslapd-auditlog-log-format, type: enum, values: [default, json, json-pretty], text: log.format, group: general}
+    use: [file, rotation, retention]
+
+  - id: log-auditfail
+    section: logging
+    order: 40
+    dn: cn=config
+    vars: {log: auditfaillog}
+    fields:
+      - {attr: nsslapd-auditfaillog-logging-hide-unhashed-pw, type: bool, text: log.hideUnhashedPw, group: general}
+    use: [file, rotation, retention]
+
+  - id: log-security
+    section: logging
+    order: 50
+    dn: cn=config
+    vars: {log: securitylog}
+    fields:
+      - {attr: nsslapd-securitylog-logbuffering, type: bool, text: log.buffering, group: general}
+    use: [file, rotation, retention]

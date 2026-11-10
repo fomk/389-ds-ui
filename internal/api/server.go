@@ -20,6 +20,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/events"
 	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
 	"github.com/fomk/389-ds-ui/internal/monitor"
+	"github.com/fomk/389-ds-ui/internal/pages"
 	"github.com/fomk/389-ds-ui/internal/providers"
 	"github.com/fomk/389-ds-ui/internal/templates"
 )
@@ -37,6 +38,7 @@ type Deps struct {
 	Templates      []templates.Template
 	History        *monitor.History
 	Restart        *ds.RestartRegistry
+	Pages          *pages.Service
 	Tasks          *ds.Tasks
 	Events         *events.Bus
 	Files          *providers.Files // nil when the server's files are not reachable
@@ -125,6 +127,7 @@ func register(api huma.API, d Deps) {
 	registerDatabases(api, d)
 	registerBackups(api, d)
 	registerLogs(api, d)
+	registerPages(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
