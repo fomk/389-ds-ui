@@ -82,7 +82,10 @@ type Page struct {
 	Use     []string          `yaml:"use,omitempty" json:"-" doc:"Fieldsets of the file appended to fields"`
 	Plugin  string            `yaml:"plugin,omitempty" json:"plugin,omitempty" doc:"cn of the plug-in this page configures; shown on the Plugins page"`
 	Sparse  bool              `yaml:"sparse,omitempty" json:"-" doc:"Attributes may be absent until set (plug-in configuration)"`
-	Fields  []PageField       `yaml:"fields" json:"fields"`
+	// EntryClass makes the page edit any entry of this object class, named
+	// by the caller (?dn=), instead of the fixed DN.
+	EntryClass string      `yaml:"entryClass,omitempty" json:"entryClass,omitempty" doc:"The page edits the entry given as ?dn=, which must have this object class"`
+	Fields     []PageField `yaml:"fields" json:"fields"`
 }
 
 // file is one YAML definition file.
@@ -167,8 +170,13 @@ func (p *Page) validate() error {
 	if p.Section == "" {
 		return fmt.Errorf("page %s: section is empty", p.ID)
 	}
-	if _, err := ldap.ParseDN(p.DN); err != nil || p.DN == "" {
-		return fmt.Errorf("page %s: invalid dn %q", p.ID, p.DN)
+	switch {
+	case p.EntryClass != "" && p.DN != "":
+		return fmt.Errorf("page %s: dn and entryClass exclude each other", p.ID)
+	case p.EntryClass == "":
+		if _, err := ldap.ParseDN(p.DN); err != nil || p.DN == "" {
+			return fmt.Errorf("page %s: invalid dn %q", p.ID, p.DN)
+		}
 	}
 	if len(p.Fields) == 0 {
 		return fmt.Errorf("page %s: no fields", p.ID)

@@ -14,10 +14,12 @@ import (
 type pageListOutput struct{ Body []pages.PageSummary }
 type pagePath struct {
 	ID string `path:"id" doc:"Page id"`
+	DN string `query:"dn" doc:"Entry to edit, for pages with entryClass"`
 }
 type pageOutput struct{ Body *pages.PageState }
 type pageUpdateInput struct {
 	ID   string `path:"id"`
+	DN   string `query:"dn" doc:"Entry to edit, for pages with entryClass"`
 	Body struct {
 		Values map[string][]string `json:"values" doc:"New values by attribute; an empty list returns the attribute to the server default"`
 	}
@@ -43,7 +45,7 @@ func registerPages(api huma.API, d Deps) {
 		Summary: "A settings page with the current values", Tags: tags},
 		func(ctx context.Context, in *pagePath) (*pageOutput, error) {
 			var st *pages.PageState
-			err := conn(ctx, func(c *ldap.Conn) (err error) { st, err = d.Pages.Get(c, in.ID); return })
+			err := conn(ctx, func(c *ldap.Conn) (err error) { st, err = d.Pages.Get(c, in.ID, in.DN); return })
 			if err != nil {
 				return nil, toHTTPError(err)
 			}
@@ -55,7 +57,7 @@ func registerPages(api huma.API, d Deps) {
 		Tags: tags},
 		func(ctx context.Context, in *pageUpdateInput) (*pageUpdateOutput, error) {
 			var res *pages.PageUpdate
-			err := conn(ctx, func(c *ldap.Conn) (err error) { res, err = d.Pages.Update(c, in.ID, in.Body.Values); return })
+			err := conn(ctx, func(c *ldap.Conn) (err error) { res, err = d.Pages.Update(c, in.ID, in.DN, in.Body.Values); return })
 			if err != nil {
 				return nil, toHTTPError(err)
 			}

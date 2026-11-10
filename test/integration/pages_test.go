@@ -40,7 +40,10 @@ func TestPagesMatchServer(t *testing.T) {
 			return err
 		}
 		for _, s := range list {
-			st, err := svc.Get(conn, s.ID)
+			if s.EntryClass != "" {
+				continue // needs an entry; see TestLocalPasswordPolicies
+			}
+			st, err := svc.Get(conn, s.ID, "")
 			if err != nil {
 				t.Errorf("page %s: %v", s.ID, err)
 				continue
@@ -163,7 +166,7 @@ func TestPluginPageRoundTrip(t *testing.T) {
 	svc := pages.New(defs)
 	c := newClient(t)
 	err = c.Do(context.Background(), func(conn *ldap.Conn) error {
-		res, err := svc.Update(conn, "plugin-memberof", map[string][]string{
+		res, err := svc.Update(conn, "plugin-memberof", "", map[string][]string{
 			"memberOfSkipNested": {"on"}, "memberOfEntryScope": {suffix},
 		})
 		if err != nil {
@@ -172,7 +175,7 @@ func TestPluginPageRoundTrip(t *testing.T) {
 		if !slices.Equal(res.Changed, []string{"memberOfEntryScope", "memberOfSkipNested"}) {
 			t.Errorf("changed = %v", res.Changed)
 		}
-		res, err = svc.Update(conn, "plugin-memberof", map[string][]string{"memberOfSkipNested": {}, "memberOfEntryScope": {}})
+		res, err = svc.Update(conn, "plugin-memberof", "", map[string][]string{"memberOfSkipNested": {}, "memberOfEntryScope": {}})
 		if err != nil {
 			return err
 		}

@@ -27,6 +27,8 @@ type PageSummary struct {
 	Section string `json:"section"`
 	Order   int    `json:"order"`
 	Plugin  string `json:"plugin,omitempty"`
+	// Pages for entries named by the caller are not in the settings menu.
+	EntryClass string `json:"entryClass,omitempty"`
 }
 
 // PageState is a page together with the current values on the server.
@@ -61,13 +63,42 @@ func (s *Service) List(c *ldap.Conn) ([]PageSummary, error) {
 	out := []PageSummary{}
 	for _, p := range s.pages {
 		if p.Applies(facts) {
-			out = append(out, PageSummary{ID: p.ID, Section: p.Section, Order: p.Order, Plugin: p.Plugin})
+			out = append(out, PageSummary{ID: p.ID, Section: p.Section, Order: p.Order, Plugin: p.Plugin, EntryClass: p.EntryClass})
 		}
 	}
 	return out, nil
 }
 
-func (s *Service) page(c *ldap.Conn, id string) (*Page, error) {
+// page finds a page; for entryClass pages it returns a copy bound to dn,
+// after checking that the entry exists and has the class.
+func (s *Service) page(c *ldap.Conn, id, dn string) (*Page, error) {
+	p, err := s.find(c, id)
+	if err != nil {
+		return nil, err
+	}
+	if p.EntryClass == "" {
+		if dn != "" && !strings.EqualFold(dn, p.DN) {
+			return nil, fmt.Errorf("%w: page %s has a fixed DN", ErrInvalidValue, id)
+		}
+		return p, nil
+	}
+	if _, err := ldap.ParseDN(dn); err != nil || dn == "" {
+		return nil, fmt.Errorf("%w: page %s needs the DN of a %s entry", ErrInvalidValue, id, p.EntryClass)
+	}
+	res, err := c.Search(ldap.NewSearchRequest(dn, ldap.ScopeBaseObject, ldap.NeverDerefAliases, 1, 0, false,
+		"(objectClass="+ldap.EscapeFilter(p.EntryClass)+")", []string{"1.1"}, nil))
+	if err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
+		return nil, err
+	}
+	if err != nil || len(res.Entries) == 0 {
+		return nil, fmt.Errorf("%w: %s is not a %s entry", ErrNotFound, dn, p.EntryClass)
+	}
+	bound := *p
+	bound.DN = dn
+	return &bound, nil
+}
+
+func (s *Service) find(c *ldap.Conn, id string) (*Page, error) {
 	for _, p := range s.pages {
 		if p.ID != id {
 			continue
@@ -86,9 +117,10 @@ func (s *Service) page(c *ldap.Conn, id string) (*Page, error) {
 	return nil, fmt.Errorf("%w: %s", ErrNotFound, id)
 }
 
-// Get reads a page and its current values.
-func (s *Service) Get(c *ldap.Conn, id string) (*PageState, error) {
-	p, err := s.page(c, id)
+// Get reads a page and its current values. dn names the entry of an
+// entryClass page and is empty otherwise.
+func (s *Service) Get(c *ldap.Conn, id, dn string) (*PageState, error) {
+	p, err := s.page(c, id, dn)
 	if err != nil {
 		return nil, err
 	}
@@ -160,8 +192,8 @@ type PageUpdate struct {
 
 // Update writes the given values; attributes whose values are unchanged are
 // skipped, an empty list removes the attribute (back to the server default).
-func (s *Service) Update(c *ldap.Conn, id string, values map[string][]string) (*PageUpdate, error) {
-	p, err := s.page(c, id)
+func (s *Service) Update(c *ldap.Conn, id, dn string, values map[string][]string) (*PageUpdate, error) {
+	p, err := s.page(c, id, dn)
 	if err != nil {
 		return nil, err
 	}

@@ -1,4 +1,45 @@
 # Binds, LDAPI and the global password policy.
+fieldsets:
+  # Password policy attributes shared by the global and the local policies;
+  # texts in pages._fields.pw.*.
+  pwpolicy:
+    - {attr: passwordChange, text: pw.passwordChange, type: bool, group: changes}
+    - {attr: passwordMustChange, text: pw.passwordMustChange, type: bool, group: changes}
+    - {attr: passwordMinAge, text: pw.passwordMinAge, type: duration, min: 0, group: changes}
+    - {attr: passwordHistory, text: pw.passwordHistory, type: bool, group: changes}
+    - {attr: passwordInHistory, text: pw.passwordInHistory, type: int, min: 0, max: 24, group: changes}
+    - {attr: passwordTrackUpdateTime, text: pw.passwordTrackUpdateTime, type: bool, group: changes}
+    - {attr: passwordAdminDN, text: pw.passwordAdminDN, type: dn, group: changes}
+    - {attr: passwordExp, text: pw.passwordExp, type: bool, group: expiration}
+    - {attr: passwordMaxAge, text: pw.passwordMaxAge, type: duration, min: 1, group: expiration}
+    - {attr: passwordWarning, text: pw.passwordWarning, type: duration, min: 0, group: expiration}
+    - {attr: passwordGraceLimit, text: pw.passwordGraceLimit, type: int, min: 0, group: expiration}
+    - {attr: passwordSendExpiringTime, text: pw.passwordSendExpiringTime, type: bool, group: expiration}
+    - {attr: passwordCheckSyntax, text: pw.passwordCheckSyntax, type: bool, group: syntax}
+    - {attr: passwordMinLength, text: pw.passwordMinLength, type: int, min: 2, max: 512, group: syntax}
+    - {attr: passwordMinDigits, text: pw.passwordMinDigits, type: int, min: 0, max: 64, group: syntax}
+    - {attr: passwordMinAlphas, text: pw.passwordMinAlphas, type: int, min: 0, max: 64, group: syntax}
+    - {attr: passwordMinUppers, text: pw.passwordMinUppers, type: int, min: 0, max: 64, group: syntax}
+    - {attr: passwordMinLowers, text: pw.passwordMinLowers, type: int, min: 0, max: 64, group: syntax}
+    - {attr: passwordMinSpecials, text: pw.passwordMinSpecials, type: int, min: 0, max: 64, group: syntax}
+    - {attr: passwordMin8Bit, text: pw.passwordMin8Bit, type: int, min: 0, max: 64, group: syntax}
+    - {attr: passwordMinCategories, text: pw.passwordMinCategories, type: int, min: 0, max: 5, group: syntax}
+    - {attr: passwordMinTokenLength, text: pw.passwordMinTokenLength, type: int, min: 1, max: 64, group: syntax}
+    - {attr: passwordMaxRepeats, text: pw.passwordMaxRepeats, type: int, min: 0, max: 64, group: syntax}
+    - {attr: passwordMaxSequence, text: pw.passwordMaxSequence, type: int, min: 0, group: syntax}
+    - {attr: passwordMaxSeqSets, text: pw.passwordMaxSeqSets, type: int, min: 0, group: syntax}
+    - {attr: passwordMaxClassChars, text: pw.passwordMaxClassChars, type: int, min: 0, group: syntax}
+    - {attr: passwordPalindrome, text: pw.passwordPalindrome, type: bool, group: syntax}
+    - {attr: passwordDictCheck, text: pw.passwordDictCheck, type: bool, group: syntax}
+    - {attr: passwordDictPath, text: pw.passwordDictPath, type: string, group: syntax}
+    - {attr: passwordBadWords, text: pw.passwordBadWords, type: string, group: syntax}
+    - {attr: passwordUserAttributes, text: pw.passwordUserAttributes, type: string, group: syntax}
+    - {attr: passwordLockout, text: pw.passwordLockout, type: bool, group: lockout}
+    - {attr: passwordMaxFailure, text: pw.passwordMaxFailure, type: int, min: 1, max: 32767, group: lockout}
+    - {attr: passwordResetFailureCount, text: pw.passwordResetFailureCount, type: duration, min: 0, group: lockout}
+    - {attr: passwordUnlock, text: pw.passwordUnlock, type: bool, group: lockout}
+    - {attr: passwordLockoutDuration, text: pw.passwordLockoutDuration, type: duration, min: 0, group: lockout}
+
 pages:
   - id: security-binds
     section: security
@@ -39,45 +80,25 @@ pages:
       - attr: passwordStorageScheme
         type: enum
         group: storage
+        text: pw.passwordStorageScheme
         optionsFrom: {base: "cn=Password Storage Schemes,cn=plugins,cn=config", attr: cn}
       - attr: nsslapd-rootpwstoragescheme
         type: enum
         group: storage
         optionsFrom: {base: "cn=Password Storage Schemes,cn=plugins,cn=config", attr: cn}
       - {attr: nsslapd-pwpolicy-local, type: bool, group: storage}
-      - {attr: passwordChange, type: bool, group: changes}
-      - {attr: passwordMustChange, type: bool, group: changes}
-      - {attr: passwordMinAge, type: duration, min: 0, group: changes}
-      - {attr: passwordHistory, type: bool, group: changes}
-      - {attr: passwordInHistory, type: int, min: 0, max: 24, group: changes}
-      - {attr: passwordTrackUpdateTime, type: bool, group: changes}
-      - {attr: passwordAdminDN, type: dn, group: changes}
-      - {attr: passwordExp, type: bool, group: expiration}
-      - {attr: passwordMaxAge, type: duration, min: 1, group: expiration}
-      - {attr: passwordWarning, type: duration, min: 0, group: expiration}
-      - {attr: passwordGraceLimit, type: int, min: 0, group: expiration}
-      - {attr: passwordSendExpiringTime, type: bool, group: expiration}
-      - {attr: passwordCheckSyntax, type: bool, group: syntax}
-      - {attr: passwordMinLength, type: int, min: 2, max: 512, group: syntax}
-      - {attr: passwordMinDigits, type: int, min: 0, max: 64, group: syntax}
-      - {attr: passwordMinAlphas, type: int, min: 0, max: 64, group: syntax}
-      - {attr: passwordMinUppers, type: int, min: 0, max: 64, group: syntax}
-      - {attr: passwordMinLowers, type: int, min: 0, max: 64, group: syntax}
-      - {attr: passwordMinSpecials, type: int, min: 0, max: 64, group: syntax}
-      - {attr: passwordMin8Bit, type: int, min: 0, max: 64, group: syntax}
-      - {attr: passwordMinCategories, type: int, min: 0, max: 5, group: syntax}
-      - {attr: passwordMinTokenLength, type: int, min: 1, max: 64, group: syntax}
-      - {attr: passwordMaxRepeats, type: int, min: 0, max: 64, group: syntax}
-      - {attr: passwordMaxSequence, type: int, min: 0, group: syntax}
-      - {attr: passwordMaxSeqSets, type: int, min: 0, group: syntax}
-      - {attr: passwordMaxClassChars, type: int, min: 0, group: syntax}
-      - {attr: passwordPalindrome, type: bool, group: syntax}
-      - {attr: passwordDictCheck, type: bool, group: syntax}
-      - {attr: passwordDictPath, type: string, group: syntax}
-      - {attr: passwordBadWords, type: string, group: syntax}
-      - {attr: passwordUserAttributes, type: string, group: syntax}
-      - {attr: passwordLockout, type: bool, group: lockout}
-      - {attr: passwordMaxFailure, type: int, min: 1, max: 32767, group: lockout}
-      - {attr: passwordResetFailureCount, type: duration, min: 0, group: lockout}
-      - {attr: passwordUnlock, type: bool, group: lockout}
-      - {attr: passwordLockoutDuration, type: duration, min: 0, group: lockout}
+    use: [pwpolicy]
+
+  # A subtree or user policy (passwordPolicy entry), opened from the
+  # Password policies page. Unset attributes take the server defaults.
+  - id: password-policy-local
+    section: security
+    entryClass: passwordPolicy
+    sparse: true
+    fields:
+      - attr: passwordStorageScheme
+        type: enum
+        group: storage
+        text: pw.passwordStorageScheme
+        optionsFrom: {base: "cn=Password Storage Schemes,cn=plugins,cn=config", attr: cn}
+    use: [pwpolicy]

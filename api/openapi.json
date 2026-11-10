@@ -841,6 +841,49 @@
         ],
         "type": "object"
       },
+      "LocalPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "description": "The passwordPolicy entry (edit it with GET/PATCH /pages/password-policy-local?dn=)",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "subtree",
+              "user"
+            ],
+            "type": "string"
+          },
+          "target": {
+            "description": "The subtree or user the policy applies to",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn",
+          "kind",
+          "target"
+        ],
+        "type": "object"
+      },
+      "LocalPolicyCreated": {
+        "additionalProperties": false,
+        "properties": {
+          "enabledLocalPolicies": {
+            "description": "nsslapd-pwpolicy-local was off and has been turned on",
+            "type": "boolean"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/LocalPolicy"
+          }
+        },
+        "required": [
+          "policy",
+          "enabledLocalPolicies"
+        ],
+        "type": "object"
+      },
       "Log": {
         "additionalProperties": false,
         "properties": {
@@ -1017,6 +1060,27 @@
         "required": [
           "dn",
           "attributes"
+        ],
+        "type": "object"
+      },
+      "NewLocalPolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "subtree",
+              "user"
+            ],
+            "type": "string"
+          },
+          "target": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "target"
         ],
         "type": "object"
       },
@@ -1216,6 +1280,10 @@
           "dn": {
             "type": "string"
           },
+          "entryClass": {
+            "description": "The page edits the entry given as ?dn=, which must have this object class",
+            "type": "string"
+          },
           "fields": {
             "items": {
               "$ref": "#/components/schemas/PageField"
@@ -1379,6 +1447,9 @@
       "PageSummary": {
         "additionalProperties": false,
         "properties": {
+          "entryClass": {
+            "type": "string"
+          },
           "id": {
             "type": "string"
           },
@@ -4344,6 +4415,16 @@
               "description": "Page id",
               "type": "string"
             }
+          },
+          {
+            "description": "Entry to edit, for pages with entryClass",
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "schema": {
+              "description": "Entry to edit, for pages with entryClass",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4382,6 +4463,16 @@
             "name": "id",
             "required": true,
             "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Entry to edit, for pages with entryClass",
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "schema": {
+              "description": "Entry to edit, for pages with entryClass",
               "type": "string"
             }
           }
@@ -4544,6 +4635,115 @@
         "summary": "Enable or disable a plug-in",
         "tags": [
           "plugins"
+        ]
+      }
+    },
+    "/api/v1/pwpolicies": {
+      "delete": {
+        "operationId": "deleteLocalPolicy",
+        "parameters": [
+          {
+            "description": "The passwordPolicy entry",
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "description": "The passwordPolicy entry",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a subtree or user password policy",
+        "tags": [
+          "password policies"
+        ]
+      },
+      "get": {
+        "operationId": "listLocalPolicies",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LocalPolicy"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Subtree and user password policies",
+        "tags": [
+          "password policies"
+        ]
+      },
+      "post": {
+        "description": "Turns on nsslapd-pwpolicy-local if it is off.",
+        "operationId": "createLocalPolicy",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewLocalPolicy"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalPolicyCreated"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create a subtree or user password policy",
+        "tags": [
+          "password policies"
         ]
       }
     },

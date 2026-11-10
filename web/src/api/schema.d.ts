@@ -599,6 +599,28 @@ export interface paths {
         patch: operations["updatePlugin"];
         trace?: never;
     };
+    "/api/v1/pwpolicies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Subtree and user password policies */
+        get: operations["listLocalPolicies"];
+        put?: never;
+        /**
+         * Create a subtree or user password policy
+         * @description Turns on nsslapd-pwpolicy-local if it is off.
+         */
+        post: operations["createLocalPolicy"];
+        /** Delete a subtree or user password policy */
+        delete: operations["deleteLocalPolicy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/root-password": {
         parameters: {
             query?: never;
@@ -1176,6 +1198,19 @@ export interface components {
             /** Format: int64 */
             size: number;
         };
+        LocalPolicy: {
+            /** @description The passwordPolicy entry (edit it with GET/PATCH /pages/password-policy-local?dn=) */
+            dn: string;
+            /** @enum {string} */
+            kind: "subtree" | "user";
+            /** @description The subtree or user the policy applies to */
+            target: string;
+        };
+        LocalPolicyCreated: {
+            /** @description nsslapd-pwpolicy-local was off and has been turned on */
+            enabledLocalPolicies: boolean;
+            policy: components["schemas"]["LocalPolicy"];
+        };
         Log: {
             /** @description Lines are written in batches (nsslapd-accesslog-logbuffering) */
             buffered?: boolean;
@@ -1222,6 +1257,11 @@ export interface components {
             attributes: components["schemas"]["NewValues"][];
             dn: string;
         };
+        NewLocalPolicy: {
+            /** @enum {string} */
+            kind: "subtree" | "user";
+            target: string;
+        };
         NewVLV: {
             base: string;
             filter: string;
@@ -1264,6 +1304,8 @@ export interface components {
         };
         Page: {
             dn: string;
+            /** @description The page edits the entry given as ?dn=, which must have this object class */
+            entryClass?: string;
             fields: components["schemas"]["PageField"][];
             id: string;
             /** Format: int64 */
@@ -1316,6 +1358,7 @@ export interface components {
             };
         };
         PageSummary: {
+            entryClass?: string;
             id: string;
             /** Format: int64 */
             order: number;
@@ -3024,7 +3067,10 @@ export interface operations {
     };
     getPage: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Entry to edit, for pages with entryClass */
+                dn?: string;
+            };
             header?: never;
             path: {
                 /** @description Page id */
@@ -3056,7 +3102,10 @@ export interface operations {
     };
     updatePage: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Entry to edit, for pages with entryClass */
+                dn?: string;
+            };
             header?: never;
             path: {
                 id: string;
@@ -3173,6 +3222,98 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PluginChange"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listLocalPolicies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocalPolicy"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createLocalPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewLocalPolicy"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocalPolicyCreated"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteLocalPolicy: {
+        parameters: {
+            query: {
+                /** @description The passwordPolicy entry */
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

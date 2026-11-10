@@ -677,6 +677,135 @@
           "label": "Оставлять свободным",
           "help": "Старые файлы удаляются, когда свободного места меньше."
         }
+      },
+      "pw": {
+        "passwordStorageScheme": {
+          "label": "Схема хеширования"
+        },
+        "passwordChange": {
+          "label": "Пользователи могут менять пароль"
+        },
+        "passwordMustChange": {
+          "label": "Смена после сброса",
+          "help": "Пароль, заданный администратором, нужно сменить."
+        },
+        "passwordMinAge": {
+          "label": "Минимальный возраст",
+          "help": "Прежде чем пароль можно сменить снова."
+        },
+        "passwordHistory": {
+          "label": "Хранить историю"
+        },
+        "passwordInHistory": {
+          "label": "Паролей в истории"
+        },
+        "passwordTrackUpdateTime": {
+          "label": "Записывать время смены",
+          "help": "Ведёт атрибут pwdUpdateTime."
+        },
+        "passwordAdminDN": {
+          "label": "Администраторы паролей",
+          "help": "Запись или группа, которой разрешено обходить политику."
+        },
+        "passwordExp": {
+          "label": "Пароли истекают"
+        },
+        "passwordMaxAge": {
+          "label": "Максимальный возраст"
+        },
+        "passwordWarning": {
+          "label": "Предупреждать за"
+        },
+        "passwordGraceLimit": {
+          "label": "Входов после истечения",
+          "help": "Разрешённые привязки после истечения."
+        },
+        "passwordSendExpiringTime": {
+          "label": "Всегда отправлять контрол истечения"
+        },
+        "passwordCheckSyntax": {
+          "label": "Проверять пароль",
+          "help": "Применять требования этой группы."
+        },
+        "passwordMinLength": {
+          "label": "Минимальная длина"
+        },
+        "passwordMinDigits": {
+          "label": "Цифр"
+        },
+        "passwordMinAlphas": {
+          "label": "Букв"
+        },
+        "passwordMinUppers": {
+          "label": "Заглавных букв"
+        },
+        "passwordMinLowers": {
+          "label": "Строчных букв"
+        },
+        "passwordMinSpecials": {
+          "label": "Спецсимволов"
+        },
+        "passwordMin8Bit": {
+          "label": "8-битных символов"
+        },
+        "passwordMinCategories": {
+          "label": "Категорий символов",
+          "help": "Из цифр, заглавных, строчных, спецсимволов и 8-битных."
+        },
+        "passwordMinTokenLength": {
+          "label": "Длина фрагмента",
+          "help": "Фрагменты атрибутов пользователя такой длины не должны встречаться."
+        },
+        "passwordMaxRepeats": {
+          "label": "Макс. повторов символа",
+          "help": "0 — не проверять."
+        },
+        "passwordMaxSequence": {
+          "label": "Макс. длина последовательности",
+          "help": "Например abcd или 1234; 0 — не проверять."
+        },
+        "passwordMaxSeqSets": {
+          "label": "Макс. повторов последовательности",
+          "help": "0 — не проверять."
+        },
+        "passwordMaxClassChars": {
+          "label": "Макс. подряд одного класса",
+          "help": "0 — не проверять."
+        },
+        "passwordPalindrome": {
+          "label": "Запрещать палиндромы"
+        },
+        "passwordDictCheck": {
+          "label": "Проверка по словарю"
+        },
+        "passwordDictPath": {
+          "label": "Путь к словарю",
+          "help": "Пусто — системный словарь cracklib."
+        },
+        "passwordBadWords": {
+          "label": "Запрещённые слова",
+          "help": "Через пробел."
+        },
+        "passwordUserAttributes": {
+          "label": "Сверять с атрибутами",
+          "help": "Атрибуты пользователя через пробел, которые не должны встречаться."
+        },
+        "passwordLockout": {
+          "label": "Блокировать после неудач"
+        },
+        "passwordMaxFailure": {
+          "label": "Допустимо неудач"
+        },
+        "passwordResetFailureCount": {
+          "label": "Сброс счётчика неудач через"
+        },
+        "passwordUnlock": {
+          "label": "Разблокировать автоматически",
+          "help": "Иначе пароль должен сбросить администратор."
+        },
+        "passwordLockoutDuration": {
+          "label": "Длительность блокировки"
+        }
       }
     },
     "server-general": {
@@ -1007,140 +1136,17 @@
       "title": "Глобальная парольная политика",
       "description": "Действует для всех пользователей, если её не переопределяет политика поддерева или пользователя.",
       "fields": {
-        "passwordStorageScheme": {
-          "label": "Схема хеширования"
-        },
         "nsslapd-rootpwstoragescheme": {
           "label": "Схема для Directory Manager"
         },
         "nsslapd-pwpolicy-local": {
           "label": "Разрешить политики поддеревьев и пользователей"
-        },
-        "passwordChange": {
-          "label": "Пользователи могут менять пароль"
-        },
-        "passwordMustChange": {
-          "label": "Смена после сброса",
-          "help": "Пароль, заданный администратором, нужно сменить."
-        },
-        "passwordMinAge": {
-          "label": "Минимальный возраст",
-          "help": "Прежде чем пароль можно сменить снова."
-        },
-        "passwordHistory": {
-          "label": "Хранить историю"
-        },
-        "passwordInHistory": {
-          "label": "Паролей в истории"
-        },
-        "passwordTrackUpdateTime": {
-          "label": "Записывать время смены",
-          "help": "Ведёт атрибут pwdUpdateTime."
-        },
-        "passwordAdminDN": {
-          "label": "Администраторы паролей",
-          "help": "Запись или группа, которой разрешено обходить политику."
-        },
-        "passwordExp": {
-          "label": "Пароли истекают"
-        },
-        "passwordMaxAge": {
-          "label": "Максимальный возраст"
-        },
-        "passwordWarning": {
-          "label": "Предупреждать за"
-        },
-        "passwordGraceLimit": {
-          "label": "Входов после истечения",
-          "help": "Разрешённые привязки после истечения."
-        },
-        "passwordSendExpiringTime": {
-          "label": "Всегда отправлять контрол истечения"
-        },
-        "passwordCheckSyntax": {
-          "label": "Проверять пароль",
-          "help": "Применять требования этой группы."
-        },
-        "passwordMinLength": {
-          "label": "Минимальная длина"
-        },
-        "passwordMinDigits": {
-          "label": "Цифр"
-        },
-        "passwordMinAlphas": {
-          "label": "Букв"
-        },
-        "passwordMinUppers": {
-          "label": "Заглавных букв"
-        },
-        "passwordMinLowers": {
-          "label": "Строчных букв"
-        },
-        "passwordMinSpecials": {
-          "label": "Спецсимволов"
-        },
-        "passwordMin8Bit": {
-          "label": "8-битных символов"
-        },
-        "passwordMinCategories": {
-          "label": "Категорий символов",
-          "help": "Из цифр, заглавных, строчных, спецсимволов и 8-битных."
-        },
-        "passwordMinTokenLength": {
-          "label": "Длина фрагмента",
-          "help": "Фрагменты атрибутов пользователя такой длины не должны встречаться."
-        },
-        "passwordMaxRepeats": {
-          "label": "Макс. повторов символа",
-          "help": "0 — не проверять."
-        },
-        "passwordMaxSequence": {
-          "label": "Макс. длина последовательности",
-          "help": "Например abcd или 1234; 0 — не проверять."
-        },
-        "passwordMaxSeqSets": {
-          "label": "Макс. повторов последовательности",
-          "help": "0 — не проверять."
-        },
-        "passwordMaxClassChars": {
-          "label": "Макс. подряд одного класса",
-          "help": "0 — не проверять."
-        },
-        "passwordPalindrome": {
-          "label": "Запрещать палиндромы"
-        },
-        "passwordDictCheck": {
-          "label": "Проверка по словарю"
-        },
-        "passwordDictPath": {
-          "label": "Путь к словарю",
-          "help": "Пусто — системный словарь cracklib."
-        },
-        "passwordBadWords": {
-          "label": "Запрещённые слова",
-          "help": "Через пробел."
-        },
-        "passwordUserAttributes": {
-          "label": "Сверять с атрибутами",
-          "help": "Атрибуты пользователя через пробел, которые не должны встречаться."
-        },
-        "passwordLockout": {
-          "label": "Блокировать после неудач"
-        },
-        "passwordMaxFailure": {
-          "label": "Допустимо неудач"
-        },
-        "passwordResetFailureCount": {
-          "label": "Сброс счётчика неудач через"
-        },
-        "passwordUnlock": {
-          "label": "Разблокировать автоматически",
-          "help": "Иначе пароль должен сбросить администратор."
-        },
-        "passwordLockoutDuration": {
-          "label": "Длительность блокировки"
         }
       }
+    },
+    "password-policy-local": {
+      "title": "Политика поддерева или пользователя",
+      "description": "Локальная парольная политика. Незаданные атрибуты берут значения сервера по умолчанию, а не значения глобальной политики."
     },
     "plugin-referint": {
       "title": "Ссылочная целостность",

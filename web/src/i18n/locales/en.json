@@ -677,6 +677,135 @@
           "label": "Keep free disk space",
           "help": "Oldest files are deleted when free space falls below this."
         }
+      },
+      "pw": {
+        "passwordStorageScheme": {
+          "label": "Hashing scheme"
+        },
+        "passwordChange": {
+          "label": "Users may change passwords"
+        },
+        "passwordMustChange": {
+          "label": "Change after reset",
+          "help": "Users must change a password set by an administrator."
+        },
+        "passwordMinAge": {
+          "label": "Minimum age",
+          "help": "Before the password can be changed again."
+        },
+        "passwordHistory": {
+          "label": "Keep history"
+        },
+        "passwordInHistory": {
+          "label": "Passwords in history"
+        },
+        "passwordTrackUpdateTime": {
+          "label": "Record change time",
+          "help": "Maintains pwdUpdateTime."
+        },
+        "passwordAdminDN": {
+          "label": "Password administrators",
+          "help": "Entry or group that may bypass the policy."
+        },
+        "passwordExp": {
+          "label": "Passwords expire"
+        },
+        "passwordMaxAge": {
+          "label": "Maximum age"
+        },
+        "passwordWarning": {
+          "label": "Warn before"
+        },
+        "passwordGraceLimit": {
+          "label": "Grace logins",
+          "help": "Binds allowed after expiration."
+        },
+        "passwordSendExpiringTime": {
+          "label": "Always send expiring control"
+        },
+        "passwordCheckSyntax": {
+          "label": "Check syntax",
+          "help": "Enforce the requirements in this group."
+        },
+        "passwordMinLength": {
+          "label": "Minimum length"
+        },
+        "passwordMinDigits": {
+          "label": "Digits"
+        },
+        "passwordMinAlphas": {
+          "label": "Letters"
+        },
+        "passwordMinUppers": {
+          "label": "Upper-case letters"
+        },
+        "passwordMinLowers": {
+          "label": "Lower-case letters"
+        },
+        "passwordMinSpecials": {
+          "label": "Special characters"
+        },
+        "passwordMin8Bit": {
+          "label": "8-bit characters"
+        },
+        "passwordMinCategories": {
+          "label": "Character categories",
+          "help": "Of digits, upper, lower, special and 8-bit."
+        },
+        "passwordMinTokenLength": {
+          "label": "Token length",
+          "help": "Parts of the user's attributes this long must not appear."
+        },
+        "passwordMaxRepeats": {
+          "label": "Max repeated characters",
+          "help": "0 does not check."
+        },
+        "passwordMaxSequence": {
+          "label": "Max sequence length",
+          "help": "Like abcd or 1234; 0 does not check."
+        },
+        "passwordMaxSeqSets": {
+          "label": "Max repeated sequences",
+          "help": "0 does not check."
+        },
+        "passwordMaxClassChars": {
+          "label": "Max same-class run",
+          "help": "0 does not check."
+        },
+        "passwordPalindrome": {
+          "label": "Reject palindromes"
+        },
+        "passwordDictCheck": {
+          "label": "Dictionary check"
+        },
+        "passwordDictPath": {
+          "label": "Dictionary path",
+          "help": "Empty uses the system cracklib dictionary."
+        },
+        "passwordBadWords": {
+          "label": "Forbidden words",
+          "help": "Space-separated."
+        },
+        "passwordUserAttributes": {
+          "label": "Check against attributes",
+          "help": "Space-separated attributes of the user that must not appear."
+        },
+        "passwordLockout": {
+          "label": "Lock out after failures"
+        },
+        "passwordMaxFailure": {
+          "label": "Failures allowed"
+        },
+        "passwordResetFailureCount": {
+          "label": "Reset failure count after"
+        },
+        "passwordUnlock": {
+          "label": "Unlock automatically",
+          "help": "Otherwise an administrator must reset the password."
+        },
+        "passwordLockoutDuration": {
+          "label": "Lockout duration"
+        }
       }
     },
     "server-general": {
@@ -1007,140 +1136,17 @@
       "title": "Global password policy",
       "description": "Applies to all users unless a subtree or user policy overrides it.",
       "fields": {
-        "passwordStorageScheme": {
-          "label": "Hashing scheme"
-        },
         "nsslapd-rootpwstoragescheme": {
           "label": "Directory Manager scheme"
         },
         "nsslapd-pwpolicy-local": {
           "label": "Allow subtree and user policies"
-        },
-        "passwordChange": {
-          "label": "Users may change passwords"
-        },
-        "passwordMustChange": {
-          "label": "Change after reset",
-          "help": "Users must change a password set by an administrator."
-        },
-        "passwordMinAge": {
-          "label": "Minimum age",
-          "help": "Before the password can be changed again."
-        },
-        "passwordHistory": {
-          "label": "Keep history"
-        },
-        "passwordInHistory": {
-          "label": "Passwords in history"
-        },
-        "passwordTrackUpdateTime": {
-          "label": "Record change time",
-          "help": "Maintains pwdUpdateTime."
-        },
-        "passwordAdminDN": {
-          "label": "Password administrators",
-          "help": "Entry or group that may bypass the policy."
-        },
-        "passwordExp": {
-          "label": "Passwords expire"
-        },
-        "passwordMaxAge": {
-          "label": "Maximum age"
-        },
-        "passwordWarning": {
-          "label": "Warn before"
-        },
-        "passwordGraceLimit": {
-          "label": "Grace logins",
-          "help": "Binds allowed after expiration."
-        },
-        "passwordSendExpiringTime": {
-          "label": "Always send expiring control"
-        },
-        "passwordCheckSyntax": {
-          "label": "Check syntax",
-          "help": "Enforce the requirements in this group."
-        },
-        "passwordMinLength": {
-          "label": "Minimum length"
-        },
-        "passwordMinDigits": {
-          "label": "Digits"
-        },
-        "passwordMinAlphas": {
-          "label": "Letters"
-        },
-        "passwordMinUppers": {
-          "label": "Upper-case letters"
-        },
-        "passwordMinLowers": {
-          "label": "Lower-case letters"
-        },
-        "passwordMinSpecials": {
-          "label": "Special characters"
-        },
-        "passwordMin8Bit": {
-          "label": "8-bit characters"
-        },
-        "passwordMinCategories": {
-          "label": "Character categories",
-          "help": "Of digits, upper, lower, special and 8-bit."
-        },
-        "passwordMinTokenLength": {
-          "label": "Token length",
-          "help": "Parts of the user's attributes this long must not appear."
-        },
-        "passwordMaxRepeats": {
-          "label": "Max repeated characters",
-          "help": "0 does not check."
-        },
-        "passwordMaxSequence": {
-          "label": "Max sequence length",
-          "help": "Like abcd or 1234; 0 does not check."
-        },
-        "passwordMaxSeqSets": {
-          "label": "Max repeated sequences",
-          "help": "0 does not check."
-        },
-        "passwordMaxClassChars": {
-          "label": "Max same-class run",
-          "help": "0 does not check."
-        },
-        "passwordPalindrome": {
-          "label": "Reject palindromes"
-        },
-        "passwordDictCheck": {
-          "label": "Dictionary check"
-        },
-        "passwordDictPath": {
-          "label": "Dictionary path",
-          "help": "Empty uses the system cracklib dictionary."
-        },
-        "passwordBadWords": {
-          "label": "Forbidden words",
-          "help": "Space-separated."
-        },
-        "passwordUserAttributes": {
-          "label": "Check against attributes",
-          "help": "Space-separated attributes of the user that must not appear."
-        },
-        "passwordLockout": {
-          "label": "Lock out after failures"
-        },
-        "passwordMaxFailure": {
-          "label": "Failures allowed"
-        },
-        "passwordResetFailureCount": {
-          "label": "Reset failure count after"
-        },
-        "passwordUnlock": {
-          "label": "Unlock automatically",
-          "help": "Otherwise an administrator must reset the password."
-        },
-        "passwordLockoutDuration": {
-          "label": "Lockout duration"
         }
       }
+    },
+    "password-policy-local": {
+      "title": "Subtree or user policy",
+      "description": "A local password policy. Attributes that are not set take the server defaults, not the values of the global policy."
     },
     "plugin-referint": {
       "title": "Referential Integrity",
