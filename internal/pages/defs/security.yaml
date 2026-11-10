@@ -12,7 +12,7 @@ pages:
       - {attr: nsslapd-minssf, type: int, min: 0, group: ssf}
       - {attr: nsslapd-minssf-exclude-rootdse, type: bool, group: ssf}
       - {attr: nsslapd-localssf, type: int, min: 0, group: ssf}
-      - {attr: nsslapd-allowed-sasl-mechanisms, type: list, group: sasl}
+      - {attr: nsslapd-allowed-sasl-mechanisms, type: string, group: sasl}
 
   - id: ldapi
     section: security

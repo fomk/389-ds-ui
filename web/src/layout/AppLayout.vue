@@ -151,7 +151,8 @@ function restart() {
         </div>
       </NLayoutHeader>
 
-      <NLayoutContent :native-scrollbar="false" content-class="content">
+      <!-- Pinned under the header so only the content scrolls (sticky bars work). -->
+      <NLayoutContent position="absolute" class="main" :native-scrollbar="false" content-class="content">
         <NAlert type="warning" :show-icon="true" class="noauth">
           {{ t('app.noAuthWarning') }}
         </NAlert>
@@ -182,10 +183,15 @@ function restart() {
 
 .header {
   height: 56px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
+}
+
+.main {
+  top: 56px;
 }
 
 .server {

@@ -62,13 +62,12 @@ internal/ds/            389-ds knowledge ("mini-lib389"):
   ├─ replication        replica, changelog, agreements, RUV
   ├─ security           cn=encryption, TLS flags
   └─ restartreg         registry of attributes requiring a restart
-internal/pages/         declarative page engine (YAML → GET/PATCH)
+internal/pages/         declarative page engine (YAML in defs/, go:embed → GET/PATCH)
 internal/providers/     interfaces and implementations: lifecycle (s6, docker, none),
                         files (local, none), certs (certutil, dsconf, none), offline
 internal/logs/          log reading, tail, filtering
 internal/events/        event bus → SSE (tasks, logs, server state)
 internal/api/           huma HTTP handlers, DTOs, error mapping
-pages/                  YAML page descriptions (go:embed)
 web/                    SPA
 ```
 

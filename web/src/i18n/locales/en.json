@@ -526,5 +526,601 @@
       "entryAlreadyExists": "Entry already exists",
       "notAllowedOnNonLeaf": "The entry has children"
     }
+  },
+  "pages": {
+    "_restart": "restart",
+    "_restartHint": "Takes effect after the server is restarted.",
+    "_danger": "Careful",
+    "_dangerHint": "A wrong value can cut ds-ui off from the server.",
+    "_changed": "Changed, not saved",
+    "_default": "server default",
+    "_dangerTitle": "Save risky settings?",
+    "_dangerConfirm": "You are changing: {fields}. A wrong value can make the server unreachable for ds-ui; fixing it then needs shell access to the container.",
+    "_saveAnyway": "Save",
+    "_saved": "Settings saved.",
+    "_savedRestart": "Saved. {n} setting takes effect after a restart. | Saved. {n} settings take effect after a restart.",
+    "_saveError": "Could not save",
+    "_loadError": "Could not load settings",
+    "_unsaved": "{n} unsaved change | {n} unsaved changes",
+    "_noChanges": "No changes",
+    "_reset": "Reset",
+    "_save": "Save",
+    "_leaveTitle": "Discard changes?",
+    "_leaveText": "The page has unsaved changes.",
+    "_leave": "Discard",
+    "_stay": "Keep editing",
+    "_sections": {
+      "server": "Server",
+      "database": "Database",
+      "logging": "Logging",
+      "security": "Security"
+    },
+    "_groups": {
+      "network": "Network",
+      "behaviour": "Behaviour",
+      "search": "Searches",
+      "connections": "Connections",
+      "threads": "Threads",
+      "caches": "Caches",
+      "limits": "Limits",
+      "import": "Import",
+      "general": "General",
+      "rotation": "Rotation",
+      "retention": "Retention",
+      "binds": "Binds",
+      "ssf": "Encryption strength (SSF)",
+      "sasl": "SASL",
+      "mapping": "Mapping to entries",
+      "storage": "Storage",
+      "changes": "Changes and history",
+      "expiration": "Expiration",
+      "syntax": "Syntax",
+      "lockout": "Lockout"
+    },
+    "_units": {
+      "B": "B",
+      "KB": "KiB",
+      "MB": "MiB",
+      "GB": "GiB",
+      "TB": "TiB",
+      "s": "s",
+      "min": "min",
+      "h": "h",
+      "d": "days",
+      "ms": "ms"
+    },
+    "_fields": {
+      "log": {
+        "enabled": {
+          "label": "Enabled"
+        },
+        "mode": {
+          "label": "File permissions",
+          "help": "Octal mode of new log files, e.g. 600."
+        },
+        "compress": {
+          "label": "Compress rotated files"
+        },
+        "buffering": {
+          "label": "Buffered writes",
+          "help": "Faster, but the last lines may appear with a delay."
+        },
+        "format": {
+          "label": "Format"
+        },
+        "hideUnhashedPw": {
+          "label": "Hide clear-text passwords",
+          "help": "Do not write the unhashed userPassword of changes."
+        },
+        "maxlogsperdir": {
+          "label": "Files to keep",
+          "help": "Maximum number of log files, including the active one."
+        },
+        "maxlogsize": {
+          "label": "Rotate at size",
+          "help": "-1 disables rotation by size."
+        },
+        "rotationtime": {
+          "label": "Rotate every",
+          "help": "Together with the unit below; -1 disables rotation by time."
+        },
+        "rotationtimeunit": {
+          "label": "Rotation unit",
+          "values": {
+            "minute": "minutes",
+            "hour": "hours",
+            "day": "days",
+            "week": "weeks",
+            "month": "months"
+          }
+        },
+        "rotationsync": {
+          "label": "Rotate at a fixed time"
+        },
+        "rotationsynchour": {
+          "label": "Hour"
+        },
+        "rotationsyncmin": {
+          "label": "Minute"
+        },
+        "expirationtime": {
+          "label": "Delete files older than",
+          "help": "Together with the unit below; -1 keeps them."
+        },
+        "expirationtimeunit": {
+          "label": "Age unit",
+          "values": {
+            "minute": "minutes",
+            "hour": "hours",
+            "day": "days",
+            "week": "weeks",
+            "month": "months"
+          }
+        },
+        "maxdiskspace": {
+          "label": "Total size limit",
+          "help": "Oldest files are deleted above this; -1 disables."
+        },
+        "minfreediskspace": {
+          "label": "Keep free disk space",
+          "help": "Oldest files are deleted when free space falls below this."
+        }
+      }
+    },
+    "server-general": {
+      "title": "General",
+      "description": "Identity, listeners and server-wide behaviour.",
+      "fields": {
+        "nsslapd-localhost": {
+          "label": "Host name",
+          "help": "Used in referrals and generated URLs."
+        },
+        "nsslapd-port": {
+          "label": "LDAP port",
+          "help": "0 disables plain LDAP. Inside the container ports are mapped by Docker."
+        },
+        "nsslapd-securePort": {
+          "label": "LDAPS port"
+        },
+        "nsslapd-listenhost": {
+          "label": "Listen address",
+          "help": "Empty listens on all interfaces."
+        },
+        "nsslapd-readonly": {
+          "label": "Read-only server",
+          "help": "Rejects all writes, including to cn=config."
+        },
+        "nsslapd-schemacheck": {
+          "label": "Schema checking"
+        },
+        "nsslapd-syntaxcheck": {
+          "label": "Syntax checking",
+          "help": "Rejects values that do not match the attribute syntax."
+        },
+        "nsslapd-dn-validate-strict": {
+          "label": "Strict DN validation"
+        },
+        "nsslapd-lastmod": {
+          "label": "Maintain modification attributes",
+          "help": "creatorsName, modifyTimestamp and friends."
+        },
+        "nsslapd-entryusn-global": {
+          "label": "Global entry USN",
+          "help": "One USN counter for all backends."
+        },
+        "nsslapd-ignore-virtual-attrs": {
+          "label": "Ignore virtual attributes",
+          "help": "Faster searches; disable if you use CoS or roles in filters."
+        },
+        "nsslapd-return-exact-case": {
+          "label": "Return attribute names as in schema"
+        }
+      }
+    },
+    "server-limits": {
+      "title": "Limits and performance",
+      "description": "Defaults for all clients; users can have their own limits.",
+      "fields": {
+        "nsslapd-sizelimit": {
+          "label": "Size limit",
+          "help": "Entries returned per search; -1 is unlimited."
+        },
+        "nsslapd-timelimit": {
+          "label": "Time limit",
+          "help": "Per search; -1 is unlimited."
+        },
+        "nsslapd-max-filter-nest-level": {
+          "label": "Filter nesting depth"
+        },
+        "nsslapd-maxsimplepaged-per-conn": {
+          "label": "Paged searches per connection",
+          "help": "-1 is unlimited."
+        },
+        "nsslapd-idletimeout": {
+          "label": "Idle timeout",
+          "help": "Idle connections are closed; 0 never."
+        },
+        "nsslapd-ioblocktimeout": {
+          "label": "I/O block timeout",
+          "help": "A connection blocked this long is closed."
+        },
+        "nsslapd-maxbersize": {
+          "label": "Max request size"
+        },
+        "nsslapd-maxsasliosize": {
+          "label": "Max SASL buffer",
+          "help": "-1 is unlimited."
+        },
+        "nsslapd-maxdescriptors": {
+          "label": "File descriptors"
+        },
+        "nsslapd-threadnumber": {
+          "label": "Worker threads",
+          "help": "-1 sizes automatically from CPU count."
+        },
+        "nsslapd-maxthreadsperconn": {
+          "label": "Threads per connection"
+        },
+        "nsslapd-ndn-cache-enabled": {
+          "label": "Normalized DN cache"
+        },
+        "nsslapd-ndn-cache-max-size": {
+          "label": "DN cache size"
+        }
+      }
+    },
+    "disk-monitoring": {
+      "title": "Disk monitoring",
+      "description": "Protects the database when the disk fills up: logs are cut down, then the server stops.",
+      "fields": {
+        "nsslapd-disk-monitoring": {
+          "label": "Enabled"
+        },
+        "nsslapd-disk-monitoring-threshold": {
+          "label": "Free space threshold"
+        },
+        "nsslapd-disk-monitoring-grace-period": {
+          "label": "Grace period",
+          "help": "Time before the server shuts down once below half the threshold."
+        },
+        "nsslapd-disk-monitoring-logging-critical": {
+          "label": "Keep logging",
+          "help": "Do not disable access logging when low on space."
+        },
+        "nsslapd-disk-monitoring-readonly-on-threshold": {
+          "label": "Read-only instead of shutdown"
+        }
+      }
+    },
+    "db-global": {
+      "title": "Global database settings",
+      "description": "Apply to every backend. Per-backend cache sizes are on the Databases page.",
+      "fields": {
+        "nsslapd-lookthroughlimit": {
+          "label": "Look-through limit",
+          "help": "Candidate entries examined per search; -1 is unlimited."
+        },
+        "nsslapd-idlistscanlimit": {
+          "label": "ID list scan limit",
+          "help": "Above this an index is treated as unindexed (allids)."
+        },
+        "nsslapd-pagedlookthroughlimit": {
+          "label": "Look-through limit, paged",
+          "help": "0 uses the normal limit."
+        },
+        "nsslapd-pagedidlistscanlimit": {
+          "label": "ID list scan limit, paged",
+          "help": "0 uses the normal limit."
+        },
+        "nsslapd-rangelookthroughlimit": {
+          "label": "Range look-through limit"
+        },
+        "nsslapd-import-cachesize": {
+          "label": "Import cache"
+        },
+        "nsslapd-search-use-vlv-index": {
+          "label": "Use VLV indexes for searches"
+        },
+        "nsslapd-backend-implement": {
+          "label": "Database implementation",
+          "help": "Changing it requires exporting and re-importing all data."
+        }
+      }
+    },
+    "db-mdb": {
+      "title": "LMDB",
+      "description": "Settings of the LMDB database environment shared by all backends.",
+      "fields": {
+        "nsslapd-mdb-max-size": {
+          "label": "Maximum database size",
+          "help": "The memory map size: the database cannot grow beyond it."
+        },
+        "nsslapd-mdb-max-readers": {
+          "label": "Maximum readers",
+          "help": "0 sizes automatically from the thread count."
+        },
+        "nsslapd-mdb-max-dbs": {
+          "label": "Maximum databases",
+          "help": "One per index and backend; raise it for many indexes."
+        },
+        "nsslapd-db-durable-transaction": {
+          "label": "Durable transactions",
+          "help": "Sync to disk on every commit: safer, slower."
+        }
+      }
+    },
+    "log-access": {
+      "title": "Access log",
+      "fields": {
+        "nsslapd-accesslog-level": {
+          "label": "Level",
+          "help": "Sum of the selected bits."
+        }
+      },
+      "flags": {
+        "internal": "Internal operations",
+        "default": "Standard (connections, operations)",
+        "entries": "Entries returned",
+        "microseconds": "Microsecond timing"
+      }
+    },
+    "log-errors": {
+      "title": "Error log",
+      "fields": {
+        "nsslapd-errorlog-level": {
+          "label": "Level",
+          "help": "Debug bits are very verbose; turn them off after troubleshooting."
+        }
+      },
+      "flags": {
+        "trace": "Function calls",
+        "packets": "Packet handling",
+        "heavyTrace": "Heavy trace",
+        "connections": "Connections",
+        "berPackets": "Packets sent/received",
+        "filters": "Search filters",
+        "config": "Configuration",
+        "acl": "Access control (detailed)",
+        "entryParsing": "Entry parsing",
+        "housekeeping": "Housekeeping",
+        "replication": "Replication",
+        "default": "Standard (errors)",
+        "entryCache": "Entry cache",
+        "plugins": "Plug-ins",
+        "aclSummary": "Access control summary",
+        "backend": "Database",
+        "pwpolicy": "Password policy"
+      }
+    },
+    "log-audit": {
+      "title": "Audit log",
+      "description": "Records every change made to the directory.",
+      "fields": {
+        "nsslapd-auditlog-display-attrs": {
+          "label": "Extra attributes",
+          "help": "Attributes of the changed entry to add to each record, e.g. cn; * for all."
+        }
+      }
+    },
+    "log-auditfail": {
+      "title": "Audit failures",
+      "description": "Records changes that the server rejected."
+    },
+    "log-security": {
+      "title": "Security log",
+      "description": "Binds, authorization failures and TCP-level events."
+    },
+    "security-binds": {
+      "title": "Binds and encryption",
+      "fields": {
+        "nsslapd-allow-anonymous-access": {
+          "label": "Anonymous access",
+          "values": {
+            "on": "Allowed",
+            "off": "Denied",
+            "rootdse": "Root DSE only"
+          }
+        },
+        "nsslapd-anonlimitsdn": {
+          "label": "Limits for anonymous",
+          "help": "Entry whose resource limits apply to anonymous clients."
+        },
+        "nsslapd-require-secure-binds": {
+          "label": "Require secure binds",
+          "help": "Simple binds only over TLS or LDAPI."
+        },
+        "nsslapd-close-on-failed-bind": {
+          "label": "Close connection on failed bind"
+        },
+        "nsslapd-minssf": {
+          "label": "Minimum SSF",
+          "help": "Operations on weaker connections are refused; 0 allows plain LDAP."
+        },
+        "nsslapd-minssf-exclude-rootdse": {
+          "label": "Allow root DSE below minimum"
+        },
+        "nsslapd-localssf": {
+          "label": "SSF of LDAPI"
+        },
+        "nsslapd-allowed-sasl-mechanisms": {
+          "label": "Allowed SASL mechanisms",
+          "help": "Comma-separated; empty allows all. EXTERNAL is always allowed."
+        }
+      }
+    },
+    "ldapi": {
+      "title": "LDAPI",
+      "description": "LDAP over a Unix socket. In the sidecar deployment ds-ui itself connects this way as Directory Manager.",
+      "fields": {
+        "nsslapd-ldapilisten": {
+          "label": "Enabled"
+        },
+        "nsslapd-ldapifilepath": {
+          "label": "Socket path"
+        },
+        "nsslapd-ldapiautobind": {
+          "label": "Autobind",
+          "help": "Bind as the local user that opened the socket."
+        },
+        "nsslapd-ldapimaprootdn": {
+          "label": "Root maps to",
+          "help": "The DN that the system user root (and the server user) binds as."
+        },
+        "nsslapd-ldapimaptoentries": {
+          "label": "Map other users to entries"
+        },
+        "nsslapd-ldapiuidnumbertype": {
+          "label": "UID attribute"
+        },
+        "nsslapd-ldapigidnumbertype": {
+          "label": "GID attribute"
+        },
+        "nsslapd-ldapientrysearchbase": {
+          "label": "Search base"
+        },
+        "nsslapd-ldapidnmappingbase": {
+          "label": "Mapping entries base"
+        }
+      }
+    },
+    "password-policy": {
+      "title": "Global password policy",
+      "description": "Applies to all users unless a subtree or user policy overrides it.",
+      "fields": {
+        "passwordStorageScheme": {
+          "label": "Hashing scheme"
+        },
+        "nsslapd-rootpwstoragescheme": {
+          "label": "Directory Manager scheme"
+        },
+        "nsslapd-pwpolicy-local": {
+          "label": "Allow subtree and user policies"
+        },
+        "passwordChange": {
+          "label": "Users may change passwords"
+        },
+        "passwordMustChange": {
+          "label": "Change after reset",
+          "help": "Users must change a password set by an administrator."
+        },
+        "passwordMinAge": {
+          "label": "Minimum age",
+          "help": "Before the password can be changed again."
+        },
+        "passwordHistory": {
+          "label": "Keep history"
+        },
+        "passwordInHistory": {
+          "label": "Passwords in history"
+        },
+        "passwordTrackUpdateTime": {
+          "label": "Record change time",
+          "help": "Maintains pwdUpdateTime."
+        },
+        "passwordAdminDN": {
+          "label": "Password administrators",
+          "help": "Entry or group that may bypass the policy."
+        },
+        "passwordExp": {
+          "label": "Passwords expire"
+        },
+        "passwordMaxAge": {
+          "label": "Maximum age"
+        },
+        "passwordWarning": {
+          "label": "Warn before"
+        },
+        "passwordGraceLimit": {
+          "label": "Grace logins",
+          "help": "Binds allowed after expiration."
+        },
+        "passwordSendExpiringTime": {
+          "label": "Always send expiring control"
+        },
+        "passwordCheckSyntax": {
+          "label": "Check syntax",
+          "help": "Enforce the requirements in this group."
+        },
+        "passwordMinLength": {
+          "label": "Minimum length"
+        },
+        "passwordMinDigits": {
+          "label": "Digits"
+        },
+        "passwordMinAlphas": {
+          "label": "Letters"
+        },
+        "passwordMinUppers": {
+          "label": "Upper-case letters"
+        },
+        "passwordMinLowers": {
+          "label": "Lower-case letters"
+        },
+        "passwordMinSpecials": {
+          "label": "Special characters"
+        },
+        "passwordMin8Bit": {
+          "label": "8-bit characters"
+        },
+        "passwordMinCategories": {
+          "label": "Character categories",
+          "help": "Of digits, upper, lower, special and 8-bit."
+        },
+        "passwordMinTokenLength": {
+          "label": "Token length",
+          "help": "Parts of the user's attributes this long must not appear."
+        },
+        "passwordMaxRepeats": {
+          "label": "Max repeated characters",
+          "help": "0 does not check."
+        },
+        "passwordMaxSequence": {
+          "label": "Max sequence length",
+          "help": "Like abcd or 1234; 0 does not check."
+        },
+        "passwordMaxSeqSets": {
+          "label": "Max repeated sequences",
+          "help": "0 does not check."
+        },
+        "passwordMaxClassChars": {
+          "label": "Max same-class run",
+          "help": "0 does not check."
+        },
+        "passwordPalindrome": {
+          "label": "Reject palindromes"
+        },
+        "passwordDictCheck": {
+          "label": "Dictionary check"
+        },
+        "passwordDictPath": {
+          "label": "Dictionary path",
+          "help": "Empty uses the system cracklib dictionary."
+        },
+        "passwordBadWords": {
+          "label": "Forbidden words",
+          "help": "Space-separated."
+        },
+        "passwordUserAttributes": {
+          "label": "Check against attributes",
+          "help": "Space-separated attributes of the user that must not appear."
+        },
+        "passwordLockout": {
+          "label": "Lock out after failures"
+        },
+        "passwordMaxFailure": {
+          "label": "Failures allowed"
+        },
+        "passwordResetFailureCount": {
+          "label": "Reset failure count after"
+        },
+        "passwordUnlock": {
+          "label": "Unlock automatically",
+          "help": "Otherwise an administrator must reset the password."
+        },
+        "passwordLockoutDuration": {
+          "label": "Lockout duration"
+        }
+      }
+    }
   }
 }

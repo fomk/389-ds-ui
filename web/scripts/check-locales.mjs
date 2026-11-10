@@ -36,7 +36,7 @@ for (const file of readdirSync(localesDir).filter((f) => f.endsWith('.json'))) {
   const msgs = load(code)
   const missing = [...ref.keys()].filter((k) => !msgs.has(k))
   const extra = [...msgs.keys()].filter((k) => !ref.has(k))
-  if (missing.length && REQUIRED.has(code)) report.push(`${code}: missing ${missing.length} key(s): ${missing.join(', ')}`)
+  if (missing.length && REQUIRED.has(code)) errors.push(`${code}: missing ${missing.length} key(s): ${missing.join(', ')}`)
   if (extra.length) errors.push(`${code}: unknown key(s) not in en.json: ${extra.join(', ')}`)
   for (const [k, v] of msgs) {
     checkSyntax(code, k, v)

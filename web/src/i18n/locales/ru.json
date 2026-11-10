@@ -526,5 +526,601 @@
       "entryAlreadyExists": "Запись уже существует",
       "notAllowedOnNonLeaf": "У записи есть дочерние записи"
     }
+  },
+  "pages": {
+    "_restart": "перезапуск",
+    "_restartHint": "Вступает в силу после перезапуска сервера.",
+    "_danger": "Осторожно",
+    "_dangerHint": "Неверное значение может отключить ds-ui от сервера.",
+    "_changed": "Изменено, не сохранено",
+    "_default": "по умолчанию",
+    "_dangerTitle": "Сохранить рискованные настройки?",
+    "_dangerConfirm": "Вы меняете: {fields}. Неверное значение может сделать сервер недоступным для ds-ui; исправлять придётся через shell контейнера.",
+    "_saveAnyway": "Сохранить",
+    "_saved": "Настройки сохранены.",
+    "_savedRestart": "Сохранено. {n} настройка вступит в силу после перезапуска. | Сохранено. {n} настройки вступят в силу после перезапуска. | Сохранено. {n} настроек вступят в силу после перезапуска. | Сохранено. {n} настройки вступят в силу после перезапуска.",
+    "_saveError": "Не удалось сохранить",
+    "_loadError": "Не удалось загрузить настройки",
+    "_unsaved": "{n} несохранённое изменение | {n} несохранённых изменения | {n} несохранённых изменений | {n} несохранённого изменения",
+    "_noChanges": "Нет изменений",
+    "_reset": "Сбросить",
+    "_save": "Сохранить",
+    "_leaveTitle": "Отменить изменения?",
+    "_leaveText": "На странице есть несохранённые изменения.",
+    "_leave": "Отменить",
+    "_stay": "Продолжить",
+    "_sections": {
+      "server": "Сервер",
+      "database": "База данных",
+      "logging": "Журналы",
+      "security": "Безопасность"
+    },
+    "_groups": {
+      "network": "Сеть",
+      "behaviour": "Поведение",
+      "search": "Поиск",
+      "connections": "Соединения",
+      "threads": "Потоки",
+      "caches": "Кэши",
+      "limits": "Ограничения",
+      "import": "Импорт",
+      "general": "Общие",
+      "rotation": "Ротация",
+      "retention": "Хранение",
+      "binds": "Привязка (bind)",
+      "ssf": "Стойкость шифрования (SSF)",
+      "sasl": "SASL",
+      "mapping": "Сопоставление с записями",
+      "storage": "Хранение паролей",
+      "changes": "Смена и история",
+      "expiration": "Срок действия",
+      "syntax": "Требования к паролю",
+      "lockout": "Блокировка"
+    },
+    "_units": {
+      "B": "Б",
+      "KB": "КиБ",
+      "MB": "МиБ",
+      "GB": "ГиБ",
+      "TB": "ТиБ",
+      "s": "с",
+      "min": "мин",
+      "h": "ч",
+      "d": "дн.",
+      "ms": "мс"
+    },
+    "_fields": {
+      "log": {
+        "enabled": {
+          "label": "Включён"
+        },
+        "mode": {
+          "label": "Права на файлы",
+          "help": "Восьмеричные права новых файлов журнала, например 600."
+        },
+        "compress": {
+          "label": "Сжимать старые файлы"
+        },
+        "buffering": {
+          "label": "Буферизация записи",
+          "help": "Быстрее, но последние строки могут появляться с задержкой."
+        },
+        "format": {
+          "label": "Формат"
+        },
+        "hideUnhashedPw": {
+          "label": "Скрывать открытые пароли",
+          "help": "Не записывать нехешированный userPassword изменений."
+        },
+        "maxlogsperdir": {
+          "label": "Хранить файлов",
+          "help": "Максимальное число файлов журнала, включая текущий."
+        },
+        "maxlogsize": {
+          "label": "Ротация по размеру",
+          "help": "-1 отключает ротацию по размеру."
+        },
+        "rotationtime": {
+          "label": "Ротация каждые",
+          "help": "Вместе с единицей ниже; -1 отключает ротацию по времени."
+        },
+        "rotationtimeunit": {
+          "label": "Единица ротации",
+          "values": {
+            "minute": "минуты",
+            "hour": "часы",
+            "day": "дни",
+            "week": "недели",
+            "month": "месяцы"
+          }
+        },
+        "rotationsync": {
+          "label": "Ротация в заданное время"
+        },
+        "rotationsynchour": {
+          "label": "Час"
+        },
+        "rotationsyncmin": {
+          "label": "Минута"
+        },
+        "expirationtime": {
+          "label": "Удалять файлы старше",
+          "help": "Вместе с единицей ниже; -1 — не удалять."
+        },
+        "expirationtimeunit": {
+          "label": "Единица возраста",
+          "values": {
+            "minute": "минуты",
+            "hour": "часы",
+            "day": "дни",
+            "week": "недели",
+            "month": "месяцы"
+          }
+        },
+        "maxdiskspace": {
+          "label": "Предел общего размера",
+          "help": "При превышении удаляются самые старые файлы; -1 — без предела."
+        },
+        "minfreediskspace": {
+          "label": "Оставлять свободным",
+          "help": "Старые файлы удаляются, когда свободного места меньше."
+        }
+      }
+    },
+    "server-general": {
+      "title": "Основные",
+      "description": "Имя, порты и общее поведение сервера.",
+      "fields": {
+        "nsslapd-localhost": {
+          "label": "Имя хоста",
+          "help": "Используется в ссылках (referral) и URL."
+        },
+        "nsslapd-port": {
+          "label": "Порт LDAP",
+          "help": "0 отключает обычный LDAP. В контейнере порты публикует Docker."
+        },
+        "nsslapd-securePort": {
+          "label": "Порт LDAPS"
+        },
+        "nsslapd-listenhost": {
+          "label": "Адрес прослушивания",
+          "help": "Пусто — все интерфейсы."
+        },
+        "nsslapd-readonly": {
+          "label": "Только чтение",
+          "help": "Отклоняет любые изменения, включая cn=config."
+        },
+        "nsslapd-schemacheck": {
+          "label": "Проверка схемы"
+        },
+        "nsslapd-syntaxcheck": {
+          "label": "Проверка синтаксиса",
+          "help": "Отклоняет значения, не соответствующие синтаксису атрибута."
+        },
+        "nsslapd-dn-validate-strict": {
+          "label": "Строгая проверка DN"
+        },
+        "nsslapd-lastmod": {
+          "label": "Служебные атрибуты изменений",
+          "help": "creatorsName, modifyTimestamp и т. п."
+        },
+        "nsslapd-entryusn-global": {
+          "label": "Общий счётчик USN",
+          "help": "Один счётчик USN на все бэкенды."
+        },
+        "nsslapd-ignore-virtual-attrs": {
+          "label": "Игнорировать виртуальные атрибуты",
+          "help": "Ускоряет поиск; выключите, если используете CoS или роли в фильтрах."
+        },
+        "nsslapd-return-exact-case": {
+          "label": "Имена атрибутов как в схеме"
+        }
+      }
+    },
+    "server-limits": {
+      "title": "Ограничения и производительность",
+      "description": "Значения для всех клиентов; у пользователей могут быть свои ограничения.",
+      "fields": {
+        "nsslapd-sizelimit": {
+          "label": "Лимит записей",
+          "help": "Записей в ответе на поиск; -1 — без лимита."
+        },
+        "nsslapd-timelimit": {
+          "label": "Лимит времени",
+          "help": "На один поиск; -1 — без лимита."
+        },
+        "nsslapd-max-filter-nest-level": {
+          "label": "Глубина вложенности фильтра"
+        },
+        "nsslapd-maxsimplepaged-per-conn": {
+          "label": "Постраничных поисков на соединение",
+          "help": "-1 — без лимита."
+        },
+        "nsslapd-idletimeout": {
+          "label": "Тайм-аут простоя",
+          "help": "Простаивающие соединения закрываются; 0 — никогда."
+        },
+        "nsslapd-ioblocktimeout": {
+          "label": "Тайм-аут блокировки ввода-вывода",
+          "help": "Соединение, заблокированное дольше, закрывается."
+        },
+        "nsslapd-maxbersize": {
+          "label": "Макс. размер запроса"
+        },
+        "nsslapd-maxsasliosize": {
+          "label": "Макс. буфер SASL",
+          "help": "-1 — без лимита."
+        },
+        "nsslapd-maxdescriptors": {
+          "label": "Файловые дескрипторы"
+        },
+        "nsslapd-threadnumber": {
+          "label": "Рабочие потоки",
+          "help": "-1 — автоматически по числу CPU."
+        },
+        "nsslapd-maxthreadsperconn": {
+          "label": "Потоков на соединение"
+        },
+        "nsslapd-ndn-cache-enabled": {
+          "label": "Кэш нормализованных DN"
+        },
+        "nsslapd-ndn-cache-max-size": {
+          "label": "Размер кэша DN"
+        }
+      }
+    },
+    "disk-monitoring": {
+      "title": "Контроль диска",
+      "description": "Защищает базу при заполнении диска: сначала сокращаются журналы, затем сервер останавливается.",
+      "fields": {
+        "nsslapd-disk-monitoring": {
+          "label": "Включён"
+        },
+        "nsslapd-disk-monitoring-threshold": {
+          "label": "Порог свободного места"
+        },
+        "nsslapd-disk-monitoring-grace-period": {
+          "label": "Отсрочка",
+          "help": "Время до остановки сервера после падения ниже половины порога."
+        },
+        "nsslapd-disk-monitoring-logging-critical": {
+          "label": "Не отключать журналы",
+          "help": "Не отключать журнал доступа при нехватке места."
+        },
+        "nsslapd-disk-monitoring-readonly-on-threshold": {
+          "label": "Только чтение вместо остановки"
+        }
+      }
+    },
+    "db-global": {
+      "title": "Общие настройки баз",
+      "description": "Действуют для всех бэкендов. Размеры кэшей отдельных бэкендов — на странице «Базы данных».",
+      "fields": {
+        "nsslapd-lookthroughlimit": {
+          "label": "Лимит просмотра",
+          "help": "Сколько записей-кандидатов просматривается за поиск; -1 — без лимита."
+        },
+        "nsslapd-idlistscanlimit": {
+          "label": "Лимит списка ID",
+          "help": "Выше этого индекс считается неиндексированным (allids)."
+        },
+        "nsslapd-pagedlookthroughlimit": {
+          "label": "Лимит просмотра, постранично",
+          "help": "0 — как обычный лимит."
+        },
+        "nsslapd-pagedidlistscanlimit": {
+          "label": "Лимит списка ID, постранично",
+          "help": "0 — как обычный лимит."
+        },
+        "nsslapd-rangelookthroughlimit": {
+          "label": "Лимит просмотра диапазона"
+        },
+        "nsslapd-import-cachesize": {
+          "label": "Кэш импорта"
+        },
+        "nsslapd-search-use-vlv-index": {
+          "label": "Использовать VLV-индексы при поиске"
+        },
+        "nsslapd-backend-implement": {
+          "label": "Реализация базы",
+          "help": "Смена требует экспорта и повторного импорта всех данных."
+        }
+      }
+    },
+    "db-mdb": {
+      "title": "LMDB",
+      "description": "Параметры окружения LMDB, общего для всех бэкендов.",
+      "fields": {
+        "nsslapd-mdb-max-size": {
+          "label": "Макс. размер базы",
+          "help": "Размер отображения в память: база не может вырасти больше."
+        },
+        "nsslapd-mdb-max-readers": {
+          "label": "Макс. читателей",
+          "help": "0 — автоматически по числу потоков."
+        },
+        "nsslapd-mdb-max-dbs": {
+          "label": "Макс. баз",
+          "help": "По одной на индекс и бэкенд; увеличьте при большом числе индексов."
+        },
+        "nsslapd-db-durable-transaction": {
+          "label": "Надёжные транзакции",
+          "help": "Сброс на диск при каждой фиксации: надёжнее, медленнее."
+        }
+      }
+    },
+    "log-access": {
+      "title": "Журнал доступа",
+      "fields": {
+        "nsslapd-accesslog-level": {
+          "label": "Уровень",
+          "help": "Сумма выбранных битов."
+        }
+      },
+      "flags": {
+        "internal": "Внутренние операции",
+        "default": "Стандартный (соединения, операции)",
+        "entries": "Возвращённые записи",
+        "microseconds": "Время в микросекундах"
+      }
+    },
+    "log-errors": {
+      "title": "Журнал ошибок",
+      "fields": {
+        "nsslapd-errorlog-level": {
+          "label": "Уровень",
+          "help": "Отладочные биты очень многословны; выключайте их после диагностики."
+        }
+      },
+      "flags": {
+        "trace": "Вызовы функций",
+        "packets": "Обработка пакетов",
+        "heavyTrace": "Подробная трассировка",
+        "connections": "Соединения",
+        "berPackets": "Отправленные/полученные пакеты",
+        "filters": "Фильтры поиска",
+        "config": "Конфигурация",
+        "acl": "Контроль доступа (подробно)",
+        "entryParsing": "Разбор записей",
+        "housekeeping": "Фоновые задачи",
+        "replication": "Репликация",
+        "default": "Стандартный (ошибки)",
+        "entryCache": "Кэш записей",
+        "plugins": "Плагины",
+        "aclSummary": "Контроль доступа (сводка)",
+        "backend": "База данных",
+        "pwpolicy": "Парольная политика"
+      }
+    },
+    "log-audit": {
+      "title": "Журнал аудита",
+      "description": "Записывает каждое изменение каталога.",
+      "fields": {
+        "nsslapd-auditlog-display-attrs": {
+          "label": "Доп. атрибуты",
+          "help": "Атрибуты изменённой записи для каждой строки, например cn; * — все."
+        }
+      }
+    },
+    "log-auditfail": {
+      "title": "Неудачные изменения",
+      "description": "Записывает изменения, отклонённые сервером."
+    },
+    "log-security": {
+      "title": "Журнал безопасности",
+      "description": "Привязки, отказы авторизации и события уровня TCP."
+    },
+    "security-binds": {
+      "title": "Привязка и шифрование",
+      "fields": {
+        "nsslapd-allow-anonymous-access": {
+          "label": "Анонимный доступ",
+          "values": {
+            "on": "Разрешён",
+            "off": "Запрещён",
+            "rootdse": "Только root DSE"
+          }
+        },
+        "nsslapd-anonlimitsdn": {
+          "label": "Лимиты для анонимных",
+          "help": "Запись, чьи лимиты ресурсов применяются к анонимным клиентам."
+        },
+        "nsslapd-require-secure-binds": {
+          "label": "Требовать защищённую привязку",
+          "help": "Простая привязка только по TLS или LDAPI."
+        },
+        "nsslapd-close-on-failed-bind": {
+          "label": "Закрывать соединение при неудачной привязке"
+        },
+        "nsslapd-minssf": {
+          "label": "Минимальный SSF",
+          "help": "Операции на более слабых соединениях отклоняются; 0 разрешает обычный LDAP."
+        },
+        "nsslapd-minssf-exclude-rootdse": {
+          "label": "Разрешить root DSE ниже минимума"
+        },
+        "nsslapd-localssf": {
+          "label": "SSF для LDAPI"
+        },
+        "nsslapd-allowed-sasl-mechanisms": {
+          "label": "Разрешённые механизмы SASL",
+          "help": "Через запятую; пусто — все. EXTERNAL разрешён всегда."
+        }
+      }
+    },
+    "ldapi": {
+      "title": "LDAPI",
+      "description": "LDAP через Unix-сокет. В режиме sidecar так подключается сам ds-ui — от имени Directory Manager.",
+      "fields": {
+        "nsslapd-ldapilisten": {
+          "label": "Включён"
+        },
+        "nsslapd-ldapifilepath": {
+          "label": "Путь к сокету"
+        },
+        "nsslapd-ldapiautobind": {
+          "label": "Автопривязка",
+          "help": "Привязка от имени локального пользователя, открывшего сокет."
+        },
+        "nsslapd-ldapimaprootdn": {
+          "label": "root сопоставляется с",
+          "help": "DN, которым привязывается системный root (и пользователь сервера)."
+        },
+        "nsslapd-ldapimaptoentries": {
+          "label": "Сопоставлять других пользователей с записями"
+        },
+        "nsslapd-ldapiuidnumbertype": {
+          "label": "Атрибут UID"
+        },
+        "nsslapd-ldapigidnumbertype": {
+          "label": "Атрибут GID"
+        },
+        "nsslapd-ldapientrysearchbase": {
+          "label": "База поиска"
+        },
+        "nsslapd-ldapidnmappingbase": {
+          "label": "База записей сопоставления"
+        }
+      }
+    },
+    "password-policy": {
+      "title": "Глобальная парольная политика",
+      "description": "Действует для всех пользователей, если её не переопределяет политика поддерева или пользователя.",
+      "fields": {
+        "passwordStorageScheme": {
+          "label": "Схема хеширования"
+        },
+        "nsslapd-rootpwstoragescheme": {
+          "label": "Схема для Directory Manager"
+        },
+        "nsslapd-pwpolicy-local": {
+          "label": "Разрешить политики поддеревьев и пользователей"
+        },
+        "passwordChange": {
+          "label": "Пользователи могут менять пароль"
+        },
+        "passwordMustChange": {
+          "label": "Смена после сброса",
+          "help": "Пароль, заданный администратором, нужно сменить."
+        },
+        "passwordMinAge": {
+          "label": "Минимальный возраст",
+          "help": "Прежде чем пароль можно сменить снова."
+        },
+        "passwordHistory": {
+          "label": "Хранить историю"
+        },
+        "passwordInHistory": {
+          "label": "Паролей в истории"
+        },
+        "passwordTrackUpdateTime": {
+          "label": "Записывать время смены",
+          "help": "Ведёт атрибут pwdUpdateTime."
+        },
+        "passwordAdminDN": {
+          "label": "Администраторы паролей",
+          "help": "Запись или группа, которой разрешено обходить политику."
+        },
+        "passwordExp": {
+          "label": "Пароли истекают"
+        },
+        "passwordMaxAge": {
+          "label": "Максимальный возраст"
+        },
+        "passwordWarning": {
+          "label": "Предупреждать за"
+        },
+        "passwordGraceLimit": {
+          "label": "Входов после истечения",
+          "help": "Разрешённые привязки после истечения."
+        },
+        "passwordSendExpiringTime": {
+          "label": "Всегда отправлять контрол истечения"
+        },
+        "passwordCheckSyntax": {
+          "label": "Проверять пароль",
+          "help": "Применять требования этой группы."
+        },
+        "passwordMinLength": {
+          "label": "Минимальная длина"
+        },
+        "passwordMinDigits": {
+          "label": "Цифр"
+        },
+        "passwordMinAlphas": {
+          "label": "Букв"
+        },
+        "passwordMinUppers": {
+          "label": "Заглавных букв"
+        },
+        "passwordMinLowers": {
+          "label": "Строчных букв"
+        },
+        "passwordMinSpecials": {
+          "label": "Спецсимволов"
+        },
+        "passwordMin8Bit": {
+          "label": "8-битных символов"
+        },
+        "passwordMinCategories": {
+          "label": "Категорий символов",
+          "help": "Из цифр, заглавных, строчных, спецсимволов и 8-битных."
+        },
+        "passwordMinTokenLength": {
+          "label": "Длина фрагмента",
+          "help": "Фрагменты атрибутов пользователя такой длины не должны встречаться."
+        },
+        "passwordMaxRepeats": {
+          "label": "Макс. повторов символа",
+          "help": "0 — не проверять."
+        },
+        "passwordMaxSequence": {
+          "label": "Макс. длина последовательности",
+          "help": "Например abcd или 1234; 0 — не проверять."
+        },
+        "passwordMaxSeqSets": {
+          "label": "Макс. повторов последовательности",
+          "help": "0 — не проверять."
+        },
+        "passwordMaxClassChars": {
+          "label": "Макс. подряд одного класса",
+          "help": "0 — не проверять."
+        },
+        "passwordPalindrome": {
+          "label": "Запрещать палиндромы"
+        },
+        "passwordDictCheck": {
+          "label": "Проверка по словарю"
+        },
+        "passwordDictPath": {
+          "label": "Путь к словарю",
+          "help": "Пусто — системный словарь cracklib."
+        },
+        "passwordBadWords": {
+          "label": "Запрещённые слова",
+          "help": "Через пробел."
+        },
+        "passwordUserAttributes": {
+          "label": "Сверять с атрибутами",
+          "help": "Атрибуты пользователя через пробел, которые не должны встречаться."
+        },
+        "passwordLockout": {
+          "label": "Блокировать после неудач"
+        },
+        "passwordMaxFailure": {
+          "label": "Допустимо неудач"
+        },
+        "passwordResetFailureCount": {
+          "label": "Сброс счётчика неудач через"
+        },
+        "passwordUnlock": {
+          "label": "Разблокировать автоматически",
+          "help": "Иначе пароль должен сбросить администратор."
+        },
+        "passwordLockoutDuration": {
+          "label": "Длительность блокировки"
+        }
+      }
+    }
   }
 }

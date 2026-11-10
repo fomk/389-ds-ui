@@ -37,7 +37,7 @@
 └─ docs/
 ```
 
-Planned by stage: `pages/` (YAML pages, stage 3), `deploy/aio/` (stage 7), `test/e2e/` (Playwright, stage 7).
+Planned by stage: `deploy/aio/` (stage 7), `test/e2e/` (Playwright, stage 7).
 
 ## Tools
 
@@ -96,7 +96,7 @@ After changing API types in Go: run `make gen` and commit `api/openapi.json` and
 
 ## How to add a settings page
 
-1. Create `pages/<section>/<id>.yaml` (format described in `internal/pages/README.md`, to appear in stage 3).
-2. Specify the DN, fields, types, `restartRequired`, and `minVersion`/`dbImpl` if needed.
-3. Add an integration test in `test/integration/pages_test.go` (read + modify + revert).
-4. The page appears in the menu automatically.
+1. Describe the page in `internal/pages/defs/*.yaml`: DN, fields, types, `restart`/`danger` flags and, if needed, a `when: {dbImpl: …}` condition (format: [internal/pages/README.md](../internal/pages/README.md)).
+2. Add its texts (`pages.<id>.*`) to `web/src/i18n/locales/en.json` and `ru.json`.
+3. Run `go test ./internal/pages` (definitions and texts) and `make itest` (every attribute exists on a real server).
+4. The page appears under "Server settings" automatically.
