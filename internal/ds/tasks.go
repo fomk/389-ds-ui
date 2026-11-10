@@ -187,6 +187,20 @@ func (m *Tasks) snapshot(t *Task) *Task {
 	return &c
 }
 
+// Busy reports whether a task of the given type is running on target
+// (case-insensitive), as far as this ds-ui started it.
+func (m *Tasks) Busy(typ, target string) bool {
+	if m == nil {
+		return false
+	}
+	for _, t := range m.List() {
+		if t.Status == TaskRunning && t.Type == typ && strings.EqualFold(t.Target, target) {
+			return true
+		}
+	}
+	return false
+}
+
 // List returns the tasks started by this ds-ui instance, newest first.
 func (m *Tasks) List() []*Task {
 	m.mu.Lock()

@@ -1,12 +1,14 @@
 <script setup lang="ts">
 /** Server settings: the declarative pages (internal/pages/defs) by section. */
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, type Component } from 'vue'
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NAlert, NCard, NGrid, NGridItem, NH1, NIcon, NSkeleton, NSwitch, useDialog, useThemeVars } from 'naive-ui'
 import { Database, ScrollText, Server, ShieldCheck, SlidersHorizontal } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
+import RootPasswordPanel from '@/components/settings/RootPasswordPanel.vue'
+import SaslMappingsPanel from '@/components/settings/SaslMappingsPanel.vue'
 import SettingsPage from '@/components/settings/SettingsPage.vue'
 
 type PageSummary = Schemas['PageSummary']
@@ -42,10 +44,22 @@ function setShowAttrs(v: boolean) {
 const SECTION_ORDER = ['server', 'database', 'logging', 'security']
 const SECTION_ICONS: Record<string, typeof Server> = { server: Server, database: Database, logging: ScrollText, security: ShieldCheck }
 
+/**
+ * Hand-written screens shown among the declarative pages (titles in
+ * pages.<id>.title like the others).
+ */
+const CUSTOM: (PageSummary & { component: Component })[] = [
+  { id: 'sasl-mappings', section: 'security', order: 15, component: SaslMappingsPanel },
+  { id: 'root-password', section: 'security', order: 25, component: RootPasswordPanel },
+]
+const custom = computed(() => CUSTOM.find((c) => c.id === selected.value))
+
 const sections = computed(() => {
   const out: { name: string; pages: PageSummary[] }[] = []
   // Plug-in pages live on the Plugins page.
-  for (const p of (list.value ?? []).filter((x) => !x.plugin)) {
+  const pages = list.value ? [...list.value.filter((x) => !x.plugin), ...CUSTOM] : []
+  pages.sort((a, b) => a.order - b.order)
+  for (const p of pages) {
     let s = out.find((x) => x.name === p.section)
     if (!s) out.push((s = { name: p.section, pages: [] }))
     s.pages.push(p)
@@ -128,7 +142,8 @@ onBeforeRouteLeave(confirmLeave)
       </NCard>
     </NGridItem>
     <NGridItem span="1 l:3">
-      <SettingsPage v-if="selected" :id="selected" :key="selected" v-model:dirty="dirty" :show-attrs="showAttrs" />
+      <component :is="custom.component" v-if="custom" />
+      <SettingsPage v-else-if="selected" :id="selected" :key="selected" v-model:dirty="dirty" :show-attrs="showAttrs" />
     </NGridItem>
   </NGrid>
 </template>

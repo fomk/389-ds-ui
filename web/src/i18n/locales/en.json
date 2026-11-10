@@ -398,7 +398,10 @@
     "vlvBase": "Base",
     "vlvScope": "Scope",
     "vlvFilter": "Filter",
-    "vlvSort": "Sort"
+    "vlvSort": "Sort",
+    "defaultTab": "Default indexes",
+    "defaultTitle": "Default indexes for new suffixes",
+    "defaultHint": "A suffix created later starts with these indexes. Existing suffixes are not changed."
   },
   "tasks": {
     "title": "Tasks",
@@ -424,7 +427,8 @@
       "delete-backend": "Suffix deleted",
       "restart": "Server restart",
       "enable-plugin": "Plug-in enabled",
-      "disable-plugin": "Plug-in disabled"
+      "disable-plugin": "Plug-in disabled",
+      "root-password": "Directory Manager password changed"
     },
     "progress": "{current} of {total}",
     "completed": "Completed."
@@ -1306,6 +1310,14 @@
           "label": "Check all state attributes"
         }
       }
+    },
+    "sasl-mappings": {
+      "title": "SASL mappings",
+      "description": "How a SASL identity (e.g. a Kerberos principal) is mapped to an entry. Mappings are tried by priority; groups of the regular expression (\\1, \\2) are substituted into the templates."
+    },
+    "root-password": {
+      "title": "Directory Manager password",
+      "description": "The password of the root DN. The server stores it hashed with the Directory Manager scheme of the password policy."
     }
   },
   "plugins": {
@@ -1331,5 +1343,53 @@
     "path": "Library",
     "dependsOn": "Depends on",
     "disabledHint": "The plug-in is disabled: its settings are kept but have no effect."
+  },
+  "rootPassword": {
+    "new": "New password",
+    "repeat": "Repeat",
+    "change": "Change password",
+    "tooShort": "At least {n} characters.",
+    "mismatch": "The passwords differ.",
+    "changed": "Password of {dn} changed.",
+    "error": "Could not change the password",
+    "confirmTitle": "ds-ui binds with this password",
+    "confirmSimple": "ds-ui connects to the server with a password. If it binds as Directory Manager, it switches to the new password now, but after its own restart it reads the old one from its secret file again.",
+    "secretTitle": "Update the ds-ui secret",
+    "secretText": "ds-ui uses the new password until it restarts. Put it into the file named by"
+  },
+  "sasl": {
+    "add": "Add mapping",
+    "edit": "Edit mapping",
+    "delete": "Delete mapping",
+    "deleteConfirm": "Delete the SASL mapping “{name}”?",
+    "deleted": "Mapping {name} deleted.",
+    "added": "Mapping {name} added.",
+    "saved": "Mapping saved.",
+    "error": "SASL mappings",
+    "none": "No mappings",
+    "name": "Name",
+    "regex": "Regular expression",
+    "regexHint": "Matched against the SASL identity; parenthesised groups become \\1, \\2, …",
+    "baseDN": "Base DN template",
+    "filter": "Filter template",
+    "filterHint": "Must find exactly one entry.",
+    "priority": "Priority",
+    "priorityHint": "1 is tried first, 100 last; 0 leaves it unset (100)."
+  },
+  "vlv": {
+    "add": "Add VLV index",
+    "build": "Build",
+    "buildStarted": "Building VLV index {name}.",
+    "buildHint": "A new VLV index is built right after it is created. Indexing works on the live database: on a large suffix, make a backup first.",
+    "delete": "Delete VLV index",
+    "deleteConfirm": "Delete the VLV index “{name}” and its sort orders?",
+    "deleted": "VLV index {name} deleted.",
+    "error": "VLV indexes",
+    "sortHint": "One sort order per line: attributes separated by spaces, -attr for descending.",
+    "scopes": {
+      "base": "Base",
+      "one": "One level",
+      "sub": "Subtree"
+    }
   }
 }

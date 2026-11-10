@@ -25,7 +25,9 @@ import { useTasksStore } from '@/stores/tasks'
 
 type Index = Schemas['Index']
 
-const props = defineProps<{ backend: string }>()
+/** Without a backend, the default indexes (cn=default indexes) are edited. */
+const props = defineProps<{ backend?: string }>()
+const isDefault = computed(() => !props.backend)
 
 const { t, te } = useI18n()
 // Unknown index types (server-internal ones) are shown as they are.
@@ -41,7 +43,9 @@ const loading = ref(false)
 async function load() {
   loading.value = true
   try {
-    list.value = await call(api.GET('/api/v1/backends/{name}/indexes', { params: { path: { name: props.backend } } }))
+    list.value = props.backend
+      ? await call(api.GET('/api/v1/backends/{name}/indexes', { params: { path: { name: props.backend } } }))
+      : await call(api.GET('/api/v1/default-indexes'))
   } catch (e) {
     message.error(`${t('indexes.error')}: ${localizeError(e).summary}`)
   } finally {
@@ -55,6 +59,7 @@ onMounted(() => {
 watch(() => props.backend, load)
 
 async function reindex(attributes: string[]) {
+  if (!props.backend) return
   try {
     const task = await call(
       api.POST('/api/v1/backends/{name}/reindex', { params: { path: { name: props.backend } }, body: { attributes } }),
@@ -74,7 +79,9 @@ function remove(ix: Index) {
     negativeText: t('edit.cancel'),
     onPositiveClick: async () => {
       try {
-        await call(api.DELETE('/api/v1/backends/{name}/indexes/{attr}', { params: { path: { name: props.backend, attr: ix.attribute } } }))
+        await (props.backend
+          ? call(api.DELETE('/api/v1/backends/{name}/indexes/{attr}', { params: { path: { name: props.backend, attr: ix.attribute } } }))
+          : call(api.DELETE('/api/v1/default-indexes/{attr}', { params: { path: { attr: ix.attribute } } })))
         message.success(t('indexes.deleted', { attr: ix.attribute }))
         await load()
       } catch (e) {
@@ -103,17 +110,19 @@ async function saveIndex() {
   if (!e?.attribute || !e.types.length) return
   saving.value = true
   try {
+    const ix = { attribute: e.attribute, types: e.types, matchingRules: [], system: false }
     if (e.isNew) {
-      await call(api.POST('/api/v1/backends/{name}/indexes', {
-        params: { path: { name: props.backend } },
-        body: { attribute: e.attribute, types: e.types, matchingRules: [], system: false },
-      }))
+      await (props.backend
+        ? call(api.POST('/api/v1/backends/{name}/indexes', { params: { path: { name: props.backend } }, body: ix }))
+        : call(api.POST('/api/v1/default-indexes', { body: ix })))
       message.success(t('indexes.added', { attr: e.attribute }))
     } else {
-      await call(api.PUT('/api/v1/backends/{name}/indexes/{attr}', {
-        params: { path: { name: props.backend, attr: e.attribute } },
-        body: { types: e.types },
-      }))
+      await (props.backend
+        ? call(api.PUT('/api/v1/backends/{name}/indexes/{attr}', {
+            params: { path: { name: props.backend, attr: e.attribute } },
+            body: { types: e.types },
+          }))
+        : call(api.PUT('/api/v1/default-indexes/{attr}', { params: { path: { attr: e.attribute } }, body: { types: e.types } })))
       message.success(t('indexes.updated'))
     }
     editing.value = undefined
@@ -145,12 +154,14 @@ const columns = computed<DataTableColumns<Index>>(() => [
   {
     key: 'actions',
     title: '',
-    width: 112,
+    width: isDefault.value ? 84 : 112,
     // Fixed slots, left-aligned: the same action is always in the same
     // column; system indexes keep an empty slot where "delete" would be.
     render: (r) =>
-      h('div', { class: 'row-actions' }, [
-        h(NButton, { size: 'tiny', quaternary: true, title: t('indexes.reindex'), 'aria-label': t('indexes.reindex'), onClick: () => reindex([r.attribute]) }, { icon: icon(RefreshCw) }),
+      h('div', { class: ['row-actions', { two: isDefault.value }] }, [
+        isDefault.value
+          ? null
+          : h(NButton, { size: 'tiny', quaternary: true, title: t('indexes.reindex'), 'aria-label': t('indexes.reindex'), onClick: () => reindex([r.attribute]) }, { icon: icon(RefreshCw) }),
         h(NButton, { size: 'tiny', quaternary: true, title: t('indexes.edit'), 'aria-label': t('indexes.edit'), onClick: () => (editing.value = { attribute: r.attribute, types: [...r.types], isNew: false }) }, { icon: icon(Pencil) }),
         r.system
           ? h('span', { class: 'slot' })
@@ -166,7 +177,7 @@ const columns = computed<DataTableColumns<Index>>(() => [
       <template #icon><NIcon><Plus /></NIcon></template>
       {{ t('indexes.add') }}
     </NButton>
-    <NButton size="small" @click="reindex([])">
+    <NButton v-if="!isDefault" size="small" @click="reindex([])">
       <template #icon><NIcon><RefreshCw /></NIcon></template>
       {{ t('indexes.reindexAll') }}
     </NButton>
@@ -215,6 +226,10 @@ const columns = computed<DataTableColumns<Index>>(() => [
   justify-content: start;
   /* keeps the icons clear of the table's scrollbar */
   padding-right: 8px;
+}
+
+:deep(.row-actions.two) {
+  grid-template-columns: repeat(2, 28px);
 }
 
 :deep(.row-actions .slot) {

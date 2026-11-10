@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
   NButton,
   NCard,
-  NDataTable,
   NEmpty,
   NGrid,
   NGridItem,
@@ -18,7 +17,6 @@ import {
   NTabs,
   NTag,
   useThemeVars,
-  type DataTableColumns,
 } from 'naive-ui'
 import { Database, Plus } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
@@ -28,11 +26,11 @@ import BackendTransfer from '@/components/db/BackendTransfer.vue'
 import BackupsPanel from '@/components/db/BackupsPanel.vue'
 import LdifFilesPanel from '@/components/db/LdifFilesPanel.vue'
 import CreateBackendDialog from '@/components/db/CreateBackendDialog.vue'
+import VlvPanel from '@/components/db/VlvPanel.vue'
 import TaskList from '@/components/TaskList.vue'
 import { useServerStore } from '@/stores/server'
 
 type Backend = Schemas['Backend']
-type VLV = Schemas['VLVIndex']
 
 const { t } = useI18n()
 const vars = useThemeVars()
@@ -47,7 +45,6 @@ const section = computed({
   set: (v: string) => router.replace({ path: '/databases', query: v === 'suffixes' ? {} : { section: v } }),
 })
 const creating = ref(false)
-const vlv = ref<VLV[]>([])
 
 const selectedName = computed(() => (typeof route.query.be === 'string' ? route.query.be : backends.value?.[0]?.name))
 const selected = computed(() => backends.value?.find((b) => b.name === selectedName.value))
@@ -56,10 +53,6 @@ async function load() {
   backends.value = await call(api.GET('/api/v1/backends'))
 }
 onMounted(load)
-
-watch(selectedName, async (name) => {
-  vlv.value = name ? await call(api.GET('/api/v1/backends/{name}/vlv', { params: { path: { name } } })).catch(() => []) : []
-}, { immediate: true })
 
 function select(name: string) {
   router.replace({ path: '/databases', query: { be: name } })
@@ -81,14 +74,6 @@ async function onDeleted() {
   await server.loadInfo()
   router.replace({ path: '/databases' })
 }
-
-const vlvColumns = computed<DataTableColumns<VLV>>(() => [
-  { key: 'name', title: t('indexes.vlvName') },
-  { key: 'base', title: t('indexes.vlvBase'), className: 'mono' },
-  { key: 'scope', title: t('indexes.vlvScope') },
-  { key: 'filter', title: t('indexes.vlvFilter'), className: 'mono' },
-  { key: 'sorts', title: t('indexes.vlvSort'), render: (r) => r.sorts.join('; ') },
-])
 </script>
 
 <template>
@@ -98,10 +83,15 @@ const vlvColumns = computed<DataTableColumns<VLV>>(() => [
     <NRadioButton value="suffixes">{{ t('db.suffixesTab') }}</NRadioButton>
     <NRadioButton value="backups">{{ t('backups.tab') }}</NRadioButton>
     <NRadioButton value="ldif">{{ t('ldifFiles.tab') }}</NRadioButton>
+    <NRadioButton value="default-indexes">{{ t('indexes.defaultTab') }}</NRadioButton>
   </NRadioGroup>
 
   <NCard v-if="section === 'backups'" size="small"><BackupsPanel /></NCard>
   <NCard v-else-if="section === 'ldif'" size="small"><LdifFilesPanel /></NCard>
+  <NCard v-else-if="section === 'default-indexes'" size="small" :title="t('indexes.defaultTitle')">
+    <p class="section-hint">{{ t('indexes.defaultHint') }}</p>
+    <BackendIndexes />
+  </NCard>
 
   <NGrid v-else cols="1 l:4" responsive="screen" :x-gap="16" :y-gap="16">
     <NGridItem>
@@ -158,9 +148,7 @@ const vlvColumns = computed<DataTableColumns<VLV>>(() => [
             <BackendTransfer :backend="selected" />
           </NTabPane>
           <NTabPane name="vlv" :tab="t('db.tabs.vlv')">
-            <NDataTable :columns="vlvColumns" :data="vlv" size="small" :row-key="(r: VLV) => r.name">
-              <template #empty><NEmpty :description="t('indexes.none')" size="small" /></template>
-            </NDataTable>
+            <VlvPanel :backend="selected.name" :suffix="selected.suffix" />
           </NTabPane>
         </NTabs>
       </NCard>
@@ -230,5 +218,10 @@ const vlvColumns = computed<DataTableColumns<VLV>>(() => [
 
 .tasks {
   margin-top: 16px;
+}
+
+.section-hint {
+  margin: 0 0 12px;
+  color: v-bind('vars.textColor2');
 }
 </style>

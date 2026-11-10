@@ -93,9 +93,16 @@ Work items:
 
 **Done when:** through the UI you can create a suffix, configure indexes, make a backup and restore from it, export/import LDIF, watch logs in real time, restart the server; everything is covered by integration tests.
 
-## Stage 3. Declarative settings (2–3 wk) → v0.2
+## Stage 3. Declarative settings (2–3 wk) → v0.2 — ✅ done
 
 **Goal:** cover the "long tail" of similar forms with data rather than code.
+
+**Outcome:** 13 settings pages and 6 plug-in pages are YAML (`internal/pages/defs`); a page needs YAML + texts and no code, and tests check every attribute against a real server and every text in en/ru. Deviations:
+- Field types are string, dn, int, bool, enum (also read from the server), list, size, duration, flags (bit masks); no `minVersion` condition yet (only `dbImpl`), no hints from `cn=schema` (the texts are written by hand).
+- SASL mappings and the root DN password are hand-written screens in the same menu (a list and a password form do not fit one-entry pages).
+- Attribute Uniqueness: only the default instance; more instances in stage 4. USN is on/off only. BDB settings page: none (LMDB is the default and BDB is deprecated).
+- Restart hints are tracked per setting and cleared when a setting is changed back.
+- 389-ds 3.1.2 once crashed while building a VLV index on a long-running development server and lost that backend's data; it could not be reproduced (fresh server, the same data from a backup, deleting the VLV index during the build). ds-ui refuses to delete a VLV index while an index task runs and advises a backup before building one.
 
 Work items:
 - Page engine `internal/pages`: YAML descriptions (DN, fields, types, `restartRequired`, `minVersion`/`dbImpl` conditions; labels and hints live in the locale files `pages.*`, ADR-009), `GET/PATCH /api/v1/pages/{id}`, diff → modify; field types: bool(on/off), int, size, duration, enum, string, dn, attr-name, multi.

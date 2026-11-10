@@ -224,6 +224,11 @@ func registerDatabases(api huma.API, d Deps) {
 	huma.Register(api, huma.Operation{OperationID: "deleteVLV", Method: http.MethodDelete, Path: apiPrefix + "/backends/{name}/vlv/{vlv}",
 		Summary: "Delete a VLV index", Tags: tags, DefaultStatus: http.StatusNoContent},
 		func(ctx context.Context, in *vlvPath) (*noContent, error) {
+			// Changing VLV definitions while the backend is being indexed is
+			// what 389-ds itself refuses ("cannot be disturbed"); do not try.
+			if d.Tasks.Busy(ds.TaskIndex, in.Name) {
+				return nil, problem(http.StatusConflict, "an index task is running on backend "+in.Name+"; delete the VLV index when it has finished")
+			}
 			if err := conn(ctx, func(c *ldap.Conn) error { return ds.DeleteVLV(c, in.Name, in.VLV) }); err != nil {
 				return nil, toHTTPError(err)
 			}

@@ -43,6 +43,8 @@ Changes are written to `dse.ldif` automatically. Which attributes require a rest
 
 Creating a suffix: 1) backend, 2) mapping tree, 3) suffix root entry. Deletion goes in reverse order (deleting the backend deletes the data).
 
+A VLV index is empty until built by an index task with `nsIndexVLVAttribute: <vlvIndex cn>`. While the task runs, 389-ds refuses to delete the VLV entries ("is already in the middle of another task and cannot be disturbed"). On LMDB, a crash during such a build once left the backend's `id2entry` empty (3.1.2, not reproduced): back up large suffixes first.
+
 ## Tasks — `cn=tasks,cn=config`
 
 Task entry: `cn=<unique name>,cn=<type>,cn=tasks,cn=config` with `objectClass: extensibleObject` and `cn`.
