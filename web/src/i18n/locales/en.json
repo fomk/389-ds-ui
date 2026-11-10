@@ -362,7 +362,8 @@
     "dangerText": "Deletes the backend and ALL entries under {suffix}. This cannot be undone.",
     "typeToConfirm": "Type {name} to confirm",
     "deleted": "Suffix {suffix} deleted",
-    "deleteError": "Could not delete the suffix"
+    "deleteError": "Could not delete the suffix",
+    "suffixesTab": "Suffixes"
   },
   "indexes": {
     "attribute": "Attribute",
@@ -413,6 +414,51 @@
       "import": "Import"
     },
     "progress": "{current} of {total}"
+  },
+  "backups": {
+    "tab": "Backups",
+    "create": "Back up now",
+    "name": "Name",
+    "namePlaceholder": "optional, default backup_<time>",
+    "created": "Backup started",
+    "date": "Created",
+    "size": "Size",
+    "restore": "Restore",
+    "download": "Download",
+    "delete": "Delete",
+    "restoreConfirm": "Restore ALL databases from {name}? Changes made after this backup are lost and the databases are offline while restoring.",
+    "restoreStarted": "Restore started",
+    "deleteConfirm": "Delete backup {name}?",
+    "deleted": "Backup {name} deleted",
+    "none": "No backups yet",
+    "noFiles": "Backups can be created, but listing, downloading and deleting them needs access to the server's files (sidecar or all-in-one mode).",
+    "error": "Backup operation failed",
+    "dir": "Directory: {dir}",
+    "sensitive": "Backups contain the server configuration including TLS private keys (config_files). Keep downloaded archives as secrets."
+  },
+  "ldifFiles": {
+    "tab": "LDIF files",
+    "upload": "Upload LDIF",
+    "uploaded": "{name} uploaded",
+    "none": "No LDIF files",
+    "deleteConfirm": "Delete {name}?",
+    "deleted": "{name} deleted",
+    "error": "File operation failed",
+    "noFiles": "LDIF files on the server need access to its files (sidecar or all-in-one mode). For small amounts of data use the LDIF import/export of the LDAP browser."
+  },
+  "transfer": {
+    "tab": "Export / import",
+    "export": "Export to LDIF",
+    "exportHint": "Writes the whole suffix to a file in the server's LDIF directory (an online task).",
+    "file": "File name",
+    "replication": "Include replication state (to initialise a replica)",
+    "exportStarted": "Export started",
+    "import": "Import from LDIF",
+    "importHint": "Replaces ALL entries of this suffix with the content of the file.",
+    "chooseFile": "Choose a file from the LDIF directory",
+    "importConfirm": "Type {name} to confirm that the suffix content will be replaced",
+    "importStarted": "Import started",
+    "error": "Could not start the task"
   },
   "errors": {
     "network": "Cannot reach the ds-ui API",

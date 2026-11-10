@@ -447,3 +447,12 @@ func ListVLV(c *ldap.Conn, backend string) ([]VLVIndex, error) {
 	}
 	return out, nil
 }
+
+// ServerDirs returns the backup and LDIF directories from cn=config.
+func ServerDirs(c *ldap.Conn) (bakDir, ldifDir string, err error) {
+	e, err := readEntry(c, "cn=config", "nsslapd-bakdir", "nsslapd-ldifdir")
+	if err != nil {
+		return "", "", err
+	}
+	return e.GetAttributeValue("nsslapd-bakdir"), e.GetAttributeValue("nsslapd-ldifdir"), nil
+}

@@ -11,6 +11,8 @@ import {
   NGridItem,
   NH1,
   NIcon,
+  NRadioButton,
+  NRadioGroup,
   NSkeleton,
   NTabPane,
   NTabs,
@@ -22,6 +24,9 @@ import { Database, Plus } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
 import BackendIndexes from '@/components/db/BackendIndexes.vue'
 import BackendSettings from '@/components/db/BackendSettings.vue'
+import BackendTransfer from '@/components/db/BackendTransfer.vue'
+import BackupsPanel from '@/components/db/BackupsPanel.vue'
+import LdifFilesPanel from '@/components/db/LdifFilesPanel.vue'
 import CreateBackendDialog from '@/components/db/CreateBackendDialog.vue'
 import TaskList from '@/components/TaskList.vue'
 import { useServerStore } from '@/stores/server'
@@ -36,6 +41,11 @@ const router = useRouter()
 const server = useServerStore()
 
 const backends = ref<Backend[]>()
+/** Top-level section, kept in the URL (?section=…). */
+const section = computed({
+  get: () => (typeof route.query.section === 'string' ? route.query.section : 'suffixes'),
+  set: (v: string) => router.replace({ path: '/databases', query: v === 'suffixes' ? {} : { section: v } }),
+})
 const creating = ref(false)
 const vlv = ref<VLV[]>([])
 
@@ -84,7 +94,16 @@ const vlvColumns = computed<DataTableColumns<VLV>>(() => [
 <template>
   <NH1 class="title">{{ t('db.title') }}</NH1>
 
-  <NGrid cols="1 l:4" responsive="screen" :x-gap="16" :y-gap="16">
+  <NRadioGroup v-model:value="section" class="sections">
+    <NRadioButton value="suffixes">{{ t('db.suffixesTab') }}</NRadioButton>
+    <NRadioButton value="backups">{{ t('backups.tab') }}</NRadioButton>
+    <NRadioButton value="ldif">{{ t('ldifFiles.tab') }}</NRadioButton>
+  </NRadioGroup>
+
+  <NCard v-if="section === 'backups'" size="small"><BackupsPanel /></NCard>
+  <NCard v-else-if="section === 'ldif'" size="small"><LdifFilesPanel /></NCard>
+
+  <NGrid v-else cols="1 l:4" responsive="screen" :x-gap="16" :y-gap="16">
     <NGridItem>
       <NCard size="small" :title="t('db.suffixes')">
         <template #header-extra>
@@ -135,6 +154,9 @@ const vlvColumns = computed<DataTableColumns<VLV>>(() => [
               <TaskList :target="selected.name" :limit="5" />
             </NCard>
           </NTabPane>
+          <NTabPane name="transfer" :tab="t('transfer.tab')">
+            <BackendTransfer :backend="selected" />
+          </NTabPane>
           <NTabPane name="vlv" :tab="t('db.tabs.vlv')">
             <NDataTable :columns="vlvColumns" :data="vlv" size="small" :row-key="(r: VLV) => r.name" :empty-text="t('indexes.none')" />
           </NTabPane>
@@ -149,6 +171,10 @@ const vlvColumns = computed<DataTableColumns<VLV>>(() => [
 <style scoped>
 .title {
   margin: 0 0 20px;
+}
+
+.sections {
+  margin-bottom: 16px;
 }
 
 .list {

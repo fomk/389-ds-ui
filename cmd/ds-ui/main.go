@@ -136,6 +136,7 @@ func serve() error {
 		Restart:        &ds.RestartRegistry{},
 		Tasks:          ds.NewTasks(client, bus, log),
 		Events:         bus,
+		Files:          files,
 		Lifecycle:      lifecycle,
 		Capabilities:   caps,
 		Instance:       cfg.Instance,

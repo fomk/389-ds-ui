@@ -39,6 +39,7 @@ type Deps struct {
 	Restart        *ds.RestartRegistry
 	Tasks          *ds.Tasks
 	Events         *events.Bus
+	Files          *providers.Files // nil when the server's files are not reachable
 	Lifecycle      providers.Lifecycle
 	Capabilities   providers.Capabilities
 	Instance       string
@@ -78,6 +79,7 @@ func NewHandler(d Deps) http.Handler {
 
 	// Server-sent events: plain handler, the compress middleware must not buffer it.
 	r.With(middleware.NoCache).Get(apiPrefix+"/events", eventsHandler(d.Events))
+	r.Put(apiPrefix+"/ldif-files/{name}", uploadLDIF(d))
 
 	register(humachi.New(r, apiConfig(d.Version)), d)
 
@@ -120,6 +122,7 @@ func register(api huma.API, d Deps) {
 	registerLDIF(api, d)
 	registerMonitor(api, d)
 	registerDatabases(api, d)
+	registerBackups(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

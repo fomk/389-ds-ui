@@ -9,6 +9,7 @@ import (
 
 	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/entries"
+	"github.com/fomk/389-ds-ui/internal/files"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 	"github.com/fomk/389-ds-ui/internal/providers"
 )
@@ -62,6 +63,14 @@ func toHTTPError(err error) error {
 		errors.Is(err, entries.ErrInvalidChange), errors.Is(err, entries.ErrInvalidFilter),
 		errors.Is(err, entries.ErrInvalidLDIF):
 		return problem(http.StatusBadRequest, err.Error())
+	case errors.Is(err, files.ErrInvalidName):
+		return problem(http.StatusBadRequest, err.Error())
+	case errors.Is(err, files.ErrNotFound):
+		return problem(http.StatusNotFound, err.Error())
+	case errors.Is(err, files.ErrExists):
+		return problem(http.StatusConflict, err.Error())
+	case errors.Is(err, files.ErrOutsideRoot):
+		return problem(http.StatusNotImplemented, err.Error())
 	case errors.Is(err, ds.ErrInvalidName):
 		return problem(http.StatusBadRequest, err.Error())
 	case errors.Is(err, ds.ErrNotFound), errors.Is(err, ds.ErrTaskNotFound):
@@ -98,3 +107,6 @@ func problem(status int, detail string) *Problem {
 		Detail: detail,
 	}}
 }
+
+// errorsAs is errors.As, for handlers outside huma.
+func errorsAs(err error, target any) bool { return errors.As(err, target) }

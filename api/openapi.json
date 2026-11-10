@@ -505,6 +505,16 @@
         ],
         "type": "object"
       },
+      "CreateBackupInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "description": "Directory name; default backup_\u003ctimestamp\u003e",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "DeleteResult": {
         "additionalProperties": false,
         "properties": {
@@ -667,6 +677,20 @@
         },
         "type": "object"
       },
+      "ExportTaskInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "File name in the LDIF directory; default \u003cbackend\u003e_\u003ctimestamp\u003e.ldif",
+            "type": "string"
+          },
+          "replication": {
+            "description": "Include replication state (for initialising replicas)",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "Field": {
         "additionalProperties": false,
         "properties": {
@@ -703,6 +727,20 @@
         ],
         "type": "object"
       },
+      "ImportTaskInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "description": "File name in the LDIF directory. The backend's current content is replaced.",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "type": "object"
+      },
       "Index": {
         "additionalProperties": false,
         "properties": {
@@ -732,6 +770,31 @@
           "types",
           "matchingRules",
           "system"
+        ],
+        "type": "object"
+      },
+      "Info": {
+        "additionalProperties": false,
+        "properties": {
+          "dir": {
+            "type": "boolean"
+          },
+          "modified": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "size",
+          "modified"
         ],
         "type": "object"
       },
@@ -1802,6 +1865,112 @@
         ]
       }
     },
+    "/api/v1/backends/{name}/export": {
+      "post": {
+        "operationId": "exportBackend",
+        "parameters": [
+          {
+            "description": "Backend",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "Backend",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportTaskInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "description": "Accepted"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Export a backend to an LDIF file on the server (task)",
+        "tags": [
+          "backups"
+        ]
+      }
+    },
+    "/api/v1/backends/{name}/import": {
+      "post": {
+        "operationId": "importBackend",
+        "parameters": [
+          {
+            "description": "Backend",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "Backend",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportTaskInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "description": "Accepted"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Import an LDIF file into a backend, replacing its content (task)",
+        "tags": [
+          "backups"
+        ]
+      }
+    },
     "/api/v1/backends/{name}/indexes": {
       "get": {
         "operationId": "listIndexes",
@@ -2076,6 +2245,191 @@
         "summary": "VLV indexes of a backend",
         "tags": [
           "databases"
+        ]
+      }
+    },
+    "/api/v1/backups": {
+      "get": {
+        "operationId": "listBackups",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Info"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Backups in nsslapd-bakdir (needs file access)",
+        "tags": [
+          "backups"
+        ]
+      },
+      "post": {
+        "operationId": "createBackup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBackupInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "description": "Accepted"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Back up all databases (online task)",
+        "tags": [
+          "backups"
+        ]
+      }
+    },
+    "/api/v1/backups/{name}": {
+      "delete": {
+        "operationId": "deleteBackup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a backup",
+        "tags": [
+          "backups"
+        ]
+      }
+    },
+    "/api/v1/backups/{name}/download": {
+      "get": {
+        "operationId": "downloadBackup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/gzip": {}
+            },
+            "description": "tar.gz archive"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Download a backup as .tar.gz",
+        "tags": [
+          "backups"
+        ]
+      }
+    },
+    "/api/v1/backups/{name}/restore": {
+      "post": {
+        "operationId": "restoreBackup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "description": "Accepted"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Restore all databases from a backup (online task; backends go offline briefly)",
+        "tags": [
+          "backups"
         ]
       }
     },
@@ -2720,6 +3074,109 @@
         "summary": "Stream entries as LDIF or CSV",
         "tags": [
           "search"
+        ]
+      }
+    },
+    "/api/v1/ldif-files": {
+      "get": {
+        "operationId": "listLDIFFiles",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Info"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Files in nsslapd-ldifdir (needs file access)",
+        "tags": [
+          "backups"
+        ]
+      }
+    },
+    "/api/v1/ldif-files/{name}": {
+      "delete": {
+        "operationId": "deleteLDIFFile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete an LDIF file",
+        "tags": [
+          "backups"
+        ]
+      },
+      "get": {
+        "operationId": "downloadLDIFFile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/ldif": {}
+            },
+            "description": "LDIF"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Download an LDIF file",
+        "tags": [
+          "backups"
         ]
       }
     },
