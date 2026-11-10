@@ -50,10 +50,14 @@ const kind = computed({
   set: (v: string) => router.replace({ path: '/logs', query: { log: v } }),
 })
 const current = computed(() => logs.value?.find((l) => l.kind === kind.value))
+// A log sharing its file with another one (auditfail → audit) shows that file.
+const fileSource = computed(() =>
+  current.value?.sameAs ? logs.value?.find((l) => l.kind === current.value!.sameAs) : current.value,
+)
 const canSeeFiles = computed(() => server.capabilities?.files ?? false)
 
 const fileOptions = computed(() =>
-  (current.value?.files ?? []).map((f, i) => ({
+  (fileSource.value?.files ?? []).map((f, i) => ({
     value: i === 0 ? '' : f.name,
     label: `${f.name}${i === 0 ? ` (${t('logs.current')})` : ''} · ${formatBytes(f.size, currentLocale.value)}`,
   })),
@@ -69,9 +73,12 @@ async function loadLogs() {
   }
 }
 
+let seq = 0
+
 async function load() {
-  if (!canSeeFiles.value || current.value?.sameAs) return
+  if (!canSeeFiles.value) return
   stopFollow()
+  const my = ++seq // only the latest request may update the view
   loading.value = true
   error.value = undefined
   try {
@@ -83,14 +90,16 @@ async function load() {
         },
       }),
     )
+    if (my !== seq) return
     lines.value = res.lines
     truncated.value = res.truncated
     await scrollToEnd(true)
   } catch (e) {
+    if (my !== seq) return
     lines.value = []
     error.value = localizeError(e)
   } finally {
-    loading.value = false
+    if (my === seq) loading.value = false
   }
   if (follow.value && !file.value) startFollow()
 }
@@ -131,8 +140,11 @@ watch(canSeeFiles, async () => {
   await loadLogs()
   await load()
 })
+watch(kind, () => {
+  file.value = ''
+  lines.value = [] // never show the previous log's lines under the new title
+})
 watch([kind, file, count], () => load())
-watch(kind, () => (file.value = ''))
 watch(follow, (on) => (on && !file.value ? startFollow() : stopFollow()))
 
 // Access log: clicking a line narrows the view to its connection.
@@ -168,7 +180,7 @@ function lineClass(line: string): string | undefined {
 
     <NCard size="small">
       <div class="controls">
-        <NSelect v-model:value="file" :options="fileOptions" size="small" class="file" :disabled="!!current?.sameAs" />
+        <NSelect v-model:value="file" :options="fileOptions" size="small" class="file" />
         <form class="filter" @submit.prevent="load">
           <NInput v-model:value="filter" size="small" clearable :placeholder="t('logs.filterHint')" :input-props="{ class: 'mono' }">
             <template #prefix><NIcon><Search /></NIcon></template>

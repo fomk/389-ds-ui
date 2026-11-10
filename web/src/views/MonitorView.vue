@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   NAlert,
@@ -11,6 +11,7 @@ import {
   NH1,
   NIcon,
   NProgress,
+  NSelect,
   NSkeleton,
   NStatistic,
   NTooltip,
@@ -38,6 +39,34 @@ const error = ref<LocalizedError>()
 const loading = ref(false)
 let timer: ReturnType<typeof setInterval> | undefined
 
+// Refresh interval in seconds (0 = off), remembered per browser.
+const INTERVAL_KEY = 'dsui.monitor.refresh'
+const interval = ref(readInterval())
+const intervalOptions = computed(() => [
+  ...[1, 3, 5, 10].map((s) => ({ value: s, label: t('monitor.everySeconds', { s }) })),
+  { value: 0, label: t('monitor.refreshOff') },
+])
+function readInterval(): number {
+  try {
+    const v = Number(localStorage.getItem(INTERVAL_KEY))
+    return [0, 1, 3, 5, 10].includes(v) && localStorage.getItem(INTERVAL_KEY) !== null ? v : 5
+  } catch {
+    return 5
+  }
+}
+function schedule() {
+  clearInterval(timer)
+  timer = interval.value ? setInterval(load, interval.value * 1000) : undefined
+}
+watch(interval, (v) => {
+  try {
+    localStorage.setItem(INTERVAL_KEY, String(v))
+  } catch {
+    // not remembered
+  }
+  schedule()
+})
+
 async function load() {
   loading.value = true
   try {
@@ -54,7 +83,7 @@ async function load() {
 
 onMounted(() => {
   load()
-  timer = setInterval(load, 10_000)
+  schedule()
 })
 onUnmounted(() => clearInterval(timer))
 
@@ -113,41 +142,40 @@ const opRows = computed(() =>
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([name, value]) => ({ name, value })),
 )
-const opColumns = computed<DataTableColumns<{ name: string; value: number }>>(() => [
-  { key: 'name', title: t('monitor.opName'), render: (r) => r.name },
-  { key: 'value', title: t('monitor.opValue'), align: 'right', render: (r) => num(r.value) },
-])
 </script>
 
 <template>
   <div class="head">
     <NH1 class="title">{{ t('monitor.title') }}</NH1>
-    <NTooltip>
-      <template #trigger>
-        <NButton quaternary :loading="loading" :aria-label="t('monitor.refresh')" @click="load">
-          <template #icon><NIcon><RefreshCw /></NIcon></template>
-        </NButton>
-      </template>
-      {{ t('monitor.autoRefresh') }}
-    </NTooltip>
+    <div class="refresh">
+      <NSelect v-model:value="interval" :options="intervalOptions" size="small" class="interval" :aria-label="t('monitor.autoRefresh')" />
+      <NTooltip>
+        <template #trigger>
+          <NButton quaternary :loading="loading" :aria-label="t('monitor.refresh')" @click="load">
+            <template #icon><NIcon><RefreshCw /></NIcon></template>
+          </NButton>
+        </template>
+        {{ t('monitor.refresh') }}
+      </NTooltip>
+    </div>
   </div>
 
   <NAlert v-if="error" type="error" :title="t('monitor.loadError')" class="block">{{ error.summary }}</NAlert>
 
   <template v-if="data">
     <!-- Headline numbers: stat tiles, not charts. -->
-    <NGrid cols="2 m:3 l:6" responsive="screen" :x-gap="12" :y-gap="12" class="block">
+    <NGrid cols="2 m:3 l:6" responsive="screen" :x-gap="12" :y-gap="12" class="block tiles">
       <NGridItem>
-        <NCard size="small">
+        <NCard size="small" class="tile">
           <NStatistic :label="t('monitor.uptime')" :value="uptime" />
           <div class="sub">{{ t('monitor.started', { time: dateTime(data.server.startTime) }) }}</div>
         </NCard>
       </NGridItem>
-      <NGridItem><NCard size="small"><NStatistic :label="t('monitor.connections')" :value="num(data.server.currentConnections)" /></NCard></NGridItem>
-      <NGridItem><NCard size="small"><NStatistic :label="t('monitor.threads')" :value="num(data.server.threads)" /></NCard></NGridItem>
-      <NGridItem><NCard size="small"><NStatistic :label="t('monitor.opsCompleted')" :value="compact(data.server.opsCompleted)" /></NCard></NGridItem>
-      <NGridItem><NCard size="small"><NStatistic :label="t('monitor.entriesSent')" :value="compact(data.server.entriesSent)" /></NCard></NGridItem>
-      <NGridItem><NCard size="small"><NStatistic :label="t('monitor.bytesSent')" :value="bytes(data.server.bytesSent)" /></NCard></NGridItem>
+      <NGridItem><NCard size="small" class="tile"><NStatistic :label="t('monitor.connections')" :value="num(data.server.currentConnections)" /></NCard></NGridItem>
+      <NGridItem><NCard size="small" class="tile"><NStatistic :label="t('monitor.threads')" :value="num(data.server.threads)" /></NCard></NGridItem>
+      <NGridItem><NCard size="small" class="tile"><NStatistic :label="t('monitor.opsCompleted')" :value="compact(data.server.opsCompleted)" /></NCard></NGridItem>
+      <NGridItem><NCard size="small" class="tile"><NStatistic :label="t('monitor.entriesSent')" :value="compact(data.server.entriesSent)" /></NCard></NGridItem>
+      <NGridItem><NCard size="small" class="tile"><NStatistic :label="t('monitor.bytesSent')" :value="bytes(data.server.bytesSent)" /></NCard></NGridItem>
     </NGrid>
 
     <!-- Small multiples: one metric per chart, never two y-scales. -->
@@ -229,7 +257,13 @@ const opColumns = computed<DataTableColumns<{ name: string; value: number }>>(()
       </NGridItem>
       <NGridItem>
         <NCard size="small" :title="t('monitor.ops')">
-          <NDataTable :columns="opColumns" :data="opRows" :row-key="(r: { name: string }) => r.name" size="small" :max-height="320" />
+          <!-- Compact name/value grid: ~25 counters fit without scrolling. -->
+          <dl class="counters">
+            <div v-for="r in opRows" :key="r.name" class="counter">
+              <dt class="mono">{{ r.name }}</dt>
+              <dd>{{ num(r.value) }}</dd>
+            </div>
+          </dl>
         </NCard>
       </NGridItem>
     </NGrid>
@@ -249,6 +283,16 @@ const opColumns = computed<DataTableColumns<{ name: string; value: number }>>(()
   margin: 0;
 }
 
+.refresh {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.interval {
+  width: 150px;
+}
+
 .block {
   margin-bottom: 12px;
 }
@@ -260,6 +304,42 @@ const opColumns = computed<DataTableColumns<{ name: string; value: number }>>(()
 
 .full {
   height: 100%;
+}
+
+/* All stat tiles share one height: every grid row is as tall as the tallest. */
+.tiles {
+  grid-auto-rows: 1fr;
+}
+
+.tile {
+  height: 100%;
+}
+
+.counters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0 24px;
+  margin: 0;
+}
+
+.counter {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid v-bind('vars.dividerColor');
+  font-size: 13px;
+}
+
+.counter dt {
+  color: v-bind('vars.textColor2');
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.counter dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .backend + .backend,

@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import {
   NAlert,
   NButton,
-  NCard,
   NForm,
   NFormItem,
   NInput,
@@ -13,8 +12,10 @@ import {
   NSpace,
   NSwitch,
   useMessage,
+  useThemeVars,
 } from 'naive-ui'
 import { api, call, type Schemas } from '@/api/client'
+import ConfirmByName from '@/components/ConfirmByName.vue'
 import { localizeError } from '@/i18n/errors'
 
 type Backend = Schemas['Backend']
@@ -24,6 +25,7 @@ const emit = defineEmits<{ changed: [backend: Backend]; deleted: [] }>()
 
 const { t } = useI18n()
 const message = useMessage()
+const vars = useThemeVars()
 
 const MB = 1024 * 1024
 const form = ref({ readOnly: false, requireIndex: false, state: 'backend', referral: '', cacheMB: 0, dnCacheMB: 0 })
@@ -69,14 +71,15 @@ async function save() {
   }
 }
 
-// Deleting a suffix destroys data: require typing the backend name.
-const confirmName = ref('')
+// Deleting a suffix destroys data: the dialog asks to type the backend name.
+const confirming = ref(false)
 const deleting = ref(false)
 async function remove() {
   deleting.value = true
   try {
     await call(api.DELETE('/api/v1/backends/{name}', { params: { path: { name: props.backend.name } } }))
     message.success(t('db.deleted', { suffix: props.backend.suffix }))
+    confirming.value = false
     emit('deleted')
   } catch (e) {
     message.error(`${t('db.deleteError')}: ${localizeError(e).summary}`)
@@ -120,15 +123,23 @@ async function remove() {
     </NSpace>
   </NForm>
 
-  <NCard size="small" :title="t('db.danger')" class="danger">
-    <p>{{ t('db.dangerText', { suffix: backend.suffix }) }}</p>
-    <NSpace align="center">
-      <NInput v-model:value="confirmName" :placeholder="t('db.typeToConfirm', { name: backend.name })" class="confirm" />
-      <NButton type="error" :disabled="confirmName !== backend.name" :loading="deleting" @click="remove">
-        {{ t('actions.delete') }}
-      </NButton>
-    </NSpace>
-  </NCard>
+  <div class="danger">
+    <div class="danger-text">
+      <div class="danger-title">{{ t('db.danger') }}</div>
+      <div class="danger-desc">{{ t('db.dangerShort') }}</div>
+    </div>
+    <NButton type="error" ghost @click="confirming = true">{{ t('db.deleteButton') }}</NButton>
+  </div>
+
+  <ConfirmByName
+    v-model:show="confirming"
+    :title="t('db.danger')"
+    :warning="t('db.dangerText', { suffix: backend.suffix })"
+    :name="backend.name"
+    :action="t('db.deleteButtonFinal')"
+    :busy="deleting"
+    @confirm="remove"
+  />
 </template>
 
 <style scoped>
@@ -149,11 +160,23 @@ async function remove() {
 }
 
 .danger {
-  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   max-width: 560px;
+  margin-top: 28px;
+  padding: 12px 16px;
+  border: 1px solid v-bind('vars.errorColor');
+  border-radius: 6px;
 }
 
-.confirm {
-  width: 260px;
+.danger-title {
+  font-weight: 600;
+}
+
+.danger-desc {
+  font-size: 13px;
+  color: v-bind('vars.textColor3');
 }
 </style>

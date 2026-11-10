@@ -114,7 +114,15 @@ const backupTasks = computed(() => tasks.tasks.some((x) => x.type === 'backup' |
 
 <template>
   <NSpace class="toolbar" align="center">
-    <NInput v-model:value="name" size="small" :placeholder="t('backups.namePlaceholder')" class="name" @keydown.enter="create" />
+    <label class="name-label" for="backup-name">{{ t('backups.nameLabel') }}</label>
+    <NInput
+      v-model:value="name"
+      size="small"
+      :placeholder="t('backups.namePlaceholder')"
+      :input-props="{ id: 'backup-name', class: 'mono' }"
+      class="name"
+      @keydown.enter="create"
+    />
     <NButton type="primary" size="small" @click="create">
       <template #icon><NIcon><Archive /></NIcon></template>
       {{ t('backups.create') }}
@@ -141,8 +149,12 @@ const backupTasks = computed(() => tasks.tasks.some((x) => x.type === 'backup' |
   margin-bottom: 12px;
 }
 
+.name-label {
+  font-size: 13px;
+}
+
 .name {
-  width: 300px;
+  width: 240px;
 }
 
 .block {

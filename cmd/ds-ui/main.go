@@ -124,8 +124,9 @@ func serve() error {
 		return fmt.Errorf("entry templates: %w", err)
 	}
 	schemas := schema.NewCache(time.Minute, log)
-	// One hour of counters at 10 s resolution, for the monitoring charts.
-	history := monitor.NewHistory(client, 10*time.Second, 360, log)
+	// One hour of counters at 2 s resolution, for the monitoring charts (the
+	// UI refreshes as often as every second).
+	history := monitor.NewHistory(client, 2*time.Second, 1800, log)
 	bus := &events.Bus{}
 	handler := api.NewHandler(api.Deps{
 		LDAP:           client,

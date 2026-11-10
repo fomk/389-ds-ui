@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NAlert, NButton, NCard, NCheckbox, NForm, NFormItem, NInput, NSelect, NSpace, useMessage } from 'naive-ui'
 import { api, call, type Schemas } from '@/api/client'
+import ConfirmByName from '@/components/ConfirmByName.vue'
 import { localizeError } from '@/i18n/errors'
 import { useServerStore } from '@/stores/server'
 import { useTasksStore } from '@/stores/tasks'
@@ -18,7 +19,7 @@ const tasks = useTasksStore()
 const exportFile = ref('')
 const replication = ref(false)
 const importFile = ref<string | null>(null)
-const confirm = ref('')
+const confirming = ref(false)
 const files = ref<Schemas['Info'][]>([])
 const canSeeFiles = computed(() => server.capabilities?.files ?? false)
 
@@ -50,7 +51,7 @@ async function startImport() {
         body: { file: importFile.value },
       })),
     )
-    confirm.value = ''
+    confirming.value = false
     message.info(t('transfer.importStarted'))
   } catch (e) {
     message.error(`${t('transfer.error')}: ${localizeError(e).summary}`)
@@ -75,10 +76,18 @@ async function startImport() {
     <NAlert v-if="!canSeeFiles" type="info">{{ t('ldifFiles.noFiles') }}</NAlert>
     <NSpace v-else vertical>
       <NSelect v-model:value="importFile" :options="fileOptions" :placeholder="t('transfer.chooseFile')" class="file" />
-      <NInput v-model:value="confirm" :placeholder="t('transfer.importConfirm', { name: backend.name })" class="file" />
-      <NButton type="error" :disabled="!importFile || confirm !== backend.name" @click="startImport">{{ t('transfer.import') }}</NButton>
+      <NButton type="error" ghost :disabled="!importFile" @click="confirming = true">{{ t('transfer.importButton') }}</NButton>
     </NSpace>
   </NCard>
+
+  <ConfirmByName
+    v-model:show="confirming"
+    :title="t('transfer.import')"
+    :warning="t('transfer.importWarning', { file: importFile ?? '', suffix: backend.suffix })"
+    :name="backend.name"
+    :action="t('transfer.import')"
+    @confirm="startImport"
+  />
 
   <TaskList :target="undefined" :limit="5" />
 </template>

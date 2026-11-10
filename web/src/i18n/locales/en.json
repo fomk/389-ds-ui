@@ -277,7 +277,7 @@
   "monitor": {
     "title": "Monitoring",
     "refresh": "Refresh",
-    "autoRefresh": "Auto-refresh every 10 s",
+    "autoRefresh": "Auto-refresh interval",
     "uptime": "Uptime",
     "uptimeValue": "{h} h {m} min",
     "started": "Started {time}",
@@ -291,7 +291,7 @@
       "entries": "Entries sent per second",
       "bytes": "Data sent per second",
       "connections": "Open connections",
-      "collecting": "Collecting data… the first points appear after about 20 seconds; history is kept for one hour while ds-ui runs."
+      "collecting": "Collecting data… the first points appear after a few seconds; history is kept for one hour while ds-ui runs."
     },
     "perSecond": "{v}/s",
     "caches": "Database caches",
@@ -319,7 +319,9 @@
     "restartStarted": "Restart requested",
     "restartRequired": "Some changes take effect only after a restart: {reasons}",
     "loadError": "Could not load monitoring data",
-    "uptimeDays": "{d} d {h} h"
+    "uptimeDays": "{d} d {h} h",
+    "everySeconds": "every {s} s",
+    "refreshOff": "no auto-refresh"
   },
   "db": {
     "title": "Databases",
@@ -360,10 +362,12 @@
     "saveError": "Could not save the settings",
     "danger": "Delete suffix",
     "dangerText": "Deletes the backend and ALL entries under {suffix}. This cannot be undone.",
-    "typeToConfirm": "Type {name} to confirm",
     "deleted": "Suffix {suffix} deleted",
     "deleteError": "Could not delete the suffix",
-    "suffixesTab": "Suffixes"
+    "suffixesTab": "Suffixes",
+    "dangerShort": "Removes the backend and all its entries for good.",
+    "deleteButton": "Delete suffix…",
+    "deleteButtonFinal": "Delete suffix and data"
   },
   "indexes": {
     "attribute": "Attribute",
@@ -419,7 +423,7 @@
     "tab": "Backups",
     "create": "Back up now",
     "name": "Name",
-    "namePlaceholder": "optional, default backup_<time>",
+    "namePlaceholder": "backup_<time>",
     "created": "Backup started",
     "date": "Created",
     "size": "Size",
@@ -434,7 +438,8 @@
     "noFiles": "Backups can be created, but listing, downloading and deleting them needs access to the server's files (sidecar or all-in-one mode).",
     "error": "Backup operation failed",
     "dir": "Directory: {dir}",
-    "sensitive": "Backups contain the server configuration including TLS private keys (config_files). Keep downloaded archives as secrets."
+    "sensitive": "Backups contain the server configuration including TLS private keys (config_files). Keep downloaded archives as secrets.",
+    "nameLabel": "Name (optional)"
   },
   "ldifFiles": {
     "tab": "LDIF files",
@@ -456,9 +461,10 @@
     "import": "Import from LDIF",
     "importHint": "Replaces ALL entries of this suffix with the content of the file.",
     "chooseFile": "Choose a file from the LDIF directory",
-    "importConfirm": "Type {name} to confirm that the suffix content will be replaced",
     "importStarted": "Import started",
-    "error": "Could not start the task"
+    "error": "Could not start the task",
+    "importButton": "Import…",
+    "importWarning": "All entries of {suffix} will be replaced with the content of {file}."
   },
   "logs": {
     "title": "Logs",
@@ -486,6 +492,9 @@
     "shown": "{n} line | {n} lines",
     "streaming": "Following…",
     "clickHint": "Click a line to show every line of its connection"
+  },
+  "confirm": {
+    "typeName": "To confirm, type"
   },
   "errors": {
     "network": "Cannot reach the ds-ui API",
