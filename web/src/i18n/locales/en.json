@@ -321,6 +321,99 @@
     "loadError": "Could not load monitoring data",
     "uptimeDays": "{d} d {h} h"
   },
+  "db": {
+    "title": "Databases",
+    "suffixes": "Suffixes",
+    "create": "New suffix",
+    "none": "No suffixes yet",
+    "tabs": {
+      "settings": "Settings",
+      "indexes": "Indexes",
+      "vlv": "VLV indexes"
+    },
+    "name": "Backend name",
+    "nameHint": "Letters, digits, - and _, e.g. userroot",
+    "suffix": "Suffix",
+    "suffixHint": "e.g. dc=example,dc=org",
+    "createRoot": "Create the root entry",
+    "created": "Suffix {suffix} created",
+    "createError": "Could not create the suffix",
+    "readOnly": "Read-only",
+    "readOnlyHint": "Reject all write operations to this suffix",
+    "requireIndex": "Require indexes",
+    "requireIndexHint": "Reject searches that cannot use an index",
+    "state": "State",
+    "states": {
+      "backend": "Active",
+      "disabled": "Disabled",
+      "referral": "Referral",
+      "referral on update": "Referral on update"
+    },
+    "referral": "Referral URL",
+    "entryCache": "Entry cache",
+    "dnCache": "DN cache",
+    "mb": "MB",
+    "rootMissing": "The root entry {suffix} does not exist yet.",
+    "openInBrowser": "Open in LDAP browser",
+    "save": "Save",
+    "saved": "Settings saved",
+    "saveError": "Could not save the settings",
+    "danger": "Delete suffix",
+    "dangerText": "Deletes the backend and ALL entries under {suffix}. This cannot be undone.",
+    "typeToConfirm": "Type {name} to confirm",
+    "deleted": "Suffix {suffix} deleted",
+    "deleteError": "Could not delete the suffix"
+  },
+  "indexes": {
+    "attribute": "Attribute",
+    "types": "Types",
+    "matchingRules": "Matching rules",
+    "system": "system",
+    "add": "Add index",
+    "edit": "Edit index",
+    "reindex": "Reindex",
+    "reindexAll": "Reindex all",
+    "delete": "Delete",
+    "typeNames": {
+      "eq": "equality",
+      "pres": "presence",
+      "sub": "substring",
+      "approx": "approximate",
+      "subtree": "subtree"
+    },
+    "added": "Index on {attr} added. Reindex to build it.",
+    "updated": "Index updated. Reindex to apply it.",
+    "deleted": "Index on {attr} deleted",
+    "deleteConfirm": "Delete the index on {attr}?",
+    "reindexStarted": "Reindex started",
+    "error": "Index operation failed",
+    "none": "No VLV indexes",
+    "vlvName": "Name",
+    "vlvBase": "Base",
+    "vlvScope": "Scope",
+    "vlvFilter": "Filter",
+    "vlvSort": "Sort"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "running": "{n} task running | {n} tasks running",
+    "none": "No tasks yet",
+    "log": "Log",
+    "status": {
+      "running": "running",
+      "succeeded": "done",
+      "failed": "failed",
+      "unknown": "unknown"
+    },
+    "types": {
+      "index": "Reindex",
+      "backup": "Backup",
+      "restore": "Restore",
+      "export": "Export",
+      "import": "Import"
+    },
+    "progress": "{current} of {total}"
+  },
   "errors": {
     "network": "Cannot reach the ds-ui API",
     "http": {

@@ -1,0 +1,449 @@
+package ds
+
+import (
+	"errors"
+	"fmt"
+	"regexp"
+	"slices"
+	"strconv"
+	"strings"
+
+	"github.com/go-ldap/ldap/v3"
+)
+
+const dnMappingTree = "cn=mapping tree,cn=config"
+
+// Backend is a database backend with its mapping tree settings.
+type Backend struct {
+	Name           string `json:"name"`
+	Suffix         string `json:"suffix"`
+	ReadOnly       bool   `json:"readOnly"`
+	RequireIndex   bool   `json:"requireIndex" doc:"Reject unindexed searches"`
+	State          string `json:"state" enum:"backend,disabled,referral,referral on update," doc:"Mapping tree state"`
+	Referral       string `json:"referral,omitempty"`
+	CacheMemSize   int64  `json:"cacheMemSize" doc:"Entry cache, bytes (nsslapd-cachememsize)"`
+	DNCacheMemSize int64  `json:"dnCacheMemSize" doc:"DN cache, bytes"`
+	RootExists     bool   `json:"rootExists" doc:"The suffix root entry exists"`
+}
+
+var (
+	// ErrInvalidName is returned for a backend or index name that is not allowed.
+	ErrInvalidName = errors.New("invalid name")
+	// ErrNotFound is returned for an unknown backend or index.
+	ErrNotFound = errors.New("not found")
+	// ErrSystemIndex protects indexes the server needs.
+	ErrSystemIndex = errors.New("system indexes cannot be deleted")
+)
+
+var backendNameRE = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_-]{0,63}$`)
+
+func backendDN(name string) string { return "cn=" + ldap.EscapeDN(name) + "," + DNLDBM }
+
+func onOff(b bool) string {
+	if b {
+		return "on"
+	}
+	return "off"
+}
+
+// ListBackends returns all LDBM backends.
+func ListBackends(c *ldap.Conn) ([]Backend, error) {
+	res, err := c.Search(ldap.NewSearchRequest(DNLDBM, ldap.ScopeSingleLevel, ldap.NeverDerefAliases, 0, 0, false,
+		"(objectClass=nsBackendInstance)", []string{"cn", "nsslapd-suffix", "nsslapd-readonly", "nsslapd-require-index",
+			"nsslapd-cachememsize", "nsslapd-dncachememsize"}, nil))
+	if err != nil {
+		return nil, err
+	}
+	mt, err := c.Search(ldap.NewSearchRequest(dnMappingTree, ldap.ScopeSingleLevel, ldap.NeverDerefAliases, 0, 0, false,
+		"(objectClass=nsMappingTree)", []string{"nsslapd-backend", "nsslapd-state", "nsslapd-referral"}, nil))
+	if err != nil {
+		return nil, err
+	}
+	mapping := map[string]*ldap.Entry{}
+	for _, e := range mt.Entries {
+		mapping[strings.ToLower(e.GetAttributeValue("nsslapd-backend"))] = e
+	}
+	out := make([]Backend, 0, len(res.Entries))
+	for _, e := range res.Entries {
+		b := Backend{
+			Name:           e.GetAttributeValue("cn"),
+			Suffix:         e.GetAttributeValue("nsslapd-suffix"),
+			ReadOnly:       strings.EqualFold(e.GetAttributeValue("nsslapd-readonly"), "on"),
+			RequireIndex:   strings.EqualFold(e.GetAttributeValue("nsslapd-require-index"), "on"),
+			CacheMemSize:   num(e, "nsslapd-cachememsize"),
+			DNCacheMemSize: num(e, "nsslapd-dncachememsize"),
+		}
+		if m := mapping[strings.ToLower(b.Name)]; m != nil {
+			b.State = m.GetAttributeValue("nsslapd-state")
+			b.Referral = m.GetAttributeValue("nsslapd-referral")
+		}
+		if _, err := readEntry(c, b.Suffix, "1.1"); err == nil {
+			b.RootExists = true
+		}
+		out = append(out, b)
+	}
+	slices.SortFunc(out, func(a, b Backend) int { return strings.Compare(a.Suffix, b.Suffix) })
+	return out, nil
+}
+
+// GetBackend returns one backend by name.
+func GetBackend(c *ldap.Conn, name string) (*Backend, error) {
+	list, err := ListBackends(c)
+	if err != nil {
+		return nil, err
+	}
+	for i := range list {
+		if strings.EqualFold(list[i].Name, name) {
+			return &list[i], nil
+		}
+	}
+	return nil, fmt.Errorf("%w: backend %s", ErrNotFound, name)
+}
+
+// NewBackend is a request to create a suffix.
+type NewBackend struct {
+	Name       string `json:"name" minLength:"1" doc:"Backend (database) name, e.g. userroot"`
+	Suffix     string `json:"suffix" minLength:"1" doc:"e.g. dc=example,dc=org"`
+	CreateRoot bool   `json:"createRoot" doc:"Also create the suffix root entry"`
+}
+
+// CreateBackend creates the backend, its mapping tree entry and optionally the
+// root entry, in that order (the order lib389 and the server expect).
+func CreateBackend(c *ldap.Conn, nb NewBackend) error {
+	if !backendNameRE.MatchString(nb.Name) {
+		return fmt.Errorf("%w: backend name %q (letters, digits, - and _)", ErrInvalidName, nb.Name)
+	}
+	if _, err := ldap.ParseDN(nb.Suffix); err != nil || nb.Suffix == "" {
+		return fmt.Errorf("%w: suffix %q", ErrInvalidName, nb.Suffix)
+	}
+	be := ldap.NewAddRequest(backendDN(nb.Name), nil)
+	be.Attribute("objectClass", []string{"top", "extensibleObject", "nsBackendInstance"})
+	be.Attribute("cn", []string{nb.Name})
+	be.Attribute("nsslapd-suffix", []string{nb.Suffix})
+	if err := c.Add(be); err != nil {
+		return fmt.Errorf("create backend: %w", err)
+	}
+	mt := ldap.NewAddRequest("cn="+ldap.EscapeDN(nb.Suffix)+","+dnMappingTree, nil)
+	mt.Attribute("objectClass", []string{"top", "extensibleObject", "nsMappingTree"})
+	mt.Attribute("cn", []string{nb.Suffix})
+	mt.Attribute("nsslapd-state", []string{"backend"})
+	mt.Attribute("nsslapd-backend", []string{nb.Name})
+	if err := c.Add(mt); err != nil {
+		_ = c.Del(ldap.NewDelRequest(backendDN(nb.Name), nil)) // roll back
+		return fmt.Errorf("create mapping tree: %w", err)
+	}
+	if nb.CreateRoot {
+		if err := c.Add(rootEntry(nb.Suffix)); err != nil {
+			return fmt.Errorf("create root entry: %w", err)
+		}
+	}
+	return nil
+}
+
+// rootEntry builds a minimal entry for a suffix from its first RDN.
+func rootEntry(suffix string) *ldap.AddRequest {
+	req := ldap.NewAddRequest(suffix, nil)
+	p, _ := ldap.ParseDN(suffix)
+	attr, value := "", ""
+	if p != nil && len(p.RDNs) > 0 && len(p.RDNs[0].Attributes) > 0 {
+		attr, value = p.RDNs[0].Attributes[0].Type, p.RDNs[0].Attributes[0].Value
+	}
+	switch strings.ToLower(attr) {
+	case "dc":
+		req.Attribute("objectClass", []string{"top", "domain"})
+	case "o":
+		req.Attribute("objectClass", []string{"top", "organization"})
+	case "ou":
+		req.Attribute("objectClass", []string{"top", "organizationalUnit"})
+	case "c":
+		req.Attribute("objectClass", []string{"top", "country"})
+	default:
+		req.Attribute("objectClass", []string{"top", "extensibleObject"})
+	}
+	if attr != "" {
+		req.Attribute(attr, []string{value})
+	}
+	return req
+}
+
+// DeleteBackend removes the mapping tree entry and the backend (with its data).
+func DeleteBackend(c *ldap.Conn, name string) error {
+	b, err := GetBackend(c, name)
+	if err != nil {
+		return err
+	}
+	mt, err := c.Search(ldap.NewSearchRequest(dnMappingTree, ldap.ScopeSingleLevel, ldap.NeverDerefAliases, 0, 0, false,
+		"(nsslapd-backend="+ldap.EscapeFilter(b.Name)+")", []string{"1.1"}, nil))
+	if err != nil {
+		return err
+	}
+	for _, e := range mt.Entries {
+		if err := c.Del(ldap.NewDelRequest(e.DN, nil)); err != nil {
+			return fmt.Errorf("delete mapping tree: %w", err)
+		}
+	}
+	// The backend's config entry has children (indexes, encryption settings,
+	// monitor) and the server refuses to delete a non-leaf, so remove the
+	// config subtree deepest first. Children the server manages itself may
+	// refuse deletion; only the backend entry itself must go.
+	sub, err := c.SearchWithPaging(ldap.NewSearchRequest(backendDN(b.Name), ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
+		0, 0, false, "(objectClass=*)", []string{"1.1"}, nil), 500)
+	if err != nil {
+		return err
+	}
+	dns := make([]string, 0, len(sub.Entries))
+	for _, e := range sub.Entries {
+		dns = append(dns, e.DN)
+	}
+	slices.SortStableFunc(dns, func(a, b string) int { return strings.Count(b, ",") - strings.Count(a, ",") })
+	top := strings.ToLower(backendDN(b.Name))
+	for _, dn := range dns {
+		err := c.Del(ldap.NewDelRequest(dn, nil))
+		if err != nil && strings.EqualFold(dn, top) {
+			return fmt.Errorf("delete backend: %w", err)
+		}
+	}
+	return nil
+}
+
+// BackendPatch changes backend settings; nil fields are left alone.
+type BackendPatch struct {
+	ReadOnly       *bool   `json:"readOnly,omitempty"`
+	RequireIndex   *bool   `json:"requireIndex,omitempty"`
+	State          *string `json:"state,omitempty" enum:"backend,disabled,referral,referral on update"`
+	Referral       *string `json:"referral,omitempty" doc:"LDAP URL; empty removes it"`
+	CacheMemSize   *int64  `json:"cacheMemSize,omitempty" minimum:"512000"`
+	DNCacheMemSize *int64  `json:"dnCacheMemSize,omitempty" minimum:"512000"`
+}
+
+// UpdateBackend applies a patch.
+func UpdateBackend(c *ldap.Conn, name string, p BackendPatch) error {
+	b, err := GetBackend(c, name)
+	if err != nil {
+		return err
+	}
+	be := ldap.NewModifyRequest(backendDN(b.Name), nil)
+	if p.ReadOnly != nil {
+		be.Replace("nsslapd-readonly", []string{onOff(*p.ReadOnly)})
+	}
+	if p.RequireIndex != nil {
+		be.Replace("nsslapd-require-index", []string{onOff(*p.RequireIndex)})
+	}
+	if p.CacheMemSize != nil {
+		be.Replace("nsslapd-cachememsize", []string{strconv.FormatInt(*p.CacheMemSize, 10)})
+	}
+	if p.DNCacheMemSize != nil {
+		be.Replace("nsslapd-dncachememsize", []string{strconv.FormatInt(*p.DNCacheMemSize, 10)})
+	}
+	if len(be.Changes) > 0 {
+		if err := c.Modify(be); err != nil {
+			return err
+		}
+	}
+	if p.State == nil && p.Referral == nil {
+		return nil
+	}
+	mt, err := c.Search(ldap.NewSearchRequest(dnMappingTree, ldap.ScopeSingleLevel, ldap.NeverDerefAliases, 0, 0, false,
+		"(nsslapd-backend="+ldap.EscapeFilter(b.Name)+")", []string{"1.1"}, nil))
+	if err != nil {
+		return err
+	}
+	if len(mt.Entries) == 0 {
+		return fmt.Errorf("%w: mapping tree of %s", ErrNotFound, b.Name)
+	}
+	m := ldap.NewModifyRequest(mt.Entries[0].DN, nil)
+	if p.Referral != nil {
+		if *p.Referral == "" {
+			if b.Referral != "" {
+				m.Delete("nsslapd-referral", nil)
+			}
+		} else {
+			m.Replace("nsslapd-referral", []string{*p.Referral})
+		}
+	}
+	if p.State != nil {
+		m.Replace("nsslapd-state", []string{*p.State})
+	}
+	if len(m.Changes) == 0 {
+		return nil
+	}
+	return c.Modify(m)
+}
+
+// --- Indexes -----------------------------------------------------------------
+
+// Index is an attribute index of a backend.
+type Index struct {
+	Attribute     string   `json:"attribute"`
+	Types         []string `json:"types" doc:"eq, pres, sub, approx"`
+	MatchingRules []string `json:"matchingRules"`
+	System        bool     `json:"system" doc:"Required by the server; cannot be deleted"`
+}
+
+var indexTypes = []string{"eq", "pres", "sub", "approx"}
+
+func indexContainer(backend string) string { return "cn=index," + backendDN(backend) }
+
+// ListIndexes returns the indexes of a backend sorted by attribute.
+func ListIndexes(c *ldap.Conn, backend string) ([]Index, error) {
+	// cn=config answers a search under a missing base with success and no
+	// entries instead of noSuchObject, so check the backend explicitly.
+	if _, err := readEntry(c, backendDN(backend), "1.1"); err != nil {
+		if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
+			return nil, fmt.Errorf("%w: backend %s", ErrNotFound, backend)
+		}
+		return nil, err
+	}
+	res, err := c.Search(ldap.NewSearchRequest(indexContainer(backend), ldap.ScopeSingleLevel, ldap.NeverDerefAliases, 0, 0, false,
+		"(objectClass=nsIndex)", []string{"cn", "nsIndexType", "nsMatchingRule", "nsSystemIndex"}, nil))
+	if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
+		return nil, fmt.Errorf("%w: backend %s", ErrNotFound, backend)
+	}
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Index, 0, len(res.Entries))
+	for _, e := range res.Entries {
+		ix := Index{
+			Attribute:     e.GetAttributeValue("cn"),
+			Types:         e.GetAttributeValues("nsIndexType"),
+			MatchingRules: e.GetAttributeValues("nsMatchingRule"),
+			System:        strings.EqualFold(e.GetAttributeValue("nsSystemIndex"), "true"),
+		}
+		if ix.Types == nil {
+			ix.Types = []string{}
+		}
+		if ix.MatchingRules == nil {
+			ix.MatchingRules = []string{}
+		}
+		out = append(out, ix)
+	}
+	slices.SortFunc(out, func(a, b Index) int {
+		return strings.Compare(strings.ToLower(a.Attribute), strings.ToLower(b.Attribute))
+	})
+	return out, nil
+}
+
+var attrRE = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9-]*$`)
+
+func validIndex(ix Index) error {
+	if !attrRE.MatchString(ix.Attribute) {
+		return fmt.Errorf("%w: attribute %q", ErrInvalidName, ix.Attribute)
+	}
+	if len(ix.Types) == 0 {
+		return fmt.Errorf("%w: at least one index type is needed", ErrInvalidName)
+	}
+	for _, t := range ix.Types {
+		if !slices.Contains(indexTypes, t) {
+			return fmt.Errorf("%w: index type %q", ErrInvalidName, t)
+		}
+	}
+	return nil
+}
+
+// CreateIndex adds an index definition. The index is empty until reindexed.
+func CreateIndex(c *ldap.Conn, backend string, ix Index) error {
+	if err := validIndex(ix); err != nil {
+		return err
+	}
+	req := ldap.NewAddRequest("cn="+ldap.EscapeDN(ix.Attribute)+","+indexContainer(backend), nil)
+	req.Attribute("objectClass", []string{"top", "nsIndex"})
+	req.Attribute("cn", []string{ix.Attribute})
+	req.Attribute("nsSystemIndex", []string{"false"})
+	req.Attribute("nsIndexType", ix.Types)
+	if len(ix.MatchingRules) > 0 {
+		req.Attribute("nsMatchingRule", ix.MatchingRules)
+	}
+	return c.Add(req)
+}
+
+// UpdateIndex replaces the types and matching rules of an index.
+func UpdateIndex(c *ldap.Conn, backend string, ix Index) error {
+	if err := validIndex(ix); err != nil {
+		return err
+	}
+	req := ldap.NewModifyRequest("cn="+ldap.EscapeDN(ix.Attribute)+","+indexContainer(backend), nil)
+	req.Replace("nsIndexType", ix.Types)
+	req.Replace("nsMatchingRule", ix.MatchingRules)
+	return c.Modify(req)
+}
+
+// DeleteIndex removes a non-system index.
+func DeleteIndex(c *ldap.Conn, backend, attr string) error {
+	list, err := ListIndexes(c, backend)
+	if err != nil {
+		return err
+	}
+	for _, ix := range list {
+		if strings.EqualFold(ix.Attribute, attr) {
+			if ix.System {
+				return ErrSystemIndex
+			}
+			return c.Del(ldap.NewDelRequest("cn="+ldap.EscapeDN(ix.Attribute)+","+indexContainer(backend), nil))
+		}
+	}
+	return fmt.Errorf("%w: index %s", ErrNotFound, attr)
+}
+
+// ReindexAttrs builds the attributes of an index task for a backend.
+// With no attributes, every index of the backend is rebuilt.
+func ReindexAttrs(c *ldap.Conn, backend string, attrs []string) (map[string][]string, error) {
+	if len(attrs) == 0 {
+		list, err := ListIndexes(c, backend)
+		if err != nil {
+			return nil, err
+		}
+		for _, ix := range list {
+			attrs = append(attrs, ix.Attribute)
+		}
+	}
+	for _, a := range attrs {
+		if !attrRE.MatchString(a) {
+			return nil, fmt.Errorf("%w: attribute %q", ErrInvalidName, a)
+		}
+	}
+	return map[string][]string{"nsInstance": {backend}, "nsIndexAttribute": attrs}, nil
+}
+
+// --- VLV indexes -------------------------------------------------------------
+
+// VLVIndex is a virtual list view search with its sort index.
+type VLVIndex struct {
+	Name   string   `json:"name"`
+	Base   string   `json:"base"`
+	Scope  string   `json:"scope" enum:"base,one,sub"`
+	Filter string   `json:"filter"`
+	Sorts  []string `json:"sorts" doc:"vlvSort values of the child vlvIndex entries"`
+}
+
+// ListVLV returns the VLV searches of a backend.
+func ListVLV(c *ldap.Conn, backend string) ([]VLVIndex, error) {
+	res, err := c.Search(ldap.NewSearchRequest(backendDN(backend), ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		"(|(objectClass=vlvSearch)(objectClass=vlvIndex))", []string{"cn", "vlvBase", "vlvScope", "vlvFilter", "vlvSort", "objectClass"}, nil))
+	if err != nil {
+		return nil, err
+	}
+	searches := map[string]*VLVIndex{}
+	var order []string
+	for _, e := range res.Entries {
+		if slices.ContainsFunc(e.GetAttributeValues("objectClass"), func(s string) bool { return strings.EqualFold(s, "vlvSearch") }) {
+			scope := map[string]string{"0": "base", "1": "one", "2": "sub"}[e.GetAttributeValue("vlvScope")]
+			searches[strings.ToLower(e.DN)] = &VLVIndex{Name: e.GetAttributeValue("cn"), Base: e.GetAttributeValue("vlvBase"),
+				Scope: scope, Filter: e.GetAttributeValue("vlvFilter"), Sorts: []string{}}
+			order = append(order, strings.ToLower(e.DN))
+		}
+	}
+	for _, e := range res.Entries {
+		if v := e.GetAttributeValue("vlvSort"); v != "" {
+			parent := strings.ToLower(strings.SplitN(e.DN, ",", 2)[1])
+			if s := searches[parent]; s != nil {
+				s.Sorts = append(s.Sorts, v)
+			}
+		}
+	}
+	out := make([]VLVIndex, 0, len(order))
+	for _, k := range order {
+		out = append(out, *searches[k])
+	}
+	return out, nil
+}

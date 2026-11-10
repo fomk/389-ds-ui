@@ -20,6 +20,7 @@ import {
 import { RotateCw } from '@lucide/vue'
 import { api, call } from '@/api/client'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
+import TasksIndicator from '@/components/TasksIndicator.vue'
 import { localizeError } from '@/i18n/errors'
 import { nav } from '@/router'
 import { useServerStore } from '@/stores/server'
@@ -144,6 +145,7 @@ function restart() {
             <template #icon><NIcon><RotateCw /></NIcon></template>
             {{ t('monitor.restart') }}
           </NButton>
+          <TasksIndicator />
           <LocaleSwitcher />
           <NTag :type="status.type" size="small" round :title="statusHint">{{ status.label }}</NTag>
         </div>

@@ -14,6 +14,7 @@ import {
   Settings,
 } from '@lucide/vue'
 import BrowserView from '@/views/BrowserView.vue'
+import DatabasesView from '@/views/DatabasesView.vue'
 import MonitorView from '@/views/MonitorView.vue'
 import OverviewView from '@/views/OverviewView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
@@ -47,7 +48,7 @@ export const nav: NavItem[] = [
   { path: '/', key: 'overview', icon: House, stage: 0, view: OverviewView },
   { path: '/browser', key: 'browser', icon: Network, stage: 1, view: BrowserView },
   { path: '/monitor', key: 'monitor', icon: Activity, stage: 2, view: MonitorView },
-  { path: '/databases', key: 'databases', icon: Database, stage: 2 },
+  { path: '/databases', key: 'databases', icon: Database, stage: 2, view: DatabasesView },
   { path: '/logs', key: 'logs', icon: ScrollText, stage: 2 },
   { path: '/settings', key: 'settings', icon: Settings, stage: 3 },
   { path: '/plugins', key: 'plugins', icon: Puzzle, stage: 3 },

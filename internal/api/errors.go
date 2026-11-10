@@ -7,6 +7,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/go-ldap/ldap/v3"
 
+	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/entries"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 	"github.com/fomk/389-ds-ui/internal/providers"
@@ -61,6 +62,12 @@ func toHTTPError(err error) error {
 		errors.Is(err, entries.ErrInvalidChange), errors.Is(err, entries.ErrInvalidFilter),
 		errors.Is(err, entries.ErrInvalidLDIF):
 		return problem(http.StatusBadRequest, err.Error())
+	case errors.Is(err, ds.ErrInvalidName):
+		return problem(http.StatusBadRequest, err.Error())
+	case errors.Is(err, ds.ErrNotFound), errors.Is(err, ds.ErrTaskNotFound):
+		return problem(http.StatusNotFound, err.Error())
+	case errors.Is(err, ds.ErrSystemIndex):
+		return problem(http.StatusConflict, err.Error())
 	case errors.Is(err, entries.ErrPagingExpired):
 		return problem(http.StatusConflict, err.Error())
 	case errors.Is(err, entries.ErrPreconditionFailed):

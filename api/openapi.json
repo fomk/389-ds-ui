@@ -182,6 +182,63 @@
         ],
         "type": "object"
       },
+      "Backend": {
+        "additionalProperties": false,
+        "properties": {
+          "cacheMemSize": {
+            "description": "Entry cache, bytes (nsslapd-cachememsize)",
+            "format": "int64",
+            "type": "integer"
+          },
+          "dnCacheMemSize": {
+            "description": "DN cache, bytes",
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "readOnly": {
+            "type": "boolean"
+          },
+          "referral": {
+            "type": "string"
+          },
+          "requireIndex": {
+            "description": "Reject unindexed searches",
+            "type": "boolean"
+          },
+          "rootExists": {
+            "description": "The suffix root entry exists",
+            "type": "boolean"
+          },
+          "state": {
+            "description": "Mapping tree state",
+            "enum": [
+              "backend",
+              "disabled",
+              "referral",
+              "referral on update",
+              ""
+            ],
+            "type": "string"
+          },
+          "suffix": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "suffix",
+          "readOnly",
+          "requireIndex",
+          "state",
+          "cacheMemSize",
+          "dnCacheMemSize",
+          "rootExists"
+        ],
+        "type": "object"
+      },
       "BackendMonitor": {
         "additionalProperties": false,
         "properties": {
@@ -207,6 +264,41 @@
           "entryCache",
           "dnCache"
         ],
+        "type": "object"
+      },
+      "BackendPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "cacheMemSize": {
+            "format": "int64",
+            "minimum": 512000,
+            "type": "integer"
+          },
+          "dnCacheMemSize": {
+            "format": "int64",
+            "minimum": 512000,
+            "type": "integer"
+          },
+          "readOnly": {
+            "type": "boolean"
+          },
+          "referral": {
+            "description": "LDAP URL; empty removes it",
+            "type": "string"
+          },
+          "requireIndex": {
+            "type": "boolean"
+          },
+          "state": {
+            "enum": [
+              "backend",
+              "disabled",
+              "referral",
+              "referral on update"
+            ],
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "CacheStats": {
@@ -611,6 +703,38 @@
         ],
         "type": "object"
       },
+      "Index": {
+        "additionalProperties": false,
+        "properties": {
+          "attribute": {
+            "type": "string"
+          },
+          "matchingRules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "system": {
+            "description": "Required by the server; cannot be deleted",
+            "type": "boolean"
+          },
+          "types": {
+            "description": "eq, pres, sub, approx",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "attribute",
+          "types",
+          "matchingRules",
+          "system"
+        ],
+        "type": "object"
+      },
       "ModifyInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -676,6 +800,31 @@
           "backends",
           "connections",
           "collected"
+        ],
+        "type": "object"
+      },
+      "NewBackend": {
+        "additionalProperties": false,
+        "properties": {
+          "createRoot": {
+            "description": "Also create the suffix root entry",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Backend (database) name, e.g. userroot",
+            "minLength": 1,
+            "type": "string"
+          },
+          "suffix": {
+            "description": "e.g. dc=example,dc=org",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "suffix",
+          "createRoot"
         ],
         "type": "object"
       },
@@ -819,6 +968,19 @@
         "properties": {
           "generated": {
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReindexInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "description": "Empty rebuilds every index of the backend",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -1298,6 +1460,72 @@
         ],
         "type": "object"
       },
+      "Task": {
+        "additionalProperties": false,
+        "properties": {
+          "current": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "dn": {
+            "type": "string"
+          },
+          "exitCode": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "finished": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "log": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "message": {
+            "description": "Last nsTaskStatus",
+            "type": "string"
+          },
+          "started": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "succeeded",
+              "failed",
+              "unknown"
+            ],
+            "type": "string"
+          },
+          "target": {
+            "description": "What the task works on (backend, file, attributes)",
+            "type": "string"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "dn",
+          "status",
+          "log",
+          "started"
+        ],
+        "type": "object"
+      },
       "Template": {
         "additionalProperties": false,
         "properties": {
@@ -1347,6 +1575,65 @@
           "fields"
         ],
         "type": "object"
+      },
+      "UpdateIndexInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "matchingRules": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "types": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "types"
+        ],
+        "type": "object"
+      },
+      "VLVIndex": {
+        "additionalProperties": false,
+        "properties": {
+          "base": {
+            "type": "string"
+          },
+          "filter": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "base",
+              "one",
+              "sub"
+            ],
+            "type": "string"
+          },
+          "sorts": {
+            "description": "vlvSort values of the child vlvIndex entries",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "base",
+          "scope",
+          "filter",
+          "sorts"
+        ],
+        "type": "object"
       }
     }
   },
@@ -1357,6 +1644,441 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/backends": {
+      "get": {
+        "operationId": "listBackends",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Backend"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Suffixes and their backends",
+        "tags": [
+          "databases"
+        ]
+      },
+      "post": {
+        "operationId": "createBackend",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewBackend"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Backend"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create a suffix (backend, mapping tree, optional root entry)",
+        "tags": [
+          "databases"
+        ]
+      }
+    },
+    "/api/v1/backends/{name}": {
+      "delete": {
+        "operationId": "deleteBackend",
+        "parameters": [
+          {
+            "description": "Backend name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "Backend name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a suffix and all its data",
+        "tags": [
+          "databases"
+        ]
+      },
+      "patch": {
+        "operationId": "updateBackend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackendPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Backend"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change backend settings",
+        "tags": [
+          "databases"
+        ]
+      }
+    },
+    "/api/v1/backends/{name}/indexes": {
+      "get": {
+        "operationId": "listIndexes",
+        "parameters": [
+          {
+            "description": "Backend name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "Backend name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Index"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Attribute indexes of a backend",
+        "tags": [
+          "databases"
+        ]
+      },
+      "post": {
+        "operationId": "createIndex",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Index"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add an index (empty until reindexed)",
+        "tags": [
+          "databases"
+        ]
+      }
+    },
+    "/api/v1/backends/{name}/indexes/{attr}": {
+      "delete": {
+        "operationId": "deleteIndex",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attr",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete an index",
+        "tags": [
+          "databases"
+        ]
+      },
+      "put": {
+        "operationId": "updateIndex",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attr",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIndexInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Change index types and matching rules",
+        "tags": [
+          "databases"
+        ]
+      }
+    },
+    "/api/v1/backends/{name}/reindex": {
+      "post": {
+        "operationId": "reindex",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReindexInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "description": "Accepted"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Start a reindex task",
+        "tags": [
+          "databases"
+        ]
+      }
+    },
+    "/api/v1/backends/{name}/vlv": {
+      "get": {
+        "operationId": "listVLV",
+        "parameters": [
+          {
+            "description": "Backend name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "Backend name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/VLVIndex"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "VLV indexes of a backend",
+        "tags": [
+          "databases"
+        ]
+      }
+    },
     "/api/v1/entries": {
       "delete": {
         "operationId": "deleteEntry",
@@ -2311,6 +3033,81 @@
         "summary": "Live server state",
         "tags": [
           "system"
+        ]
+      }
+    },
+    "/api/v1/tasks": {
+      "get": {
+        "operationId": "listTasks",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Task"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Tasks started by this ds-ui, newest first",
+        "tags": [
+          "tasks"
+        ]
+      }
+    },
+    "/api/v1/tasks/{id}": {
+      "get": {
+        "operationId": "getTask",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "One task",
+        "tags": [
+          "tasks"
         ]
       }
     },

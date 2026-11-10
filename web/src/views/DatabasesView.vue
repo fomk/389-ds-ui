@@ -1,0 +1,206 @@
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import {
+  NButton,
+  NCard,
+  NDataTable,
+  NEmpty,
+  NGrid,
+  NGridItem,
+  NH1,
+  NIcon,
+  NSkeleton,
+  NTabPane,
+  NTabs,
+  NTag,
+  useThemeVars,
+  type DataTableColumns,
+} from 'naive-ui'
+import { Database, Plus } from '@lucide/vue'
+import { api, call, type Schemas } from '@/api/client'
+import BackendIndexes from '@/components/db/BackendIndexes.vue'
+import BackendSettings from '@/components/db/BackendSettings.vue'
+import CreateBackendDialog from '@/components/db/CreateBackendDialog.vue'
+import TaskList from '@/components/TaskList.vue'
+import { useServerStore } from '@/stores/server'
+
+type Backend = Schemas['Backend']
+type VLV = Schemas['VLVIndex']
+
+const { t } = useI18n()
+const vars = useThemeVars()
+const route = useRoute()
+const router = useRouter()
+const server = useServerStore()
+
+const backends = ref<Backend[]>()
+const creating = ref(false)
+const vlv = ref<VLV[]>([])
+
+const selectedName = computed(() => (typeof route.query.be === 'string' ? route.query.be : backends.value?.[0]?.name))
+const selected = computed(() => backends.value?.find((b) => b.name === selectedName.value))
+
+async function load() {
+  backends.value = await call(api.GET('/api/v1/backends'))
+}
+onMounted(load)
+
+watch(selectedName, async (name) => {
+  vlv.value = name ? await call(api.GET('/api/v1/backends/{name}/vlv', { params: { path: { name } } })).catch(() => []) : []
+}, { immediate: true })
+
+function select(name: string) {
+  router.replace({ path: '/databases', query: { be: name } })
+}
+
+async function onCreated(b: Backend) {
+  await load()
+  await server.loadInfo() // naming contexts changed
+  select(b.name)
+}
+
+function onChanged(b: Backend) {
+  const i = backends.value?.findIndex((x) => x.name === b.name) ?? -1
+  if (i >= 0) backends.value!.splice(i, 1, b)
+}
+
+async function onDeleted() {
+  await load()
+  await server.loadInfo()
+  router.replace({ path: '/databases' })
+}
+
+const vlvColumns = computed<DataTableColumns<VLV>>(() => [
+  { key: 'name', title: t('indexes.vlvName') },
+  { key: 'base', title: t('indexes.vlvBase'), className: 'mono' },
+  { key: 'scope', title: t('indexes.vlvScope') },
+  { key: 'filter', title: t('indexes.vlvFilter'), className: 'mono' },
+  { key: 'sorts', title: t('indexes.vlvSort'), render: (r) => r.sorts.join('; ') },
+])
+</script>
+
+<template>
+  <NH1 class="title">{{ t('db.title') }}</NH1>
+
+  <NGrid cols="1 l:4" responsive="screen" :x-gap="16" :y-gap="16">
+    <NGridItem>
+      <NCard size="small" :title="t('db.suffixes')">
+        <template #header-extra>
+          <NButton size="small" type="primary" @click="creating = true">
+            <template #icon><NIcon><Plus /></NIcon></template>
+            {{ t('db.create') }}
+          </NButton>
+        </template>
+        <NSkeleton v-if="!backends" text :repeat="3" />
+        <NEmpty v-else-if="!backends.length" :description="t('db.none')" />
+        <div v-else class="list">
+          <button
+            v-for="b in backends"
+            :key="b.name"
+            type="button"
+            class="item"
+            :class="{ active: b.name === selectedName }"
+            @click="select(b.name)"
+          >
+            <NIcon :size="18"><Database /></NIcon>
+            <span class="item-text">
+              <span class="mono suffix">{{ b.suffix }}</span>
+              <span class="muted">{{ b.name }}</span>
+            </span>
+            <NTag v-if="b.readOnly" size="tiny" :bordered="false" type="warning">{{ t('db.readOnly') }}</NTag>
+            <NTag v-else-if="b.state && b.state !== 'backend'" size="tiny" :bordered="false">{{ t(`db.states.${b.state}`) }}</NTag>
+          </button>
+        </div>
+      </NCard>
+    </NGridItem>
+
+    <NGridItem span="1 l:3">
+      <NCard v-if="selected" size="small">
+        <template #header>
+          <span class="mono">{{ selected.suffix }}</span>
+          <span class="muted head-name">{{ selected.name }}</span>
+        </template>
+        <template #header-extra>
+          <RouterLink v-if="selected.rootExists" :to="{ path: '/browser', query: { dn: selected.suffix } }">{{ t('db.openInBrowser') }}</RouterLink>
+        </template>
+        <NTabs type="line" animated>
+          <NTabPane name="settings" :tab="t('db.tabs.settings')">
+            <BackendSettings :backend="selected" @changed="onChanged" @deleted="onDeleted" />
+          </NTabPane>
+          <NTabPane name="indexes" :tab="t('db.tabs.indexes')">
+            <BackendIndexes :backend="selected.name" />
+            <NCard size="small" :title="t('tasks.title')" class="tasks">
+              <TaskList :target="selected.name" :limit="5" />
+            </NCard>
+          </NTabPane>
+          <NTabPane name="vlv" :tab="t('db.tabs.vlv')">
+            <NDataTable :columns="vlvColumns" :data="vlv" size="small" :row-key="(r: VLV) => r.name" :empty-text="t('indexes.none')" />
+          </NTabPane>
+        </NTabs>
+      </NCard>
+    </NGridItem>
+  </NGrid>
+
+  <CreateBackendDialog v-model:show="creating" @created="onCreated" />
+</template>
+
+<style scoped>
+.title {
+  margin: 0 0 20px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item:hover {
+  background: v-bind('vars.hoverColor');
+}
+
+.item.active {
+  background: color-mix(in srgb, v-bind('vars.primaryColor') 12%, transparent);
+}
+
+.item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.suffix {
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  font-size: 12px;
+  color: v-bind('vars.textColor3');
+}
+
+.head-name {
+  margin-left: 10px;
+}
+
+.tasks {
+  margin-top: 16px;
+}
+</style>

@@ -4,6 +4,112 @@
  */
 
 export interface paths {
+    "/api/v1/backends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Suffixes and their backends */
+        get: operations["listBackends"];
+        put?: never;
+        /** Create a suffix (backend, mapping tree, optional root entry) */
+        post: operations["createBackend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/backends/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a suffix and all its data */
+        delete: operations["deleteBackend"];
+        options?: never;
+        head?: never;
+        /** Change backend settings */
+        patch: operations["updateBackend"];
+        trace?: never;
+    };
+    "/api/v1/backends/{name}/indexes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Attribute indexes of a backend */
+        get: operations["listIndexes"];
+        put?: never;
+        /** Add an index (empty until reindexed) */
+        post: operations["createIndex"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/backends/{name}/indexes/{attr}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Change index types and matching rules */
+        put: operations["updateIndex"];
+        post?: never;
+        /** Delete an index */
+        delete: operations["deleteIndex"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/backends/{name}/reindex": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a reindex task */
+        post: operations["reindex"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/backends/{name}/vlv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** VLV indexes of a backend */
+        get: operations["listVLV"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/entries": {
         parameters: {
             query?: never;
@@ -296,6 +402,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tasks started by this ds-ui, newest first */
+        get: operations["listTasks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One task */
+        get: operations["getTask"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/templates": {
         parameters: {
             query?: never;
@@ -367,12 +507,49 @@ export interface components {
             /** @enum {string} */
             usage?: "userApplications" | "directoryOperation" | "distributedOperation" | "dSAOperation";
         };
+        Backend: {
+            /**
+             * Format: int64
+             * @description Entry cache, bytes (nsslapd-cachememsize)
+             */
+            cacheMemSize: number;
+            /**
+             * Format: int64
+             * @description DN cache, bytes
+             */
+            dnCacheMemSize: number;
+            name: string;
+            readOnly: boolean;
+            referral?: string;
+            /** @description Reject unindexed searches */
+            requireIndex: boolean;
+            /** @description The suffix root entry exists */
+            rootExists: boolean;
+            /**
+             * @description Mapping tree state
+             * @enum {string}
+             */
+            state: "backend" | "disabled" | "referral" | "referral on update" | "";
+            suffix: string;
+        };
         BackendMonitor: {
             dnCache: components["schemas"]["CacheStats"];
             entryCache: components["schemas"]["CacheStats"];
             name: string;
             readOnly: boolean;
             suffix?: string;
+        };
+        BackendPatch: {
+            /** Format: int64 */
+            cacheMemSize?: number;
+            /** Format: int64 */
+            dnCacheMemSize?: number;
+            readOnly?: boolean;
+            /** @description LDAP URL; empty removes it */
+            referral?: string;
+            requireIndex?: boolean;
+            /** @enum {string} */
+            state?: "backend" | "disabled" | "referral" | "referral on update";
         };
         CacheStats: {
             /** Format: int64 */
@@ -534,6 +711,14 @@ export interface components {
             intervalSeconds: number;
             samples: components["schemas"]["Sample"][];
         };
+        Index: {
+            attribute: string;
+            matchingRules: string[];
+            /** @description Required by the server; cannot be deleted */
+            system: boolean;
+            /** @description eq, pres, sub, approx */
+            types: string[];
+        };
         ModifyInputBody: {
             changes: components["schemas"]["Change"][];
         };
@@ -550,6 +735,14 @@ export interface components {
                 [key: string]: number;
             };
             server: components["schemas"]["ServerMonitor"];
+        };
+        NewBackend: {
+            /** @description Also create the suffix root entry */
+            createRoot: boolean;
+            /** @description Backend (database) name, e.g. userroot */
+            name: string;
+            /** @description e.g. dc=example,dc=org */
+            suffix: string;
         };
         NewEntry: {
             attributes: components["schemas"]["NewValues"][];
@@ -583,6 +776,10 @@ export interface components {
         };
         PasswordResult: {
             generated?: string;
+        };
+        ReindexInputBody: {
+            /** @description Empty rebuilds every index of the backend */
+            attributes?: string[];
         };
         RenameRequest: {
             /** @description Remove the old RDN value from the entry */
@@ -739,6 +936,28 @@ export interface components {
              */
             server: "running" | "stopped" | "restarting" | "unknown";
         };
+        Task: {
+            /** Format: int64 */
+            current?: number;
+            dn: string;
+            /** Format: int64 */
+            exitCode?: number;
+            /** Format: date-time */
+            finished?: string;
+            id: string;
+            log: string[];
+            /** @description Last nsTaskStatus */
+            message?: string;
+            /** Format: date-time */
+            started: string;
+            /** @enum {string} */
+            status: "running" | "succeeded" | "failed" | "unknown";
+            /** @description What the task works on (backend, file, attributes) */
+            target?: string;
+            /** Format: int64 */
+            total?: number;
+            type: string;
+        };
         Template: {
             /** @description The user chooses object classes and the RDN attribute */
             custom?: boolean;
@@ -753,6 +972,19 @@ export interface components {
             /** @description Naming attribute */
             rdn: string;
         };
+        UpdateIndexInputBody: {
+            matchingRules?: string[];
+            types: string[];
+        };
+        VLVIndex: {
+            base: string;
+            filter: string;
+            name: string;
+            /** @enum {string} */
+            scope: "base" | "one" | "sub";
+            /** @description vlvSort values of the child vlvIndex entries */
+            sorts: string[];
+        };
     };
     responses: never;
     parameters: never;
@@ -762,6 +994,329 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listBackends: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Backend"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createBackend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewBackend"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Backend"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteBackend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Backend name */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateBackend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackendPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Backend"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listIndexes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Backend name */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Index"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Index"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+                attr: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateIndexInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+                attr: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    reindex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReindexInputBody"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listVLV: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Backend name */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VLVIndex"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     getEntry: {
         parameters: {
             query: {
@@ -1406,6 +1961,66 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SystemState"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listTasks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getTask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Task"];
                 };
             };
             /** @description Error */

@@ -45,13 +45,16 @@ const csrf: Middleware = {
 export const api = createClient<paths>({ baseUrl: '' })
 api.use(csrf)
 
-/** Unwraps an openapi-fetch result, throwing ApiError on failure. */
+/**
+ * Unwraps an openapi-fetch result, throwing ApiError on failure. Successful
+ * responses without a body (201/202/204) resolve to undefined.
+ */
 export async function call<T>(p: Promise<{ data?: T; error?: unknown; response: Response }>): Promise<T> {
   const { data, error, response } = await p
-  if (error !== undefined || data === undefined) {
+  if (error !== undefined || !response.ok) {
     throw new ApiError(response.status, (error as Problem) ?? { status: response.status })
   }
-  return data
+  return data as T
 }
 
 export interface ExportQuery {

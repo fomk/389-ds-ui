@@ -19,6 +19,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/config"
 	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/entries"
+	"github.com/fomk/389-ds-ui/internal/events"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
 	"github.com/fomk/389-ds-ui/internal/monitor"
@@ -125,6 +126,7 @@ func serve() error {
 	schemas := schema.NewCache(time.Minute, log)
 	// One hour of counters at 10 s resolution, for the monitoring charts.
 	history := monitor.NewHistory(client, 10*time.Second, 360, log)
+	bus := &events.Bus{}
 	handler := api.NewHandler(api.Deps{
 		LDAP:           client,
 		Schemas:        schemas,
@@ -132,6 +134,8 @@ func serve() error {
 		Templates:      tpls,
 		History:        history,
 		Restart:        &ds.RestartRegistry{},
+		Tasks:          ds.NewTasks(client, bus, log),
+		Events:         bus,
 		Lifecycle:      lifecycle,
 		Capabilities:   caps,
 		Instance:       cfg.Instance,

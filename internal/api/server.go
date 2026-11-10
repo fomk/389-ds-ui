@@ -17,6 +17,7 @@ import (
 
 	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/entries"
+	"github.com/fomk/389-ds-ui/internal/events"
 	"github.com/fomk/389-ds-ui/internal/ldapx/schema"
 	"github.com/fomk/389-ds-ui/internal/monitor"
 	"github.com/fomk/389-ds-ui/internal/providers"
@@ -36,6 +37,8 @@ type Deps struct {
 	Templates      []templates.Template
 	History        *monitor.History
 	Restart        *ds.RestartRegistry
+	Tasks          *ds.Tasks
+	Events         *events.Bus
 	Lifecycle      providers.Lifecycle
 	Capabilities   providers.Capabilities
 	Instance       string
@@ -72,6 +75,9 @@ func NewHandler(d Deps) http.Handler {
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
+
+	// Server-sent events: plain handler, the compress middleware must not buffer it.
+	r.With(middleware.NoCache).Get(apiPrefix+"/events", eventsHandler(d.Events))
 
 	register(humachi.New(r, apiConfig(d.Version)), d)
 
@@ -113,6 +119,7 @@ func register(api huma.API, d Deps) {
 	registerTemplates(api, d)
 	registerLDIF(api, d)
 	registerMonitor(api, d)
+	registerDatabases(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
