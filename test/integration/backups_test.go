@@ -84,6 +84,9 @@ func TestBackupRestoreExportImport(t *testing.T) {
 	if r := do("GET", "/api/v1/backups", ""); r.Code != 501 {
 		t.Errorf("backups list without files: %d", r.Code)
 	}
+	if r := do("GET", "/api/v1/logs", ""); r.Code != 501 {
+		t.Errorf("logs without files: %d", r.Code)
+	}
 	if r := do("POST", "/api/v1/backups", `{"name":"../evil"}`); r.Code != 400 {
 		t.Errorf("invalid backup name: %d", r.Code)
 	}

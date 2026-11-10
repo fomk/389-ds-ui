@@ -798,6 +798,48 @@
         ],
         "type": "object"
       },
+      "Log": {
+        "additionalProperties": false,
+        "properties": {
+          "buffered": {
+            "description": "Lines are written in batches (nsslapd-accesslog-logbuffering)",
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/Info"
+            },
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "access",
+              "errors",
+              "audit",
+              "auditfail",
+              "security"
+            ],
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "sameAs": {
+            "description": "Writes into the same file as another log",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "path",
+          "enabled",
+          "files"
+        ],
+        "type": "object"
+      },
       "ModifyInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -1520,6 +1562,30 @@
           "server",
           "restartRequired",
           "restartReasons"
+        ],
+        "type": "object"
+      },
+      "TailOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "lines": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "path": {
+            "type": "string"
+          },
+          "truncated": {
+            "description": "The scan limit was reached before enough matching lines were found",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "path",
+          "lines",
+          "truncated"
         ],
         "type": "object"
       },
@@ -3218,6 +3284,120 @@
         "summary": "Apply an LDIF fragment (add, modify, delete records)",
         "tags": [
           "search"
+        ]
+      }
+    },
+    "/api/v1/logs": {
+      "get": {
+        "operationId": "listLogs",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Log"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Server logs and their files (needs file access)",
+        "tags": [
+          "logs"
+        ]
+      }
+    },
+    "/api/v1/logs/{kind}": {
+      "get": {
+        "operationId": "tailLog",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "access",
+                "errors",
+                "audit",
+                "auditfail",
+                "security"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Rotated file name; empty = current file",
+            "explode": false,
+            "in": "query",
+            "name": "file",
+            "schema": {
+              "description": "Rotated file name; empty = current file",
+              "type": "string"
+            }
+          },
+          {
+            "explode": false,
+            "in": "query",
+            "name": "lines",
+            "schema": {
+              "default": 500,
+              "format": "int64",
+              "maximum": 5000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Words that must all occur (case-insensitive); conn=N and op=N match whole tokens",
+            "explode": false,
+            "in": "query",
+            "name": "filter",
+            "schema": {
+              "description": "Words that must all occur (case-insensitive); conn=N and op=N match whole tokens",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TailOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Last lines of a log file, optionally filtered",
+        "tags": [
+          "logs"
         ]
       }
     },

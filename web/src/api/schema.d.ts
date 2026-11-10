@@ -404,6 +404,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Server logs and their files (needs file access) */
+        get: operations["listLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/logs/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Last lines of a log file, optionally filtered */
+        get: operations["tailLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/monitor": {
         parameters: {
             query?: never;
@@ -879,6 +913,17 @@ export interface components {
             /** Format: int64 */
             size: number;
         };
+        Log: {
+            /** @description Lines are written in batches (nsslapd-accesslog-logbuffering) */
+            buffered?: boolean;
+            enabled: boolean;
+            files: components["schemas"]["Info"][];
+            /** @enum {string} */
+            kind: "access" | "errors" | "audit" | "auditfail" | "security";
+            path: string;
+            /** @description Writes into the same file as another log */
+            sameAs?: string;
+        };
         ModifyInputBody: {
             changes: components["schemas"]["Change"][];
         };
@@ -1095,6 +1140,12 @@ export interface components {
              * @enum {string}
              */
             server: "running" | "stopped" | "restarting" | "unknown";
+        };
+        TailOutputBody: {
+            lines: string[];
+            path: string;
+            /** @description The scan limit was reached before enough matching lines were found */
+            truncated: boolean;
         };
         Task: {
             /** Format: int64 */
@@ -2197,6 +2248,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApplySummary"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listLogs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Log"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    tailLog: {
+        parameters: {
+            query?: {
+                /** @description Rotated file name; empty = current file */
+                file?: string;
+                lines?: number;
+                /** @description Words that must all occur (case-insensitive); conn=N and op=N match whole tokens */
+                filter?: string;
+            };
+            header?: never;
+            path: {
+                kind: "access" | "errors" | "audit" | "auditfail" | "security";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TailOutputBody"];
                 };
             };
             /** @description Error */

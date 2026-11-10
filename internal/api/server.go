@@ -80,6 +80,7 @@ func NewHandler(d Deps) http.Handler {
 	// Server-sent events: plain handler, the compress middleware must not buffer it.
 	r.With(middleware.NoCache).Get(apiPrefix+"/events", eventsHandler(d.Events))
 	r.Put(apiPrefix+"/ldif-files/{name}", uploadLDIF(d))
+	r.With(middleware.NoCache).Get(apiPrefix+"/logs/{kind}/stream", streamLog(d))
 
 	register(humachi.New(r, apiConfig(d.Version)), d)
 
@@ -123,6 +124,7 @@ func register(api huma.API, d Deps) {
 	registerMonitor(api, d)
 	registerDatabases(api, d)
 	registerBackups(api, d)
+	registerLogs(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

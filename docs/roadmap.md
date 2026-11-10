@@ -70,9 +70,15 @@ Work items:
 
 **Done when:** you can create an OU/user/group, edit, move, delete, search, export and import LDIF; forms correctly reflect the schema; a branch of 100k entries opens without freezing (pagination).
 
-## Stage 2. Administration core (3–4 wk) → M2 / v0.1 MVP
+## Stage 2. Administration core (3–4 wk) → M2 / v0.1 MVP — ✅ done
 
 **Goal:** day-to-day administration of a single server.
+
+**Outcome:** every item of the definition of done works through the UI and is covered by integration tests (backup → change → restore verified to roll the change back). Deviations:
+- *VLV indexes* are listed, not created or deleted yet (moved to stage 3, together with *default indexes*).
+- *"Server" page* merged into Monitoring (version, uptime, start time) and Overview (paths, mode).
+- *Restart* uses the Docker proxy (sidecar); the s6 provider comes with the all-in-one image (stage 7).
+- Findings: the default entry cache of the container (512 KB, 16 % hit ratio on 100k entries) is flagged on the monitoring page; backups contain TLS private keys (`config_files`) — the UI warns; huma silently dropped path parameters of inputs embedding an unexported struct (fixed, HTTP-level tests added); `cn=config` answers searches under a missing base with success (handled).
 
 Work items:
 - Task engine `cn=tasks,cn=config`: creation, polling `nsTaskStatus/nsTaskLog/nsTaskExitCode`, progress via SSE, task history in the UI (in-memory + reading existing tasks).

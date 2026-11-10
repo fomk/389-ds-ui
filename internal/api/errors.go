@@ -11,6 +11,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/entries"
 	"github.com/fomk/389-ds-ui/internal/files"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
+	"github.com/fomk/389-ds-ui/internal/logs"
 	"github.com/fomk/389-ds-ui/internal/providers"
 )
 
@@ -63,6 +64,8 @@ func toHTTPError(err error) error {
 		errors.Is(err, entries.ErrInvalidChange), errors.Is(err, entries.ErrInvalidFilter),
 		errors.Is(err, entries.ErrInvalidLDIF):
 		return problem(http.StatusBadRequest, err.Error())
+	case errors.Is(err, logs.ErrUnknownLog):
+		return problem(http.StatusNotFound, err.Error())
 	case errors.Is(err, files.ErrInvalidName):
 		return problem(http.StatusBadRequest, err.Error())
 	case errors.Is(err, files.ErrNotFound):

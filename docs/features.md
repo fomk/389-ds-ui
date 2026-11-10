@@ -45,7 +45,7 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 |---|---|---|---|---|---|
 | Log settings (levels, rotation, deletion) | LDAP | 3 | ✅ | ✅ | ✅ |
 | Viewing log files | File | 2 | ✅ | ❌ | ✅ |
-| Real-time tail, filters | File + SSE | 2 | ✅ | ❌ | ✅ |
+| Real-time tail, filters (conn=N/op=N tokens, click-to-filter by connection) | File + SSE | 2 | ✅ | ❌ | ✅ |
 | Change history (Retro Changelog) | LDAP (`cn=changelog`) | 4 | ✅ | ✅ | ✅ |
 
 ## Databases (stage 2)
@@ -54,7 +54,7 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 |---|---|---|---|---|
 | Suffixes/backends: CRUD, read-only, referrals | LDAP | ✅ | ✅ | ✅ |
 | Indexes: CRUD, reindex | LDAP + Task | ✅ | ✅ | ✅ |
-| VLV indexes | LDAP + Task | ✅ | ✅ | ✅ |
+| VLV indexes (listing; create/delete in stage 3) | LDAP + Task | ✅ | ✅ | ✅ |
 | Backup / restore (online) | Task | ✅ | ✅ | ✅ |
 | Listing, downloading, deleting backups | File | ✅ | ❌ | ✅ |
 | LDIF export / import (via task) | Task + File | ✅ | 🔄 run without file access | ✅ |

@@ -8,10 +8,14 @@
 ├─ internal/
 │  ├─ config/                 env → Config
 │  ├─ ldapx/                  LDAP client (ldapi/ldap/ldaps, EXTERNAL/simple, reconnect)
-│  ├─ ds/                     389-ds knowledge (currently: root DSE, version, DB implementation)
+│  ├─ ds/                     389-ds knowledge: root DSE, monitor, backends, indexes, tasks, restart registry
 │  ├─ providers/              Lifecycle (docker, none), Files/Certs detection, Capabilities
 │  ├─ entries/                LDAP editor operations: read, children, modify, create, delete, rename, password
 │  ├─ templates/              entry templates for the create form (defs/*.yaml, go:embed)
+│  ├─ monitor/                in-memory history of monitor counters
+│  ├─ events/                 in-process event bus behind /api/v1/events (SSE)
+│  ├─ files/                  backup and LDIF directories on the shared volume
+│  ├─ logs/                   log tail, filter and follow (with rotation)
 │  ├─ api/                    huma handlers, error mapping, CSRF, SPA serving
 │  └─ webui/                  go:embed of the built SPA (dist/ is generated, only .gitkeep in git)
 ├─ api/openapi.json           OpenAPI contract (generated: make gen, checked in CI)

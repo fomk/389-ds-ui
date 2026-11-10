@@ -460,6 +460,33 @@
     "importStarted": "Import started",
     "error": "Could not start the task"
   },
+  "logs": {
+    "title": "Logs",
+    "kinds": {
+      "access": "Access",
+      "errors": "Errors",
+      "audit": "Audit",
+      "auditfail": "Audit failures",
+      "security": "Security"
+    },
+    "file": "File",
+    "current": "current",
+    "lines": "Lines",
+    "filter": "Filter",
+    "filterHint": "Words that must all occur, e.g. conn=12 or err=32 or BIND",
+    "follow": "Follow",
+    "refresh": "Refresh",
+    "disabled": "This log is disabled on the server",
+    "empty": "No matching lines",
+    "truncated": "Only the last 64 MB of the file were searched",
+    "buffered": "The access log is buffered: new lines appear in batches.",
+    "sameAs": "Written to the same file as the {other} log",
+    "noFiles": "Logs need access to the server's files (sidecar or all-in-one mode).",
+    "error": "Could not read the log",
+    "shown": "{n} line | {n} lines",
+    "streaming": "Following…",
+    "clickHint": "Click a line to show every line of its connection"
+  },
   "errors": {
     "network": "Cannot reach the ds-ui API",
     "http": {

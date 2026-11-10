@@ -92,7 +92,7 @@ The layout is defined by `dscontainer` (verified on 389-ds 3.1.2):
 | `/data/config` | instance configuration (`dse.ldif`, schema, NSS DB `cert9.db`/`key4.db`), symlinked from `/etc/dirsrv/slapd-localhost` |
 | `/data/ssca` | self-signed CA, symlinked from `/etc/dirsrv/ssca` |
 | `/data/db` | databases (LMDB) |
-| `/data/logs` | `access`, `error`, `audit`, `security` |
+| `/data/logs` | `access`, `errors`, `audit` (also used by `auditfail`), `security` (JSON lines); rotated files `<name>.<timestamp>` |
 | `/data/ldif` | LDIF for import/export (`nsslapd-ldifdir`) |
 | `/data/bak` | backups (`nsslapd-bakdir`) |
 | `/data/run` | LDAPI socket `slapd-localhost.socket`, pid, `lock/`, `dbhome/` |
