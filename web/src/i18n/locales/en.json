@@ -1461,10 +1461,12 @@
   },
   "policies": {
     "loadError": "Could not load password policies",
-    "list": "Policies",
     "new": "New policy",
+    "add": "Add",
     "global": "Global policy",
-    "none": "No subtree or user policies",
+    "globalHint": "applies to everyone without a local policy",
+    "local": "Local policies",
+    "none": "None yet",
     "kind": "Applies to",
     "kinds": {
       "subtree": "subtree",

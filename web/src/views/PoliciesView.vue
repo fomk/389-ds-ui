@@ -11,7 +11,6 @@ import {
   NAlert,
   NButton,
   NCard,
-  NEmpty,
   NForm,
   NFormItem,
   NGrid,
@@ -172,22 +171,24 @@ onBeforeRouteLeave(confirmLeave)
 
     <NGrid cols="1 l:3" responsive="screen" :x-gap="16" :y-gap="16">
       <NGridItem>
-        <NCard size="small" :title="t('policies.list')">
-          <template #header-extra>
-            <NButton size="small" type="primary" @click="openCreate">
-              <template #icon><NIcon><Plus /></NIcon></template>
-              {{ t('policies.new') }}
-            </NButton>
-          </template>
+        <NCard size="small">
           <NSkeleton v-if="!policies" text :repeat="4" />
-          <div v-else class="list">
-            <button type="button" class="item" :class="{ active: selected === GLOBAL }" @click="select(GLOBAL)">
-              <NIcon :size="17"><Globe /></NIcon>
-              <span class="item-text">
-                <span>{{ t('policies.global') }}</span>
-                <span class="muted">cn=config</span>
-              </span>
-            </button>
+          <template v-else>
+          <button type="button" class="item" :class="{ active: selected === GLOBAL }" @click="select(GLOBAL)">
+            <NIcon :size="17"><Globe /></NIcon>
+            <span class="item-text">
+              <span>{{ t('policies.global') }}</span>
+              <span class="muted">{{ t('policies.globalHint') }}</span>
+            </span>
+          </button>
+          <div class="local-head">
+            <span class="local-title">{{ t('policies.local') }}</span>
+            <NButton size="small" type="primary" :title="t('policies.new')" @click="openCreate">
+              <template #icon><NIcon><Plus /></NIcon></template>
+              {{ t('policies.add') }}
+            </NButton>
+          </div>
+          <div class="list">
             <button
               v-for="p in policies"
               :key="p.dn"
@@ -202,8 +203,9 @@ onBeforeRouteLeave(confirmLeave)
                 <span class="muted">{{ t(`policies.kinds.${p.kind}`) }}</span>
               </span>
             </button>
-            <NEmpty v-if="!policies.length" size="small" :description="t('policies.none')" class="empty" />
+            <p v-if="!policies.length" class="muted empty">{{ t('policies.none') }}</p>
           </div>
+          </template>
         </NCard>
       </NGridItem>
 
@@ -311,7 +313,22 @@ onBeforeRouteLeave(confirmLeave)
 }
 
 .empty {
-  margin-top: 12px;
+  margin: 4px 10px;
+}
+
+.local-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 0 6px;
+  padding: 12px 0 0 10px;
+  border-top: 1px solid v-bind('vars.dividerColor');
+}
+
+.local-title {
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .head {

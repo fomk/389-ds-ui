@@ -54,10 +54,14 @@ const CUSTOM: (PageSummary & { component: Component })[] = [
 ]
 const custom = computed(() => CUSTOM.find((c) => c.id === selected.value))
 
+/** Pages that have their own section; old links are redirected there. */
+const ELSEWHERE: Record<string, string> = { 'password-policy': '/policies' }
+if (typeof route.query.page === 'string' && ELSEWHERE[route.query.page]) router.replace(ELSEWHERE[route.query.page]!)
+
 const sections = computed(() => {
   const out: { name: string; pages: PageSummary[] }[] = []
   // Plug-in pages live on the Plugins page.
-  const pages = list.value ? [...list.value.filter((x) => !x.plugin && !x.entryClass), ...CUSTOM] : []
+  const pages = list.value ? [...list.value.filter((x) => !x.plugin && !x.entryClass && !ELSEWHERE[x.id]), ...CUSTOM] : []
   pages.sort((a, b) => a.order - b.order)
   for (const p of pages) {
     let s = out.find((x) => x.name === p.section)
