@@ -28,6 +28,7 @@ import EntryEditor from './EntryEditor.vue'
 import EntryLdif from './EntryLdif.vue'
 import GroupMembers from './GroupMembers.vue'
 import AccountCard from './AccountCard.vue'
+import AciCard from './AciCard.vue'
 import MemberOf from './MemberOf.vue'
 import PasswordDialog from './PasswordDialog.vue'
 import RenameDialog from './RenameDialog.vue'
@@ -106,6 +107,18 @@ function onAction(key: string) {
   }
   dialog.value = key as typeof dialog.value
 }
+
+/**
+ * Entries that are accounts: classes meant for binding, or a password set.
+ * (Many structural classes, e.g. organizationalUnit, merely allow userPassword.)
+ */
+const ACCOUNT_CLASSES = new Set(['person', 'organizationalperson', 'inetorgperson', 'posixaccount', 'account', 'inetuser', 'simplesecurityobject'])
+const isAccount = computed(
+  () =>
+    !!entry.value &&
+    (entry.value.objectClasses.some((o) => ACCOUNT_CLASSES.has(o.toLowerCase())) ||
+      entry.value.attributes.some((a) => a.name.toLowerCase() === 'userpassword')),
+)
 
 /** DN-valued membership attribute managed in the members card, if any. */
 const memberAttr = computed(() => {
@@ -242,7 +255,8 @@ defineExpose({ reload: load })
     </NTable>
     <GroupMembers v-if="memberAttr" :entry="entry" :attr="memberAttr" @changed="onSaved" />
     <MemberOf :dn="entry.dn" :version="entry.etag" />
-    <AccountCard v-if="canSetPassword" :dn="entry.dn" :version="entry.etag" />
+    <AccountCard v-if="isAccount" :dn="entry.dn" :version="entry.etag" />
+    <AciCard :dn="entry.dn" :version="entry.etag" />
     </template>
     </template>
 
@@ -257,6 +271,16 @@ defineExpose({ reload: load })
 </template>
 
 <style scoped>
+/* Narrow panels: the toolbar moves below the title instead of squeezing it. */
+.entry :deep(> .n-card-header) {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.entry :deep(> .n-card-header > .n-card-header__main) {
+  min-width: min(260px, 100%);
+}
+
 .title {
   display: flex;
   align-items: center;

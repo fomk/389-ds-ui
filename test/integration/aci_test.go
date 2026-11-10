@@ -77,7 +77,8 @@ func TestACIsAndEffectiveRights(t *testing.T) {
 		if err != nil {
 			t.Fatalf("GER anonymous: %v", err)
 		}
-		if containsAll(anon.Attrs["userPassword"], "r") || containsAll(anon.Entry, "d") {
+		// "none" must come back as no rights, not as the letters n, o, e.
+		if anon.Attrs["userPassword"] != "" || containsAll(anon.Entry, "d") || containsAll(self.Attrs["uid"], "o") {
 			t.Errorf("anonymous rights = %+v", anon)
 		}
 		return nil

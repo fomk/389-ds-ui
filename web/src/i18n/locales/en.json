@@ -1512,5 +1512,51 @@
     "lockedUntil": "Locked until",
     "untilAdmin": "an administrator unlocks it",
     "lastLogin": "Last login"
+  },
+  "aci": {
+    "title": "Access control (ACI)",
+    "add": "Add ACI",
+    "edit": "Edit ACI",
+    "delete": "Delete ACI",
+    "deleteConfirm": "Delete this ACI? Access it grants or denies changes at once.",
+    "deleted": "ACI deleted.",
+    "saved": "ACI saved.",
+    "error": "Access control",
+    "none": "No ACIs in this entry",
+    "inherited": "{n} ACI from parent entries | {n} ACIs from parent entries",
+    "inheritedNote": "ACIs of parent entries apply here unless their targets exclude this entry.",
+    "looksOk": "No obvious mistakes; the server checks the rest when saving.",
+    "rejected": "The server rejected the ACI",
+    "problems": {
+      "empty": "The ACI is empty.",
+      "quote": "A quote is not closed.",
+      "parens": "Parentheses do not match.",
+      "version": "\"version 3.0\" is missing.",
+      "name": "The rule needs a name: acl \"…\".",
+      "perm": "allow or deny is missing.",
+      "rights": "Rights must follow in parentheses: allow (read, search).",
+      "right": "Unknown right \"{right}\".",
+      "bindRule": "No bind rule (userdn, groupdn, roledn, userattr, ip, …).",
+      "end": "The ACI must end with \";)\".",
+      "target": "Unknown target \"{target}\"."
+    },
+    "effective": "Effective rights",
+    "effectiveHint": "What a bind DN may do with {dn}, as the server evaluates its ACIs.",
+    "subjectPlaceholder": "Bind DN, e.g. uid=jdoe,ou=People,…; empty for anonymous",
+    "check": "Check",
+    "entryRights": "Entry",
+    "entryRight": {
+      "v": "view",
+      "a": "add",
+      "d": "delete",
+      "n": "rename"
+    },
+    "attrRight": {
+      "r": "read",
+      "s": "search",
+      "c": "compare",
+      "w": "write",
+      "o": "delete value"
+    }
   }
 }

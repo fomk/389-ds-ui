@@ -143,11 +143,18 @@ func GetEffectiveRights(c *ldap.Conn, target, subject string, attrs []string) (*
 		return nil, fmt.Errorf("%w: entry %s", ErrNotFound, target)
 	}
 	e := res.Entries[0]
-	out := &EffectiveRights{Target: e.DN, Subject: subject, Entry: e.GetAttributeValue("entryLevelRights"), Attrs: map[string]string{}}
-	// "cn:rscwo, sn:rscwo, ..."
+	// 389-ds writes "none" for no rights; its letters would read as rights.
+	none := func(r string) string {
+		if strings.EqualFold(r, "none") {
+			return ""
+		}
+		return r
+	}
+	out := &EffectiveRights{Target: e.DN, Subject: subject, Entry: none(e.GetAttributeValue("entryLevelRights")), Attrs: map[string]string{}}
+	// "cn:rscwo, sn:rscwo, uid:none, ..."
 	for _, part := range strings.Split(e.GetAttributeValue("attributeLevelRights"), ",") {
 		if name, rights, ok := strings.Cut(strings.TrimSpace(part), ":"); ok {
-			out.Attrs[name] = rights
+			out.Attrs[name] = none(rights)
 		}
 	}
 	return out, nil
