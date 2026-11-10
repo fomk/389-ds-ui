@@ -214,6 +214,15 @@ func CreateLocalPolicy(c *ldap.Conn, n NewLocalPolicy) (*LocalPolicyCreated, err
 	}
 
 	out := &LocalPolicyCreated{Policy: LocalPolicy{DN: pdn, Kind: n.Kind, Target: target}}
+	// Report the DN the way the server spells it (it escapes "," as \2C),
+	// so that clients can match it with the list.
+	if list, err := ListLocalPolicies(c); err == nil {
+		for _, p := range list {
+			if ldapx.NormDN(p.DN) == ldapx.NormDN(pdn) {
+				out.Policy = p
+			}
+		}
+	}
 	res, err := c.Search(ldap.NewSearchRequest("cn=config", ldap.ScopeBaseObject, ldap.NeverDerefAliases,
 		1, 0, false, "(objectClass=*)", []string{"nsslapd-pwpolicy-local"}, nil))
 	if err != nil {

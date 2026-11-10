@@ -540,6 +540,8 @@
     "_dangerHint": "A wrong value can cut ds-ui off from the server.",
     "_changed": "Changed, not saved",
     "_default": "server default",
+    "_on": "on",
+    "_off": "off",
     "_dangerTitle": "Save risky settings?",
     "_dangerConfirm": "You are changing: {fields}. A wrong value can make the server unreachable for ds-ui; fixing it then needs shell access to the container.",
     "_saveAnyway": "Save",
@@ -1454,5 +1456,31 @@
     "subclasses": "Subclasses",
     "inherited": "inherited",
     "inheritedLegend": "Italic: inherited from superior classes."
+  },
+  "policies": {
+    "loadError": "Could not load password policies",
+    "list": "Policies",
+    "new": "New policy",
+    "global": "Global policy",
+    "none": "No subtree or user policies",
+    "kind": "Applies to",
+    "kinds": {
+      "subtree": "subtree",
+      "user": "user"
+    },
+    "targetSubtree": "Subtree",
+    "targetUser": "User entry",
+    "subtreeHint": "Every entry below gets this policy (through Class of Service).",
+    "userHint": "Only this entry gets the policy.",
+    "created": "Policy for {target} created. Unset settings take the server defaults.",
+    "localTurnedOn": "Local policies were off in the server settings; they are on now.",
+    "localOff": "Local policies are off in the server settings: the policies below are ignored.",
+    "enableLocal": "Turn on",
+    "localEnabled": "Local policies are on.",
+    "delete": "Delete policy",
+    "deleteSubtree": "Delete the policy of {target}? Entries below go back to the global policy.",
+    "deleteUser": "Delete the policy of {target}? The user goes back to the subtree or global policy.",
+    "deleted": "Policy of {target} deleted.",
+    "deleteError": "Could not delete the policy"
   }
 }

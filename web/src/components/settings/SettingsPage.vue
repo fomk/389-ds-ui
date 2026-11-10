@@ -11,7 +11,9 @@ import SettingsField from './SettingsField.vue'
 
 type PageState = Schemas['PageState']
 
-const props = defineProps<{ id: string; showAttrs?: boolean }>()
+/** dn: the entry to edit, for pages with entryClass (e.g. local password policies). */
+const props = defineProps<{ id: string; dn?: string; showAttrs?: boolean }>()
+const query = computed(() => (props.dn ? { dn: props.dn } : {}))
 const dirty = defineModel<boolean>('dirty', { default: false })
 
 const { t, te } = useI18n()
@@ -36,13 +38,13 @@ async function load() {
   state.value = undefined
   loadError.value = undefined
   try {
-    state.value = await call(api.GET('/api/v1/pages/{id}', { params: { path: { id: props.id } } }))
+    state.value = await call(api.GET('/api/v1/pages/{id}', { params: { path: { id: props.id }, query: query.value } }))
     reset()
   } catch (e) {
     loadError.value = localizeError(e)
   }
 }
-watch(() => props.id, load, { immediate: true })
+watch(() => [props.id, props.dn], load, { immediate: true })
 
 const changed = computed(() => (state.value ? changedAttrs(form.value, state.value.values) : []))
 watch(changed, (c) => (dirty.value = c.length > 0), { immediate: true })
@@ -85,7 +87,7 @@ async function save() {
   saving.value = true
   try {
     const values = Object.fromEntries(changed.value.map((a) => [a, form.value[a] ?? []]))
-    const res = await call(api.PATCH('/api/v1/pages/{id}', { params: { path: { id: props.id } }, body: { values } }))
+    const res = await call(api.PATCH('/api/v1/pages/{id}', { params: { path: { id: props.id }, query: query.value }, body: { values } }))
     state.value = res.state
     reset()
     if (res.restart.length) {
@@ -132,6 +134,7 @@ defineExpose({ save, reset })
             :options="state.options?.[f.attr]"
             :changed="changed.includes(f.attr)"
             :show-attr="showAttrs"
+            :sparse="state.page.sparse"
           />
         </section>
       </form>

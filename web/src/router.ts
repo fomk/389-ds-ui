@@ -20,6 +20,7 @@ import MonitorView from '@/views/MonitorView.vue'
 import OverviewView from '@/views/OverviewView.vue'
 import PlaceholderView from '@/views/PlaceholderView.vue'
 import PluginsView from '@/views/PluginsView.vue'
+import PoliciesView from '@/views/PoliciesView.vue'
 import SchemaView from '@/views/SchemaView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 
@@ -57,7 +58,7 @@ export const nav: NavItem[] = [
   { path: '/settings', key: 'settings', icon: Settings, stage: 3, view: SettingsView },
   { path: '/plugins', key: 'plugins', icon: Puzzle, stage: 3, view: PluginsView },
   { path: '/schema', key: 'schema', icon: BookOpen, stage: 4, view: SchemaView },
-  { path: '/policies', key: 'policies', icon: KeyRound, stage: 4 },
+  { path: '/policies', key: 'policies', icon: KeyRound, stage: 4, view: PoliciesView },
   { path: '/replication', key: 'replication', icon: RefreshCw, stage: 5 },
   { path: '/security', key: 'security', icon: Lock, stage: 6 },
 ]

@@ -1304,6 +1304,10 @@
           "section": {
             "description": "Menu section: server, database, logging, security, …",
             "type": "string"
+          },
+          "sparse": {
+            "description": "Attributes may be absent until set (plug-in configuration, local policies); the UI shows an explicit default state",
+            "type": "boolean"
           }
         },
         "required": [

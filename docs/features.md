@@ -68,8 +68,8 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 | Schema browsing (search, dependencies, inherited attributes) — done | LDAP | 4 | ✅ | ✅ | ✅ |
 | Creating/changing/deleting custom AT/OC — done (deletion only while unused) | LDAP (`cn=schema`) | 4 | ✅ | ✅ | ✅ |
 | Schema reload (after editing schema files on disk; needs the Schema Reload plug-in) | Task | later | ✅ | ✅ | ✅ |
-| Global password policy | LDAP | 3 | ✅ | ✅ | ✅ |
-| Local password policies | LDAP (CoS) | 4 | ✅ | ✅ | ✅ |
+| Global password policy — done | LDAP | 3 | ✅ | ✅ | ✅ |
+| Local password policies (subtree via CoS, user via `pwdpolicysubentry`) — done | LDAP (CoS) | 4 | ✅ | ✅ | ✅ |
 | Account status, lock/unlock | LDAP | 4 | ✅ | ✅ | ✅ |
 | Roles, CoS | LDAP | 4 | ✅ | ✅ | ✅ |
 | ACI: view/edit as text | LDAP | 4 | ✅ | ✅ | ✅ |

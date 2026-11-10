@@ -1314,6 +1314,8 @@ export interface components {
             plugin?: string;
             /** @description Menu section: server, database, logging, security, … */
             section: string;
+            /** @description Attributes may be absent until set (plug-in configuration, local policies); the UI shows an explicit default state */
+            sparse?: boolean;
         };
         PageField: {
             attr: string;

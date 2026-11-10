@@ -81,7 +81,7 @@ type Page struct {
 	Vars    map[string]string `yaml:"vars,omitempty" json:"-" doc:"Substitutions for {name} in id, dn and attributes"`
 	Use     []string          `yaml:"use,omitempty" json:"-" doc:"Fieldsets of the file appended to fields"`
 	Plugin  string            `yaml:"plugin,omitempty" json:"plugin,omitempty" doc:"cn of the plug-in this page configures; shown on the Plugins page"`
-	Sparse  bool              `yaml:"sparse,omitempty" json:"-" doc:"Attributes may be absent until set (plug-in configuration)"`
+	Sparse  bool              `yaml:"sparse,omitempty" json:"sparse,omitempty" doc:"Attributes may be absent until set (plug-in configuration, local policies); the UI shows an explicit default state"`
 	// EntryClass makes the page edit any entry of this object class, named
 	// by the caller (?dn=), instead of the fixed DN.
 	EntryClass string      `yaml:"entryClass,omitempty" json:"entryClass,omitempty" doc:"The page edits the entry given as ?dn=, which must have this object class"`

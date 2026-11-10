@@ -55,6 +55,10 @@ menu) and `sparse` (attributes may be absent until set; the integration test
 then checks that the entry's object classes allow them instead of requiring
 them on the server).
 
+`entryClass` (instead of `dn`): the page edits whichever entry of that object
+class the caller names with `?dn=` — e.g. a local password policy. Such pages
+are not in the settings menu.
+
 Facts available to `when`: `dbImpl` (`mdb` or `bdb`).
 
 ## Reading and writing

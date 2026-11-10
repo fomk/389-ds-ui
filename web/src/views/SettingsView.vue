@@ -57,7 +57,7 @@ const custom = computed(() => CUSTOM.find((c) => c.id === selected.value))
 const sections = computed(() => {
   const out: { name: string; pages: PageSummary[] }[] = []
   // Plug-in pages live on the Plugins page.
-  const pages = list.value ? [...list.value.filter((x) => !x.plugin), ...CUSTOM] : []
+  const pages = list.value ? [...list.value.filter((x) => !x.plugin && !x.entryClass), ...CUSTOM] : []
   pages.sort((a, b) => a.order - b.order)
   for (const p of pages) {
     let s = out.find((x) => x.name === p.section)

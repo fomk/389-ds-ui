@@ -6,6 +6,8 @@ import {
   NIcon,
   NInput,
   NInputNumber,
+  NRadioButton,
+  NRadioGroup,
   NSelect,
   NSwitch,
   NTag,
@@ -25,7 +27,8 @@ import {
   type Unit,
 } from '@/settings/fields'
 
-const props = defineProps<{ pageId: string; field: PageField; options?: string[]; changed?: boolean; showAttr?: boolean }>()
+/** sparse: an absent attribute is a state of its own ("server default"), shown explicitly for bools. */
+const props = defineProps<{ pageId: string; field: PageField; options?: string[]; changed?: boolean; showAttr?: boolean; sparse?: boolean }>()
 const model = defineModel<string[]>({ required: true })
 
 const { t, te } = useI18n()
@@ -152,6 +155,18 @@ const enumOptions = computed(() => {
 
     <div class="control">
       <span v-if="field.readOnly" :id="id" class="ro">{{ readOnlyText }}</span>
+
+      <NRadioGroup
+        v-else-if="field.type === 'bool' && sparse"
+        size="small"
+        :value="single ? (checked ? 'on' : 'off') : ''"
+        :disabled="disabled"
+        @update:value="(v: string) => set(v === '' ? null : v === 'on' ? boolLiterals[0] : boolLiterals[1])"
+      >
+        <NRadioButton value="">{{ t('pages._default') }}</NRadioButton>
+        <NRadioButton value="on">{{ t('pages._on') }}</NRadioButton>
+        <NRadioButton value="off">{{ t('pages._off') }}</NRadioButton>
+      </NRadioGroup>
 
       <NSwitch
         v-else-if="field.type === 'bool'"
