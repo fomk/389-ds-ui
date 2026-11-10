@@ -171,16 +171,23 @@ defineExpose({ save, reset })
 }
 
 .group + .group {
-  margin-top: 20px;
+  margin-top: 24px;
 }
 
 .group-title {
-  margin: 0 0 4px;
-  font-size: 13px;
+  margin: 0 0 2px;
+  padding: 8px 12px;
+  border-left: 3px solid v-bind('vars.primaryColor');
+  border-radius: 4px;
+  background: v-bind('vars.actionColor');
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: v-bind('vars.textColor3');
+  color: v-bind('vars.textColor1');
+}
+
+/* The heading already separates the first field. */
+.group-title + :deep(.row) {
+  border-top: 0;
 }
 
 .actions {

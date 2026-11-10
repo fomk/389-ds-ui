@@ -3,7 +3,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { NAlert, NCard, NGrid, NGridItem, NH1, NSkeleton, useDialog, useThemeVars } from 'naive-ui'
+import { NAlert, NCard, NGrid, NGridItem, NH1, NIcon, NSkeleton, useDialog, useThemeVars } from 'naive-ui'
+import { Database, ScrollText, Server, ShieldCheck, SlidersHorizontal } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import SettingsPage from '@/components/settings/SettingsPage.vue'
@@ -22,6 +23,7 @@ const dirty = ref(false)
 
 /** Section order in the menu; unknown sections go last. */
 const SECTION_ORDER = ['server', 'database', 'logging', 'security']
+const SECTION_ICONS: Record<string, typeof Server> = { server: Server, database: Database, logging: ScrollText, security: ShieldCheck }
 
 const sections = computed(() => {
   const out: { name: string; pages: PageSummary[] }[] = []
@@ -82,7 +84,10 @@ onBeforeRouteLeave(confirmLeave)
         <NSkeleton v-if="!list" text :repeat="8" />
         <nav v-else :aria-label="t('nav.settings')">
           <div v-for="s in sections" :key="s.name" class="section">
-            <div class="section-title">{{ t(`pages._sections.${s.name}`) }}</div>
+            <div class="section-title">
+              <NIcon :size="16"><component :is="SECTION_ICONS[s.name] ?? SlidersHorizontal" /></NIcon>
+              {{ t(`pages._sections.${s.name}`) }}
+            </div>
             <button
               v-for="p in s.pages"
               :key="p.id"
@@ -115,22 +120,31 @@ onBeforeRouteLeave(confirmLeave)
 }
 
 .section + .section {
-  margin-top: 14px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid v-bind('vars.dividerColor');
 }
 
 .section-title {
-  padding: 0 10px 4px;
-  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 6px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: v-bind('vars.textColor3');
+  color: v-bind('vars.textColor1');
+}
+
+.section-title .n-icon {
+  color: v-bind('vars.primaryColor');
 }
 
 .item {
   display: block;
   width: 100%;
-  padding: 7px 10px;
+  padding: 6px 10px 6px 34px;
+  font-size: 13.5px;
+  color: v-bind('vars.textColor2');
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -146,6 +160,7 @@ onBeforeRouteLeave(confirmLeave)
 
 .item.active {
   background: color-mix(in srgb, v-bind('vars.primaryColor') 12%, transparent);
+  color: v-bind('vars.textColor1');
   font-weight: 500;
 }
 </style>
