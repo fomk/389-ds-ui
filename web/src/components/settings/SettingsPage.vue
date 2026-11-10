@@ -11,7 +11,7 @@ import SettingsField from './SettingsField.vue'
 
 type PageState = Schemas['PageState']
 
-const props = defineProps<{ id: string }>()
+const props = defineProps<{ id: string; showAttrs?: boolean }>()
 const dirty = defineModel<boolean>('dirty', { default: false })
 
 const { t, te } = useI18n()
@@ -130,6 +130,7 @@ defineExpose({ save, reset })
             :field="f"
             :options="state.options?.[f.attr]"
             :changed="changed.includes(f.attr)"
+            :show-attr="showAttrs"
           />
         </section>
       </form>

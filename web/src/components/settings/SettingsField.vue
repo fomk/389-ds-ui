@@ -26,7 +26,7 @@ import {
   type Unit,
 } from '@/settings/fields'
 
-const props = defineProps<{ pageId: string; field: PageField; options?: string[]; changed?: boolean }>()
+const props = defineProps<{ pageId: string; field: PageField; options?: string[]; changed?: boolean; showAttr?: boolean }>()
 const model = defineModel<string[]>({ required: true })
 
 const { t, te } = useI18n()
@@ -112,7 +112,7 @@ const enumOptions = computed(() => {
 <template>
   <div class="row">
     <div class="label">
-      <label :for="id" class="name">
+      <label :for="id" class="name" :title="showAttr ? undefined : field.attr">
         {{ t(`${key}.label`) }}
         <NTooltip v-if="field.restart">
           <template #trigger>
@@ -131,7 +131,7 @@ const enumOptions = computed(() => {
         </NTooltip>
         <span v-if="changed" class="dot" :title="t('pages._changed')" />
       </label>
-      <code class="attr">{{ field.attr }}</code>
+      <code v-if="showAttr" class="attr">{{ field.attr }}</code>
       <div v-if="help" class="help">{{ help }}</div>
     </div>
 

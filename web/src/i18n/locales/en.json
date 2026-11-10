@@ -549,6 +549,7 @@
     "_leaveText": "The page has unsaved changes.",
     "_leave": "Discard",
     "_stay": "Keep editing",
+    "_showAttrs": "Attribute names",
     "_sections": {
       "server": "Server",
       "database": "Database",

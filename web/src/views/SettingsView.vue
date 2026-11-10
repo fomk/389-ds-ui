@@ -3,7 +3,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { NAlert, NCard, NGrid, NGridItem, NH1, NIcon, NSkeleton, useDialog, useThemeVars } from 'naive-ui'
+import { NAlert, NCard, NGrid, NGridItem, NH1, NIcon, NSkeleton, NSwitch, useDialog, useThemeVars } from 'naive-ui'
 import { Database, ScrollText, Server, ShieldCheck, SlidersHorizontal } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
@@ -20,6 +20,23 @@ const dialog = useDialog()
 const list = ref<PageSummary[]>()
 const error = ref<LocalizedError>()
 const dirty = ref(false)
+
+/** Show LDAP attribute names under the labels (per-browser preference). */
+const ATTRS_KEY = 'dsui.settings.attrs'
+const showAttrs = ref(false)
+try {
+  showAttrs.value = localStorage.getItem(ATTRS_KEY) === '1'
+} catch {
+  // storage unavailable: keep the default
+}
+function setShowAttrs(v: boolean) {
+  showAttrs.value = v
+  try {
+    localStorage.setItem(ATTRS_KEY, v ? '1' : '0')
+  } catch {
+    // ignore
+  }
+}
 
 /** Section order in the menu; unknown sections go last. */
 const SECTION_ORDER = ['server', 'database', 'logging', 'security']
@@ -74,7 +91,13 @@ onBeforeRouteLeave(confirmLeave)
 </script>
 
 <template>
-  <NH1 class="title">{{ t('nav.settings') }}</NH1>
+  <div class="title-row">
+    <NH1 class="title">{{ t('nav.settings') }}</NH1>
+    <label class="attrs-toggle">
+      <NSwitch :value="showAttrs" size="small" @update:value="setShowAttrs" />
+      {{ t('pages._showAttrs') }}
+    </label>
+  </div>
 
   <NAlert v-if="error" type="error" :title="t('pages._loadError')">{{ error.summary }}</NAlert>
 
@@ -104,14 +127,32 @@ onBeforeRouteLeave(confirmLeave)
       </NCard>
     </NGridItem>
     <NGridItem span="1 l:3">
-      <SettingsPage v-if="selected" :id="selected" :key="selected" v-model:dirty="dirty" />
+      <SettingsPage v-if="selected" :id="selected" :key="selected" v-model:dirty="dirty" :show-attrs="showAttrs" />
     </NGridItem>
   </NGrid>
 </template>
 
 <style scoped>
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
 .title {
-  margin: 0 0 20px;
+  margin: 0;
+}
+
+.attrs-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: v-bind('vars.textColor2');
+  cursor: pointer;
 }
 
 .menu-card {
