@@ -236,7 +236,10 @@
     "error": "Search failed",
     "exportLDIF": "Export LDIF",
     "exportCSV": "Export CSV",
-    "csvNeedsAttrs": "CSV export needs an attribute list"
+    "csvNeedsAttrs": "CSV export needs an attribute list",
+    "quickPlaceholder": "Name, uid or email — or an LDAP filter such as (mail=*{'@'}example.com)",
+    "advanced": "Advanced",
+    "inBase": "in"
   },
   "ldif": {
     "table": "Attributes",

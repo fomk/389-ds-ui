@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, h, ref } from 'vue'
+import { computed, h, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import {
   NAlert,
   NButton,
   NCard,
+  NCollapseTransition,
   NDataTable,
   NForm,
   NFormItem,
@@ -17,9 +18,10 @@ import {
   useThemeVars,
   type DataTableColumns,
 } from 'naive-ui'
-import { Download, Search } from '@lucide/vue'
+import { ChevronDown, ChevronRight, Download, Search } from '@lucide/vue'
 import { api, call, exportUrl, type Schemas } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
+import { quickFilter } from '@/ldap/filter'
 
 type Hit = Schemas['SearchHit']
 
@@ -30,7 +32,19 @@ const vars = useThemeVars()
 
 const base = ref(props.base)
 const scope = ref<'base' | 'one' | 'sub'>('sub')
-const filter = ref('(objectClass=*)')
+/** What the user types: plain text (name, uid, email) or an LDAP filter. */
+const query = ref('')
+const advanced = ref(false)
+const queryInput = ref<InstanceType<typeof NInput>>()
+onMounted(() => queryInput.value?.focus())
+
+// Text starting with "(" is used as an LDAP filter as is; anything else
+// becomes a name/uid/email match; empty finds everything below the base.
+const filter = computed(() => {
+  const q = query.value.trim()
+  if (!q) return '(objectClass=*)'
+  return q.startsWith('(') ? q : quickFilter(q)
+})
 const attrsText = ref('cn, uid, mail')
 const limit = ref(500)
 const busy = ref(false)
@@ -55,7 +69,7 @@ async function run() {
   try {
     const res = await call(
       api.POST('/api/v1/search', {
-        body: { base: base.value.trim(), scope: scope.value, filter: filter.value.trim(), attrs: attrs.value, limit: limit.value },
+        body: { base: base.value.trim(), scope: scope.value, filter: filter.value, attrs: attrs.value, limit: limit.value },
       }),
     )
     hits.value = res.entries
@@ -97,34 +111,53 @@ const columns = computed<DataTableColumns<Hit>>(() => [
   })),
 ])
 
-const exportQuery = computed(() => ({ base: base.value.trim(), scope: scope.value, filter: filter.value.trim(), attrs: attrs.value }))
+const exportQuery = computed(() => ({ base: base.value.trim(), scope: scope.value, filter: filter.value, attrs: attrs.value }))
 </script>
 
 <template>
   <NCard size="small" :title="t('search.title')">
-    <NForm label-placement="left" label-width="auto" size="small" @submit.prevent="run">
-      <NFormItem :label="t('search.base')">
-        <NInput v-model:value="base" :input-props="{ class: 'mono', spellcheck: false }" />
-      </NFormItem>
-      <NFormItem :label="t('search.filter')">
-        <NInput v-model:value="filter" :input-props="{ class: 'mono', spellcheck: false }" @keydown.enter.prevent="run" />
-      </NFormItem>
-      <NFormItem :label="t('search.attrs')" :feedback="t('search.attrsHint')">
-        <NInput v-model:value="attrsText" :input-props="{ class: 'mono', spellcheck: false }" />
-      </NFormItem>
-      <div class="row">
-        <NFormItem :label="t('search.scope')" :show-feedback="false">
-          <NSelect v-model:value="scope" :options="scopeOptions" class="scope" />
+    <form class="quick" @submit.prevent="run">
+      <NInput
+        ref="queryInput"
+        v-model:value="query"
+        size="large"
+        clearable
+        :placeholder="t('search.quickPlaceholder')"
+        :input-props="{ spellcheck: false }"
+      >
+        <template #prefix><NIcon><Search /></NIcon></template>
+      </NInput>
+      <NButton type="primary" size="large" attr-type="submit" :loading="busy">{{ t('search.run') }}</NButton>
+    </form>
+    <div class="under">
+      <span class="muted">{{ t('search.inBase') }} <span class="mono">{{ base }}</span></span>
+      <NButton text size="small" @click="advanced = !advanced">
+        <template #icon><NIcon><ChevronDown v-if="advanced" /><ChevronRight v-else /></NIcon></template>
+        {{ t('search.advanced') }}
+      </NButton>
+    </div>
+    <div v-if="query.trim() && !query.trim().startsWith('(')" class="muted filter-preview">
+      {{ t('search.filter') }}: <span class="mono">{{ filter }}</span>
+    </div>
+
+    <NCollapseTransition :show="advanced">
+      <NForm label-placement="left" label-width="auto" size="small" class="advanced" @submit.prevent="run">
+        <NFormItem :label="t('search.base')">
+          <NInput v-model:value="base" :input-props="{ class: 'mono', spellcheck: false }" />
         </NFormItem>
-        <NFormItem :label="t('search.limit')" :show-feedback="false">
-          <NInputNumber v-model:value="limit" :min="1" :max="5000" class="limit" />
+        <NFormItem :label="t('search.attrs')" :feedback="t('search.attrsHint')">
+          <NInput v-model:value="attrsText" :input-props="{ class: 'mono', spellcheck: false }" />
         </NFormItem>
-        <NButton type="primary" attr-type="submit" :loading="busy">
-          <template #icon><NIcon><Search /></NIcon></template>
-          {{ t('search.run') }}
-        </NButton>
-      </div>
-    </NForm>
+        <div class="row">
+          <NFormItem :label="t('search.scope')" :show-feedback="false">
+            <NSelect v-model:value="scope" :options="scopeOptions" class="scope" />
+          </NFormItem>
+          <NFormItem :label="t('search.limit')" :show-feedback="false">
+            <NInputNumber v-model:value="limit" :min="1" :max="5000" class="limit" />
+          </NFormItem>
+        </div>
+      </NForm>
+    </NCollapseTransition>
 
     <NAlert v-if="error" type="error" :title="t('search.error')" class="block">
       {{ error.summary }}
@@ -168,6 +201,33 @@ const exportQuery = computed(() => ({ base: base.value.trim(), scope: scope.valu
 </template>
 
 <style scoped>
+.quick {
+  display: flex;
+  gap: 8px;
+}
+
+.under {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 6px 2px 0;
+  font-size: 12px;
+}
+
+.filter-preview {
+  margin: 4px 2px 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.muted {
+  color: v-bind('vars.textColor3');
+}
+
+.advanced {
+  margin-top: 12px;
+}
+
 .row {
   display: flex;
   flex-wrap: wrap;

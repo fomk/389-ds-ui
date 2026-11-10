@@ -236,7 +236,10 @@
     "error": "Ошибка поиска",
     "exportLDIF": "Экспорт LDIF",
     "exportCSV": "Экспорт CSV",
-    "csvNeedsAttrs": "Для экспорта в CSV укажите атрибуты"
+    "csvNeedsAttrs": "Для экспорта в CSV укажите атрибуты",
+    "quickPlaceholder": "Имя, uid или почта — или LDAP-фильтр, например (mail=*{'@'}example.com)",
+    "advanced": "Дополнительно",
+    "inBase": "в"
   },
   "ldif": {
     "table": "Атрибуты",

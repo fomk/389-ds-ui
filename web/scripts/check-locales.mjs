@@ -17,9 +17,18 @@ const flatten = (obj, prefix = '') =>
   )
 const placeholders = (msg) => [...new Set([...String(msg).matchAll(/\{(\w+)\}/g)].map((m) => m[1]))].sort().join(",")
 
+// vue-i18n message syntax: "@" starts a linked message and must be written
+// as {'@'} when meant literally; otherwise rendering fails at runtime.
+const checkSyntax = (code, key, msg) => {
+  if (/@(?!\.|:)/.test(String(msg).replace(/\{'[^']*'\}/g, ''))) {
+    errors.push(`${code}: ${key}: literal "@" must be written as {'@'} (vue-i18n linked-message syntax)`)
+  }
+}
+
 const load = (code) => new Map(flatten(JSON.parse(readFileSync(join(localesDir, `${code}.json`), 'utf8'))))
-const ref = load('en')
 const errors = []
+const ref = load('en')
+for (const [k, v] of ref) checkSyntax('en', k, v)
 
 for (const file of readdirSync(localesDir).filter((f) => f.endsWith('.json'))) {
   const code = file.replace(/\.json$/, '')
@@ -30,6 +39,7 @@ for (const file of readdirSync(localesDir).filter((f) => f.endsWith('.json'))) {
   if (missing.length && REQUIRED.has(code)) report.push(`${code}: missing ${missing.length} key(s): ${missing.join(', ')}`)
   if (extra.length) errors.push(`${code}: unknown key(s) not in en.json: ${extra.join(', ')}`)
   for (const [k, v] of msgs) {
+    checkSyntax(code, k, v)
     if (ref.has(k) && placeholders(v) !== placeholders(ref.get(k))) {
       errors.push(`${code}: ${k}: placeholders {${placeholders(v)}} differ from en {${placeholders(ref.get(k))}}`)
     }
