@@ -320,8 +320,9 @@
     "restartRequired": "Some changes take effect only after a restart: {reasons}",
     "loadError": "Could not load monitoring data",
     "uptimeDays": "{d} d {h} h",
-    "everySeconds": "every {s} s",
-    "refreshOff": "no auto-refresh"
+    "everySeconds": "{s} s",
+    "refreshOff": "off",
+    "refreshLabel": "Refresh"
   },
   "db": {
     "title": "Databases",

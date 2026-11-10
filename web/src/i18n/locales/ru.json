@@ -320,8 +320,9 @@
     "restartRequired": "Часть изменений вступит в силу только после перезапуска: {reasons}",
     "loadError": "Не удалось получить данные мониторинга",
     "uptimeDays": "{d} д {h} ч",
-    "everySeconds": "каждые {s} с",
-    "refreshOff": "без автообновления"
+    "everySeconds": "{s} с",
+    "refreshOff": "выкл.",
+    "refreshLabel": "Обновление"
   },
   "db": {
     "title": "Базы данных",

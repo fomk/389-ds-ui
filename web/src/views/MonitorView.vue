@@ -148,6 +148,7 @@ const opRows = computed(() =>
   <div class="head">
     <NH1 class="title">{{ t('monitor.title') }}</NH1>
     <div class="refresh">
+      <span class="refresh-label">{{ t('monitor.refreshLabel') }}</span>
       <NSelect v-model:value="interval" :options="intervalOptions" size="small" class="interval" :aria-label="t('monitor.autoRefresh')" />
       <NTooltip>
         <template #trigger>
@@ -289,8 +290,14 @@ const opRows = computed(() =>
   gap: 4px;
 }
 
+.refresh-label {
+  font-size: 13px;
+  color: v-bind('vars.textColor3');
+  margin-right: 4px;
+}
+
 .interval {
-  width: 150px;
+  width: 96px;
 }
 
 .block {
