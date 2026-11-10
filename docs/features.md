@@ -70,7 +70,7 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 | Schema reload (after editing schema files on disk; needs the Schema Reload plug-in) | Task | later | ✅ | ✅ | ✅ |
 | Global password policy — done | LDAP | 3 | ✅ | ✅ | ✅ |
 | Local password policies (subtree via CoS, user via `pwdpolicysubentry`) — done | LDAP (CoS) | 4 | ✅ | ✅ | ✅ |
-| Account status, lock/unlock | LDAP | 4 | ✅ | ✅ | ✅ |
+| Account status (lock, role/CoS lock, lockout, expiry, must-change, policy, last login), lock/unlock — done (LDAP browser) | LDAP | 4 | ✅ | ✅ | ✅ |
 | Roles, CoS | LDAP | 4 | ✅ | ✅ | ✅ |
 | ACI: view/edit as text | LDAP | 4 | ✅ | ✅ | ✅ |
 | Permission check (Get Effective Rights) | LDAP (control) | 4 | ✅ | ✅ | ✅ |

@@ -259,6 +259,8 @@ const (
 	OpEnablePlugin  = "enable-plugin"
 	OpDisablePlugin = "disable-plugin"
 	OpRootPassword  = "root-password"
+	OpLockAccount   = "lock-account"
+	OpUnlockAccount = "unlock-account"
 )
 
 // Record adds a finished operation to the history: ok when err is nil,

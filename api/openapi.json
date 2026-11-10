@@ -1,6 +1,66 @@
 {
   "components": {
     "schemas": {
+      "AccountStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          },
+          "failedBinds": {
+            "description": "passwordRetryCount",
+            "format": "int64",
+            "type": "integer"
+          },
+          "graceLoginsUsed": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "hasPassword": {
+            "type": "boolean"
+          },
+          "lastLogin": {
+            "description": "lastLoginTime (Account Policy plug-in)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lockedByRoleOrCoS": {
+            "description": "Unlocking here is not possible; change the role or CoS",
+            "type": "boolean"
+          },
+          "lockedOutUntil": {
+            "description": "Absent with locked-out: until an administrator unlocks",
+            "format": "date-time",
+            "type": "string"
+          },
+          "passwordChanged": {
+            "description": "pwdUpdateTime (if tracked)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "passwordExpires": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "policy": {
+            "type": "string"
+          },
+          "states": {
+            "description": "active, or any of locked, locked-role, locked-out, expired, must-change",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "dn",
+          "states",
+          "hasPassword",
+          "lockedByRoleOrCoS"
+        ],
+        "type": "object"
+      },
       "ApplyLDIFInputBody": {
         "additionalProperties": false,
         "properties": {
@@ -2456,6 +2516,132 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/accounts/lock": {
+      "post": {
+        "operationId": "lockAccount",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountStatus"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Lock an account (nsAccountLock)",
+        "tags": [
+          "accounts"
+        ]
+      }
+    },
+    "/api/v1/accounts/status": {
+      "get": {
+        "operationId": "getAccountStatus",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountStatus"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Lock, lockout and password expiry state of an entry",
+        "tags": [
+          "accounts"
+        ]
+      }
+    },
+    "/api/v1/accounts/unlock": {
+      "post": {
+        "operationId": "unlockAccount",
+        "parameters": [
+          {
+            "explode": false,
+            "in": "query",
+            "name": "dn",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountStatus"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Unlock an account and reset a lockout after failed binds",
+        "tags": [
+          "accounts"
+        ]
+      }
+    },
     "/api/v1/backends": {
       "get": {
         "operationId": "listBackends",

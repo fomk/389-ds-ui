@@ -27,6 +27,7 @@ import DeleteDialog from './DeleteDialog.vue'
 import EntryEditor from './EntryEditor.vue'
 import EntryLdif from './EntryLdif.vue'
 import GroupMembers from './GroupMembers.vue'
+import AccountCard from './AccountCard.vue'
 import MemberOf from './MemberOf.vue'
 import PasswordDialog from './PasswordDialog.vue'
 import RenameDialog from './RenameDialog.vue'
@@ -241,6 +242,7 @@ defineExpose({ reload: load })
     </NTable>
     <GroupMembers v-if="memberAttr" :entry="entry" :attr="memberAttr" @changed="onSaved" />
     <MemberOf :dn="entry.dn" :version="entry.etag" />
+    <AccountCard v-if="canSetPassword" :dn="entry.dn" :version="entry.etag" />
     </template>
     </template>
 

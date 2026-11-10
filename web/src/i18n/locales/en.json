@@ -428,7 +428,9 @@
       "restart": "Server restart",
       "enable-plugin": "Plug-in enabled",
       "disable-plugin": "Plug-in disabled",
-      "root-password": "Directory Manager password changed"
+      "root-password": "Directory Manager password changed",
+      "lock-account": "Account locked",
+      "unlock-account": "Account unlocked"
     },
     "progress": "{current} of {total}",
     "completed": "Completed."
@@ -1482,5 +1484,33 @@
     "deleteUser": "Delete the policy of {target}? The user goes back to the subtree or global policy.",
     "deleted": "Policy of {target} deleted.",
     "deleteError": "Could not delete the policy"
+  },
+  "account": {
+    "title": "Account",
+    "lock": "Lock",
+    "unlock": "Unlock",
+    "lockedMsg": "Account locked.",
+    "unlocked": "Account unlocked.",
+    "error": "Could not change the account",
+    "states": {
+      "active": "active",
+      "locked": "locked",
+      "locked-role": "locked by a role",
+      "locked-out": "locked after failed logins",
+      "expired": "password expired",
+      "must-change": "must change password"
+    },
+    "roleNote": "The lock comes from a role or Class of Service; change it there.",
+    "policy": "Password policy",
+    "globalPolicy": "global",
+    "password": "Password",
+    "noPassword": "not set",
+    "changed": "Password changed",
+    "expires": "Password expires",
+    "grace": "Grace logins used",
+    "failed": "Failed logins",
+    "lockedUntil": "Locked until",
+    "untilAdmin": "an administrator unlocks it",
+    "lastLogin": "Last login"
   }
 }

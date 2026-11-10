@@ -4,6 +4,57 @@
  */
 
 export interface paths {
+    "/api/v1/accounts/lock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lock an account (nsAccountLock) */
+        post: operations["lockAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lock, lockout and password expiry state of an entry */
+        get: operations["getAccountStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unlock an account and reset a lockout after failed binds */
+        post: operations["unlockAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/backends": {
         parameters: {
             query?: never;
@@ -901,6 +952,39 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccountStatus: {
+            dn: string;
+            /**
+             * Format: int64
+             * @description passwordRetryCount
+             */
+            failedBinds?: number;
+            /** Format: int64 */
+            graceLoginsUsed?: number;
+            hasPassword: boolean;
+            /**
+             * Format: date-time
+             * @description lastLoginTime (Account Policy plug-in)
+             */
+            lastLogin?: string;
+            /** @description Unlocking here is not possible; change the role or CoS */
+            lockedByRoleOrCoS: boolean;
+            /**
+             * Format: date-time
+             * @description Absent with locked-out: until an administrator unlocks
+             */
+            lockedOutUntil?: string;
+            /**
+             * Format: date-time
+             * @description pwdUpdateTime (if tracked)
+             */
+            passwordChanged?: string;
+            /** Format: date-time */
+            passwordExpires?: string;
+            policy?: string;
+            /** @description active, or any of locked, locked-role, locked-out, expired, must-change */
+            states: string[];
+        };
         ApplyLDIFInputBody: {
             /** @description Content or change records (add, modify, delete); URL values are not allowed */
             ldif: string;
@@ -1673,6 +1757,99 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    lockAccount: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountStatus"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getAccountStatus: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountStatus"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    unlockAccount: {
+        parameters: {
+            query: {
+                dn: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountStatus"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listBackends: {
         parameters: {
             query?: never;
