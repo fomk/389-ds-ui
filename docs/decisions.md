@@ -48,13 +48,13 @@ Verified: create, exec, requests to other containers, and requests not from `ui`
 
 ---
 
-## ADR-003. Connecting via LDAPI autobind, no UI authentication
+## ADR-003. Connecting via LDAPI autobind (UI sign-in: see ADR-011)
 
 **Status:** Accepted (revisit after 1.0)
 
 **Decision.** In modes A/C ds-ui connects to `ldapi://` with SASL EXTERNAL → DS maps it to Directory Manager (`nsslapd-ldapiautobind`, `nsslapd-ldapimaprootdn`). The UI does not store the DM password.
 
-**Clarified in stage 0.** 389-ds 3.1 maps to DM not only uid 0 but also the server process uid (`nsslapd-localuser: dirsrv`). Therefore ds-ui runs **as uid 389 (`dirsrv`), without root**: files it creates on `/data` are owned by `dirsrv` right away. uid/gid 389 are pinned in both images. The UI has no authentication of its own and is published only on `127.0.0.1`/the internal network.
+**Clarified in stage 0.** 389-ds 3.1 maps to DM not only uid 0 but also the server process uid (`nsslapd-localuser: dirsrv`). Therefore ds-ui runs **as uid 389 (`dirsrv`), without root**: files it creates on `/data` are owned by `dirsrv` right away. uid/gid 389 are pinned in both images. At first the UI had no sign-in and was published only on `127.0.0.1`/the internal network; sign-in came later (ADR-011).
 
 **Consequences.** Minimal secrets; anyone who reaches the UI port is effectively DM. The API is designed so that later the LDAP connection can be taken "from the request context" (user bind, permissions via ACI).
 
@@ -156,3 +156,11 @@ Verified: create, exec, requests to other containers, and requests not from `ui`
 
 **Alternatives.** VLV + SSS (needs per-branch indexes); SSS alone (still a full scan per request); full read with a longer cache (first open still 8–12 s, memory proportional to branch size).
 
+
+## ADR-011. Sign-in with directory accounts; data access as the user
+
+**Context.** ds-ui had no sign-in and acted as Directory Manager for everyone. Options: one shared admin password; a reverse proxy that authenticates (trusted header); directory accounts; OIDC; client certificates.
+
+**Decision.** Users sign in with their directory accounts (the password is checked with a simple bind to the server). The role comes from configured groups: *administrator* (everything) or *operator* (reads the administration, works with data); Directory Manager is always an administrator. Directory data — the LDAP browser, search, LDIF, export — is accessed with the Proxied Authorization control (RFC 4370) as the user, so the server's ACIs decide what they may see and change; server administration stays with ds-ui's own privileges and is limited by role. Sessions are in memory with idle and absolute timeouts; failed sign-ins are rate-limited.
+
+**Consequences.** No extra service and no second user database; password policies, lockout and the security log of 389-ds apply to ds-ui sign-in. Users who should edit data need ACIs. 389-ds records ds-ui's bind DN in `modifiersName` for proxied operations, so authorship lives in the ds-ui log and task history. The Password Modify extended operation cannot carry the control in go-ldap, so signed-in users change passwords with a modify of `userPassword` (no generated passwords). Sessions do not survive a ds-ui restart. A reverse-proxy or OIDC mode can be added later on top of the same roles.

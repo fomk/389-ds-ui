@@ -27,6 +27,8 @@ import RolesView from '@/views/RolesView.vue'
 import SchemaView from '@/views/SchemaView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 import TlsView from '@/views/TlsView.vue'
+import LoginView from '@/views/LoginView.vue'
+import { useAuthStore } from '@/stores/auth'
 
 /** Message keys under "nav" in the locale files. */
 export type NavKey =
@@ -72,6 +74,8 @@ export const nav: NavItem[] = [
 declare module 'vue-router' {
   interface RouteMeta {
     nav?: NavKey
+    /** Shown without the application layout and without sign-in. */
+    bare?: boolean
   }
 }
 
@@ -81,10 +85,24 @@ const routes: RouteRecordRaw[] = [
       ? { path: n.path, component: n.view, meta: { nav: n.key } }
       : { path: n.path, component: PlaceholderView, props: { navKey: n.key, stage: n.stage }, meta: { nav: n.key } },
   ),
+  { path: '/login', name: 'login', component: LoginView, meta: { bare: true } },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
 export const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+// Without a session (when sign-in is on) only the sign-in page is reachable.
+router.beforeEach(async (to) => {
+  const auth = useAuthStore()
+  try {
+    await auth.load()
+  } catch {
+    return true // API down: let the page show the error
+  }
+  if (to.name === 'login') return auth.ready && auth.enabled ? { path: '/' } : true
+  if (!auth.ready) return { name: 'login', query: to.fullPath === '/' ? {} : { next: to.fullPath } }
+  return true
 })

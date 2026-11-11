@@ -128,10 +128,10 @@ On startup ds-ui checks the availability of each provider (socket, volume, proxy
 
 ## Security
 
-- There is no authentication. ds-ui operates with Directory Manager rights (autobind via LDAPI as uid 389 `dirsrv` — without root, or the DM password in mode B).
-- The UI port is published only on `127.0.0.1` or to the internal network; every page shows a banner about the no-authentication mode.
+- Users sign in with directory accounts (ADR-011): the password is checked with a bind, the role (administrator, operator) comes from groups, sessions are in memory. ds-ui itself operates with Directory Manager rights (autobind via LDAPI as uid 389 `dirsrv`, or the DM password in mode B); directory data is accessed with Proxied Authorization as the user, so the server's ACIs decide.
+- With `DSUI_AUTH=none` there is no sign-in: then the port is published only on `127.0.0.1` or an internal network, and every page shows a banner.
 - Docker API — only via `wollomatic/socket-proxy` with an allowlist: `GET …/containers/<ds>/json` and `POST …/containers/<ds>/(restart|stop|start)`, source — the `ui` container only (ADR-002). Even if ds-ui is compromised, it cannot create a container or run `exec`.
 - File operations — only within paths obtained from `cn=config`, with path traversal checks.
 - Secrets (the DM password in mode B, remote node credentials) — only from files (`*_FILE`), not from env values.
-- Without authentication: every request must carry an allowed `Host` (DNS-rebinding protection, `421`), mutations additionally need an allowed `Origin` and the `X-Requested-With: ds-ui` header (CSRF).
-- Preparing for authentication: `LDAPConn.Conn(ctx)` receives the request context — later the connection will take the bind account from the session, and permissions will be determined by the DS's own ACIs.
+- Every request must carry an allowed `Host` (DNS-rebinding protection, `421`), mutations additionally need an allowed `Origin` and the `X-Requested-With: ds-ui` header (CSRF); the session cookie is `SameSite=Strict`.
+- The request context carries the user (`internal/actor`); `ldapx.ProxyControls(ctx)` adds the Proxied Authorization control to directory data requests.

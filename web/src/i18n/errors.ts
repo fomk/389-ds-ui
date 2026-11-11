@@ -34,6 +34,9 @@ export function localizeError(e: unknown): LocalizedError {
     const key = name ? `errors.ldap.${name}` : undefined
     let summary: string
     if (key && te(key)) summary = t(key)
+    else if (e.status === 401) summary = t('errors.http.unauthorized')
+    else if (e.status === 403 && !name) summary = t('errors.http.forbidden')
+    else if (e.status === 429) summary = t('errors.http.tooMany')
     else if (e.status === 503) summary = t('errors.http.unavailable')
     else if (e.status === 501) summary = t('errors.http.notImplemented')
     else summary = t('errors.http.generic', { status: e.status })

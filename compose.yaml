@@ -35,6 +35,11 @@ services:
       # Browser origins (and Host headers) allowed to use the UI; add yours if you
       # reach the UI under another name, e.g. through an SSH tunnel on another port.
       DSUI_ALLOWED_ORIGINS: ${DSUI_ALLOWED_ORIGINS:-http://127.0.0.1:${DSUI_PORT:-8080},http://localhost:${DSUI_PORT:-8080}}
+      # Sign-in with directory accounts. Directory Manager can always sign in
+      # (password: secrets/dm_password); groups are separated by ";".
+      DSUI_AUTH: ${DSUI_AUTH:-ldap}
+      DSUI_ADMIN_GROUPS: ${DSUI_ADMIN_GROUPS:-}
+      DSUI_OPERATOR_GROUPS: ${DSUI_OPERATOR_GROUPS:-}
     volumes:
       - ds-data:/data
     ports:

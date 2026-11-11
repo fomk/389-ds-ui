@@ -1,6 +1,6 @@
 # Deployment
 
-> ⚠️ ds-ui **has no authentication** and runs with Directory Manager privileges. Publish the UI port only on `127.0.0.1` (access via an SSH tunnel) or on an internal network.
+> ds-ui itself connects to the server with Directory Manager privileges; users sign in with their directory accounts (see [Sign-in](#sign-in)). Serve it over HTTPS (a reverse proxy) when it is reachable beyond `127.0.0.1`.
 
 ## Images
 
@@ -102,3 +102,30 @@ The layout is defined by `dscontainer` (verified on 389-ds 3.1.2):
 
 - Regular backups — via a backup task (UI from stage 2) or `docker compose exec ds dsconf ldapi://%2fdata%2frun%2fslapd-localhost.socket backup create`; copy the `/data/bak` directory off the host.
 - A snapshot of the `ds-data` volume is consistent only while DS is stopped.
+
+## Sign-in
+
+`DSUI_AUTH=ldap` (default) asks for a directory account; `DSUI_AUTH=none` turns sign-in off (then publish the port only on `127.0.0.1` or a trusted network).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DSUI_AUTH` | `ldap` | `ldap` or `none` |
+| `DSUI_ADMIN_GROUPS` | — | Groups (DNs separated by `;`) whose members are administrators |
+| `DSUI_OPERATOR_GROUPS` | — | Groups whose members are operators |
+| `DSUI_SESSION_IDLE` | `30m` | A session ends after this long without requests |
+| `DSUI_SESSION_MAX` | `12h` | …and at the latest after this long |
+
+- The user name is a `uid` (searched in all suffixes, it must be unique), a full DN, or `Directory Manager`. The password is checked with a bind to the server, so its password policy, lockout and security log apply.
+- **Roles.** Directory Manager is always an administrator; otherwise the role comes from membership (`member`, `uniqueMember`, or `memberOf` for nested groups) of the configured groups. Accounts in neither group cannot sign in. Without groups only Directory Manager can sign in.
+  - *Administrators* may do everything.
+  - *Operators* see the administration pages (settings, monitoring, logs, replication…) without changing them, and work with directory data.
+- **Directory data** (LDAP browser, search, LDIF, export) is read and written with Proxied Authorization as the signed-in user: the server applies **their ACIs**, so a group member who needs to edit entries also needs an ACI that allows it. 389-ds records ds-ui's own bind DN in `modifiersName`; ds-ui's request log and task history name the user.
+- Server administration (cn=config, tasks, files, certificates) is done by ds-ui with its own privileges and limited by role.
+- Sessions are kept in memory: restarting ds-ui signs everyone out. The cookie is `HttpOnly`, `SameSite=Strict`, and `Secure` behind HTTPS (also when a proxy sets `X-Forwarded-Proto: https`). Five failed attempts per user name and client block sign-in for five minutes.
+
+Example: administrators and operators from two groups.
+
+```sh
+DSUI_ADMIN_GROUPS="cn=ds-ui admins,ou=Groups,dc=example,dc=com" \
+DSUI_OPERATOR_GROUPS="cn=ds-ui operators,ou=Groups,dc=example,dc=com" make up
+```

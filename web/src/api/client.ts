@@ -42,8 +42,21 @@ const csrf: Middleware = {
   },
 }
 
+/** Called when the server answers 401 (no or expired session). */
+let unauthorized: () => void = () => {}
+export function onUnauthorized(fn: () => void) {
+  unauthorized = fn
+}
+const session: Middleware = {
+  onResponse({ request, response }) {
+    if (response.status === 401 && !new URL(request.url, location.href).pathname.startsWith('/api/v1/auth/')) unauthorized()
+    return response
+  },
+}
+
 export const api = createClient<paths>({ baseUrl: '' })
 api.use(csrf)
+api.use(session)
 
 /**
  * Unwraps an openapi-fetch result, throwing ApiError on failure. Successful

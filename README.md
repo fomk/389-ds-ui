@@ -13,7 +13,7 @@ shipped as a lightweight Docker service next to the DS container.
   - **C — sidecar** (default): two containers, shared `/data` volume, LDAPI autobind, restart through a Docker API proxy;
   - **B — remote**: LDAP over the network only (for remote nodes / replicas);
   - **A — all-in-one**: DS and UI in a single container under s6-overlay (planned).
-- **No authentication** for now — expose the UI only on `127.0.0.1` or an internal network.
+- **Sign-in with directory accounts** (`DSUI_AUTH=ldap`, the default): Directory Manager or members of the configured admin/operator groups; directory data is accessed as the signed-in user, so the server's ACIs apply ([docs/deployment.md](docs/deployment.md#sign-in)).
 - **Multilingual UI**: English and Russian; adding a language is a single JSON file ([docs/i18n.md](docs/i18n.md)).
 
 ## Documentation

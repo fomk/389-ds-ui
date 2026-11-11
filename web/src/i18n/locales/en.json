@@ -523,7 +523,10 @@
     "http": {
       "generic": "Request failed (HTTP {status})",
       "notImplemented": "Not supported in this deployment",
-      "unavailable": "The directory server is unreachable"
+      "unavailable": "The directory server is unreachable",
+      "unauthorized": "Sign in again",
+      "forbidden": "Your role may not do this",
+      "tooMany": "Too many attempts; wait a few minutes"
     },
     "ldap": {
       "noSuchObject": "Entry does not exist",
@@ -2059,5 +2062,21 @@
     "close": "Close",
     "saved": "Certificate added.",
     "imported": "Added: {names}."
+  },
+  "login": {
+    "title": "Sign in",
+    "username": "User",
+    "usernameHint": "uid, full DN or Directory Manager",
+    "password": "Password",
+    "submit": "Sign in",
+    "logout": "Sign out",
+    "readOnly": "View only: your role cannot change these settings.",
+    "roles": {
+      "admin": "administrator",
+      "operator": "operator"
+    },
+    "invalid": "Wrong user name or password.",
+    "noAccess": "The password is right, but this account has no access to ds-ui. Ask an administrator to add it to a ds-ui group.",
+    "tooMany": "Too many failed attempts. Wait a few minutes."
   }
 }

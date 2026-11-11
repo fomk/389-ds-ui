@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { NAlert, NButton, NCard, NSkeleton, NSpace, useDialog, useMessage, useThemeVars } from 'naive-ui'
 import { api, call, type Schemas } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
+import { useAuthStore } from '@/stores/auth'
 import { useServerStore } from '@/stores/server'
 import { changedAttrs, clean, fieldKey, type PageField } from '@/settings/fields'
 import SettingsField from './SettingsField.vue'
@@ -21,6 +22,7 @@ const vars = useThemeVars()
 const message = useMessage()
 const dialog = useDialog()
 const server = useServerStore()
+const auth = useAuthStore()
 
 const state = ref<PageState>()
 const form = ref<Record<string, string[]>>({})
@@ -140,7 +142,10 @@ defineExpose({ save, reset })
       </form>
     </template>
 
-    <template v-if="state" #action>
+    <template v-if="state && auth.readOnly" #action>
+      <span class="status">{{ t('login.readOnly') }}</span>
+    </template>
+    <template v-else-if="state" #action>
       <div class="actions">
         <span class="status">
           {{ changed.length ? t('pages._unsaved', { n: changed.length }, changed.length) : t('pages._noChanges') }}

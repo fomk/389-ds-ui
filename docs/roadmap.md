@@ -14,7 +14,7 @@ Estimates assume **one full-time developer**. Total to 1.0: **~19–26 weeks (�
 | 5 | Replication | 3–4 wk | v0.4 |
 | 6 | TLS and certificates | 1.5–2 wk | v0.5 |
 | 7 | Stabilization, multi-server, release | 2–3 wk | **v1.0** |
-| — | After 1.0 | — | authentication, visual ACI editor, log statistics |
+| — | After 1.0 | — | OIDC / proxy sign-in, visual ACI editor, log statistics |
 
 Dependencies: `0 → 1 → 2 → {3, 4, 5, 6} → 7`. After M2, stages 3–6 can be reordered by priority.
 
@@ -169,13 +169,13 @@ Work items:
 - Mode A (all-in-one): `deploy/aio` image (DS image + s6-overlay + ds-ui), `s6` Lifecycle provider (moved from stage 0).
 - e2e tests (Playwright) for key scenarios, editor load smoke test.
 - User documentation, CHANGELOG, image versioning, publishing to a registry.
-- Authentication design (ADR) — implementation after 1.0.
+- ✅ Sign-in (moved ahead of stage 7, ADR-011): directory accounts, administrator/operator roles from groups, directory data with Proxied Authorization.
 
 **Done when:** all features from [features.md](features.md) with stage ≤ 7 are implemented, e2e tests are green, release images exist.
 
 ## After 1.0
 
-- Authentication: user LDAP bind, sessions, permissions via the DS's own ACIs (the "request-context" LDAP connection has been in place since stage 0).
+- Sign-in through a reverse proxy (trusted header) or OIDC, as alternatives to directory accounts.
 - Visual ACI builder.
 - Access log statistics (similar to `logconv`).
 - Offline operations (dbverify, BDB→LMDB) in mode A.
@@ -191,7 +191,7 @@ Work items:
 | No ready-made library (an equivalent of lib389) | Certain | High (volume) | 389 documentation and experiments on a live server → `ds-reference.md`; declarative forms; integration tests against a real DS |
 | Replication complexity (roles, RUV, conflicts) | Medium | High | Separate stage, setup of 2–3 DS instances in CI; topology lag moved to stage 7 |
 | Debian build of 389 differs in paths / availability of `dscontainer` | Medium | Low | Check in stage 0, custom entrypoint |
-| UI without authentication reachable from outside | Medium | Critical | Publish only on 127.0.0.1, explicit warning in the UI and docs |
+| UI reachable from outside | Medium | Critical | Sign-in on by default; with `DSUI_AUTH=none` publish only on 127.0.0.1, explicit warning in the UI and docs |
 | Dependency licenses (as with PrimeVue 5) | Medium | Medium | Check dependency licenses before adding and in CI (ADR-004); no third-party code is borrowed (ADR-008) |
 
 ## Stage 0 open questions — answers

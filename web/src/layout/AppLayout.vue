@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, h, ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
   NAlert,
   NButton,
+  NDropdown,
   NIcon,
   NLayout,
   NLayoutContent,
@@ -17,10 +18,11 @@ import {
   useThemeVars,
   type MenuOption,
 } from 'naive-ui'
-import { RotateCw } from '@lucide/vue'
+import { RotateCw, CircleUser } from '@lucide/vue'
 import { api, call } from '@/api/client'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import TasksIndicator from '@/components/TasksIndicator.vue'
+import { useAuthStore } from '@/stores/auth'
 import { localizeError } from '@/i18n/errors'
 import { nav } from '@/router'
 import { useServerStore } from '@/stores/server'
@@ -88,7 +90,18 @@ const statusHint = computed(() => (server.apiDown ? t('status.apiDown') : server
 
 const dialog = useDialog()
 const message = useMessage()
-const canRestart = computed(() => !!server.capabilities && server.capabilities.lifecycle !== 'none')
+const auth = useAuthStore()
+const canRestart = computed(() => !!server.capabilities && server.capabilities.lifecycle !== 'none' && !auth.readOnly)
+const router = useRouter()
+const userOptions = computed(() => [
+  { key: 'dn', label: auth.user?.dn ?? '', disabled: true },
+  { key: 'logout', label: t('login.logout') },
+])
+async function onUser(key: string | number) {
+  if (key !== 'logout') return
+  await auth.logout()
+  await router.replace({ name: 'login' })
+}
 
 function restart() {
   dialog.warning({
@@ -147,13 +160,20 @@ function restart() {
           </NButton>
           <TasksIndicator />
           <LocaleSwitcher />
+          <NDropdown v-if="auth.user" trigger="click" :options="userOptions" @select="onUser">
+            <NButton size="small" quaternary>
+              <template #icon><NIcon><CircleUser /></NIcon></template>
+              {{ auth.user.name }}
+              <NTag size="tiny" :bordered="false" class="role">{{ t(`login.roles.${auth.user.role}`) }}</NTag>
+            </NButton>
+          </NDropdown>
           <NTag :type="status.type" size="small" round :title="statusHint">{{ status.label }}</NTag>
         </div>
       </NLayoutHeader>
 
       <!-- Pinned under the header so only the content scrolls (sticky bars work). -->
       <NLayoutContent position="absolute" class="main" :native-scrollbar="false" content-class="content">
-        <NAlert type="warning" :show-icon="true" class="noauth">
+        <NAlert v-if="!auth.enabled" type="warning" :show-icon="true" class="noauth">
           {{ t('app.noAuthWarning') }}
         </NAlert>
         <NAlert v-if="server.state?.restartRequired" type="info" class="noauth">
@@ -212,6 +232,10 @@ function restart() {
 
 .muted {
   color: v-bind('vars.textColor3');
+}
+
+.role {
+  margin-left: 6px;
 }
 
 .noauth {

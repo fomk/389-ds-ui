@@ -142,7 +142,9 @@ func TestSignInAndProxiedAccess(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = c.Do(context.Background(), func(conn *ldap.Conn) error { return ds.SetACIs(conn, people, nil) }) })
+	t.Cleanup(func() {
+		_ = c.Do(context.Background(), func(conn *ldap.Conn) error { return ds.SetACIs(conn, people, nil) })
+	})
 	if r := do(op, "PATCH", "/api/v1/entries?dn="+url.QueryEscape(jdoe), change); r.StatusCode != 200 {
 		t.Errorf("operator writes with an ACI: %d", r.StatusCode)
 	}
