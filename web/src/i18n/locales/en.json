@@ -2067,6 +2067,7 @@
     "title": "Sign in",
     "username": "User",
     "usernameHint": "uid or DN",
+    "passwordHint": "account password",
     "password": "Password",
     "submit": "Sign in",
     "logout": "Sign out",

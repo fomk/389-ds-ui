@@ -60,7 +60,7 @@ async function submit() {
           <NInput
             v-model:value="password"
             type="password"
-            placeholder=""
+            :placeholder="t('login.passwordHint')"
             show-password-on="click"
             :input-props="{ autocomplete: 'current-password', name: 'password' }"
             :disabled="busy"

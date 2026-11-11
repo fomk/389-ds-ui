@@ -2067,6 +2067,7 @@
     "title": "Вход",
     "username": "Пользователь",
     "usernameHint": "uid или DN",
+    "passwordHint": "пароль учётной записи",
     "password": "Пароль",
     "submit": "Войти",
     "logout": "Выйти",
