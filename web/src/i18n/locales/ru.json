@@ -2066,7 +2066,7 @@
   "login": {
     "title": "Вход",
     "username": "Пользователь",
-    "usernameHint": "uid, полный DN или Directory Manager",
+    "usernameHint": "uid или DN",
     "password": "Пароль",
     "submit": "Войти",
     "logout": "Выйти",

@@ -48,9 +48,10 @@ async function submit() {
       </div>
       <h1 class="title">{{ t('login.title') }}</h1>
       <NForm label-placement="top" @submit.prevent="submit">
-        <NFormItem :label="t('login.username')" :feedback="t('login.usernameHint')">
+        <NFormItem :label="t('login.username')">
           <NInput
             v-model:value="username"
+            :placeholder="t('login.usernameHint')"
             :input-props="{ autocomplete: 'username', autofocus: true, spellcheck: false, name: 'username' }"
             :disabled="busy"
           />
@@ -59,6 +60,7 @@ async function submit() {
           <NInput
             v-model:value="password"
             type="password"
+            placeholder=""
             show-password-on="click"
             :input-props="{ autocomplete: 'current-password', name: 'password' }"
             :disabled="busy"

@@ -2066,7 +2066,7 @@
   "login": {
     "title": "Sign in",
     "username": "User",
-    "usernameHint": "uid, full DN or Directory Manager",
+    "usernameHint": "uid or DN",
     "password": "Password",
     "submit": "Sign in",
     "logout": "Sign out",
