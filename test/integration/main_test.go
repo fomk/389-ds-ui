@@ -1,7 +1,7 @@
 //go:build integration
 
 // Package integration runs ds-ui code against a real 389-ds container.
-// Run with: make itest   (builds deploy/ds and sets DS_IMAGE)
+// Run with: make itest   (sets DS_IMAGE; see the Makefile)
 package integration
 
 import (
@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 func run(m *testing.M) int {
 	image := os.Getenv("DS_IMAGE")
 	if image == "" {
-		image = "389-ds-ui/ds:dev"
+		image = "389-ds-base:3.3.1"
 	}
 	ctx := context.Background()
 	ds, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{

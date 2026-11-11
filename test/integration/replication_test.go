@@ -45,7 +45,7 @@ func startNode(t *testing.T, ctx context.Context, nw *testcontainers.DockerNetwo
 	t.Helper()
 	image := os.Getenv("DS_IMAGE")
 	if image == "" {
-		image = "389-ds-ui/ds:dev"
+		image = "389-ds-base:3.3.1"
 	}
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{

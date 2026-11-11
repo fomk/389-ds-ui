@@ -4,8 +4,10 @@ name: 389-ds-ui
 
 services:
   ds:
-    build: deploy/ds
-    image: 389-ds-ui/ds:dev
+    # Built from the 389-ds-base-docker repository (ADR-012); for the bundled
+    # development image use DS_IMAGE=389-ds-ui/ds:dev after `make ds-image`.
+    image: ${DS_IMAGE:-389-ds-base:3.3.1}
+    pull_policy: missing
     environment:
       DS_SUFFIX: ${DS_SUFFIX:-dc=example,dc=com}
       DS_DM_PASSWORD_FILE: /run/secrets/dm_password

@@ -59,7 +59,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - run: make itest
+      # The 389-ds-base-docker image is not published yet; test the bundled one.
+      - run: make itest DS_IMAGE=389-ds-ui/ds:dev
 
   images:
     runs-on: ubuntu-latest

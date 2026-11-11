@@ -60,7 +60,7 @@ Planned by stage: `test/e2e/` (Playwright, stage 7).
 | `make check-gen` | `gen` + check that the generated files are committed |
 | `make lint` | go vet, gofmt, golangci-lint (if installed), vue-tsc, translation check (`check:locales`), npm license check |
 | `make test` | Go unit tests |
-| `make itest` | build the DS image and run the integration tests |
+| `make itest` | run the integration tests against `DS_IMAGE` (default `389-ds-base:3.3.1` from 389-ds-base-docker; `DS_IMAGE=389-ds-ui/ds:dev` builds and uses `deploy/ds`) |
 | `make build` | SPA + `bin/ds-ui` |
 | `make images` | ds, ui (sidecar and static) images |
 | `make secrets` | create `secrets/dm_password` |
@@ -70,7 +70,7 @@ After changing API types in Go: run `make gen` and commit `api/openapi.json` and
 ## Testing
 
 - **Unit:** schema parser, DN utilities, entry diff, ASN.1 controls, YAML page engine, error mapping, log parsing — Go `go test`, no network. Frontend helpers (DN, LDAP time parsing, formatting) — vitest (`npm test` in `web/`, `*.test.ts` next to the code).
-- **Integration (primary level):** `testcontainers-go` starts the built DS image (one per test package, `DS_IMAGE`, default `389-ds-ui/ds:dev`), connecting via DM simple bind over TCP (LDAPI is not reachable from the host: autobind maps only uid 0/389). Each test works in its own suffix/subtree. Every function in `internal/ds` must have an integration test — this is our substitute for the "reference" lib389. Files are tagged `//go:build integration`.
+- **Integration (primary level):** `testcontainers-go` starts the built DS image (one per test package, `DS_IMAGE`, default `389-ds-base:3.3.1`), connecting via DM simple bind over TCP (LDAPI is not reachable from the host: autobind maps only uid 0/389). Each test works in its own suffix/subtree. Every function in `internal/ds` must have an integration test — this is our substitute for the "reference" lib389. Files are tagged `//go:build integration`.
 - **Replication:** a separate suite with 2 DS instances on a shared network; runs in CI nightly and on PRs touching `internal/ds/replication`.
 - **Version matrix:** CI runs the integration tests on the target Debian version and (optionally) on the upstream 389ds image to catch `cn=config` changes early.
 - **E2E:** Playwright — key scenarios (create a user, change an index, backup/restore, log tail).

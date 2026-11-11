@@ -1,7 +1,10 @@
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 GO      ?= go
 NPM     ?= npm
-DS_IMAGE ?= 389-ds-ui/ds:dev
+# 389-ds image for integration tests: built in the 389-ds-base-docker repository
+# (ADR-012). DS_IMAGE=389-ds-ui/ds:dev uses the bundled deploy/ds image instead.
+DEV_DS_IMAGE := 389-ds-ui/ds:dev
+DS_IMAGE ?= 389-ds-base:3.3.1
 
 .PHONY: help
 help: ## Show targets
@@ -41,11 +44,11 @@ test: web/node_modules ## Unit tests (Go + frontend)
 	cd web && $(NPM) test
 
 .PHONY: ds-image
-ds-image: ## Build the 389-ds image used by integration tests
-	docker build -t $(DS_IMAGE) deploy/ds
+ds-image: ## Build the bundled development 389-ds image (deploy/ds)
+	docker build -t $(DEV_DS_IMAGE) deploy/ds
 
 .PHONY: itest
-itest: ds-image ## Integration tests against a real 389-ds container
+itest: $(if $(filter $(DEV_DS_IMAGE),$(DS_IMAGE)),ds-image) ## Integration tests against a real 389-ds container (DS_IMAGE)
 	DS_IMAGE=$(DS_IMAGE) $(GO) test -tags integration -count=1 -timeout 10m ./test/integration/...
 
 .PHONY: secrets

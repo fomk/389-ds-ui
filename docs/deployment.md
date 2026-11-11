@@ -6,11 +6,12 @@
 
 | Image | Dockerfile | Base | Contents | Size |
 |---|---|---|---|---|
-| `ds` | `deploy/ds/Dockerfile` | `debian:trixie-slim` | 389-ds-base 3.1.2, tini, `dscontainer` + `ds-entrypoint` wrapper | ~436 MB |
+| `ds` | 389-ds-base-docker repository | `debian:trixie-slim` | 389-ds-base 3.3.1 built from the release tarball, tini, `dscontainer` + `ds-entrypoint` wrapper; used by `compose.yaml` as `389-ds-base:3.3.1` (`DS_IMAGE`) | ~468 MB |
+| `ds` (dev) | `deploy/ds/Dockerfile` | `debian:trixie-slim` | Debian's 389-ds-base 3.1.2, same layout; CI and `DS_IMAGE=389-ds-ui/ds:dev` | ~436 MB |
 | `ui` (sidecar) | `deploy/ui/Dockerfile`, target `sidecar` | `debian:trixie-slim` | ds-ui + `libnss3-tools` (certutil), user 389 | ~152 MB |
 | `ui` (static) | `deploy/ui/Dockerfile`, target `static` | `distroless/static:nonroot` | ds-ui only (mode B) | ~20 MB |
 
-The `ds` image here is for development and tests. For production the DS image comes from the separate repository 389-ds-base-docker (built from the upstream release tarball); it keeps the same layout — state in `/data`, LDAPI socket `/data/run/slapd-localhost.socket`, uid/gid 389, `DS_DM_PASSWORD_FILE` / `DS_SUFFIX` — so ds-ui works with it unchanged. There is no all-in-one image (ADR-012).
+The `deploy/ds` image is for development and CI. The DS image itself comes from the separate repository 389-ds-base-docker (built from the upstream release tarball); it keeps the same layout — state in `/data`, LDAPI socket `/data/run/slapd-localhost.socket`, uid/gid 389, `DS_DM_PASSWORD_FILE` / `DS_SUFFIX` — so ds-ui works with it unchanged. There is no all-in-one image (ADR-012).
 
 The uid/gid of the `dirsrv` user in the `ds` and `ui` (sidecar) images is fixed: **389:389** (`--build-arg DS_UID/DS_GID`).
 
@@ -20,6 +21,8 @@ File: [`compose.yaml`](../compose.yaml). Run:
 
 ```bash
 make up        # creates secrets/dm_password (if missing), detects DOCKER_GID and runs docker compose up -d --build
+# the ds image (389-ds-base:3.3.1) must exist locally: build it in 389-ds-base-docker,
+# or run with DS_IMAGE=389-ds-ui/ds:dev after `make ds-image`
 make down      # stop; the ds-data volume is preserved
 ```
 
@@ -83,7 +86,7 @@ HTTP endpoints for orchestrators: `/healthz` — the process is alive (independe
 
 ## `/data` volume (`ds` image)
 
-The layout is defined by `dscontainer` (verified on 389-ds 3.1.2):
+The layout is defined by `dscontainer` (verified on 389-ds 3.1.2 and 3.3.1):
 
 | Path | Contents |
 |---|---|
