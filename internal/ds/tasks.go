@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/fomk/389-ds-ui/internal/actor"
 	"log/slog"
 	"slices"
 	"strconv"
@@ -51,6 +52,7 @@ type Task struct {
 	Log      []string   `json:"log"`
 	Started  time.Time  `json:"started"`
 	Finished *time.Time `json:"finished,omitempty"`
+	By       string     `json:"by,omitempty" doc:"DN of the signed-in user who started it"`
 }
 
 // Doer runs a function with an LDAP connection.
@@ -99,7 +101,7 @@ func (m *Tasks) Start(ctx context.Context, typ, target string, attrs map[string]
 	if err := m.ldap.Do(ctx, func(c *ldap.Conn) error { return c.Add(req) }); err != nil {
 		return nil, err
 	}
-	t := &Task{ID: name, Type: typ, DN: dn, Target: target, Status: TaskRunning, Log: []string{}, Started: now}
+	t := &Task{ID: name, Type: typ, DN: dn, Target: target, Status: TaskRunning, Log: []string{}, Started: now, By: actor.Name(ctx)}
 	m.mu.Lock()
 	m.tasks = append(m.tasks, t)
 	if len(m.tasks) > maxTasks {
@@ -268,14 +270,14 @@ const (
 
 // Record adds a finished operation to the history: ok when err is nil,
 // failed with the error as message otherwise.
-func (m *Tasks) Record(typ, target string, err error) {
+func (m *Tasks) Record(ctx context.Context, typ, target string, err error) {
 	if m == nil {
 		return
 	}
 	now := time.Now().UTC()
 	t := &Task{
 		ID: fmt.Sprintf("%s_%s", typ, now.Format("20060102_150405.000000")), Type: typ, Target: target,
-		Status: TaskSucceeded, Log: []string{}, Started: now, Finished: &now,
+		Status: TaskSucceeded, Log: []string{}, Started: now, Finished: &now, By: actor.Name(ctx),
 	}
 	if err != nil {
 		t.Status, t.Message = TaskFailed, err.Error()

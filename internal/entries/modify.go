@@ -42,7 +42,7 @@ func (s *Service) Modify(ctx context.Context, dn, ifMatch string, changes []Chan
 	if len(changes) == 0 {
 		return nil, fmt.Errorf("%w: no changes", ErrInvalidChange)
 	}
-	req := ldap.NewModifyRequest(dn, nil)
+	req := ldap.NewModifyRequest(dn, ldapx.ProxyControls(ctx))
 	for _, c := range changes {
 		vals, err := decodeValues(c)
 		if err != nil {
@@ -119,7 +119,7 @@ func (s *Service) Add(ctx context.Context, ne NewEntry) (*Entry, error) {
 	if !ldapx.ValidDN(ne.DN) || ne.DN == "" {
 		return nil, ErrInvalidDN
 	}
-	req := ldap.NewAddRequest(ne.DN, nil)
+	req := ldap.NewAddRequest(ne.DN, ldapx.ProxyControls(ctx))
 	for _, a := range ne.Attributes {
 		vals, err := decodeValues(Change{Attr: a.Name, Values: a.Values, Binary: a.Binary})
 		if err != nil {
@@ -151,7 +151,7 @@ func (s *Service) Delete(ctx context.Context, dn string, subtree bool) (*DeleteR
 		targets := []string{dn}
 		if subtree {
 			sr, err := c.SearchWithPaging(ldap.NewSearchRequest(dn, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
-				0, 0, false, "(objectClass=*)", []string{"1.1"}, nil), 500)
+				0, 0, false, "(objectClass=*)", []string{"1.1"}, ldapx.ProxyControls(ctx)), 500)
 			if err != nil {
 				return err
 			}
@@ -169,7 +169,7 @@ func (s *Service) Delete(ctx context.Context, dn string, subtree bool) (*DeleteR
 			if err := ctx.Err(); err != nil {
 				return err
 			}
-			if err := c.Del(ldap.NewDelRequest(t, nil)); err != nil {
+			if err := c.Del(ldap.NewDelRequest(t, ldapx.ProxyControls(ctx))); err != nil {
 				if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) && t != dn {
 					continue // removed concurrently
 				}
@@ -225,6 +225,7 @@ func (s *Service) Rename(ctx context.Context, r RenameRequest) (*RenameResult, e
 		newParent = r.NewParent
 	}
 	req := ldap.NewModifyDNRequest(r.DN, r.NewRDN, r.DeleteOldRDN, "")
+	req.Controls = ldapx.ProxyControls(ctx)
 	if newParent != oldParent {
 		req.NewSuperior = newParent
 	}
@@ -277,15 +278,22 @@ func (s *Service) SetPassword(ctx context.Context, r PasswordRequest) (*Password
 		return nil, ErrInvalidDN
 	}
 	var res *ldap.PasswordModifyResult
-	err := s.ldap.Do(ctx, func(c *ldap.Conn) (err error) {
-		res, err = c.PasswordModify(ldap.NewPasswordModifyRequest(r.DN, "", r.Password))
-		return err
-	})
-	if ldap.IsErrorWithCode(err, ldap.LDAPResultConfidentialityRequired) {
+	var err error
+	// The extended operation cannot carry Proxied Authorization (go-ldap has
+	// no controls for it): signed-in users replace userPassword instead,
+	// which the server hashes and checks against their ACIs.
+	proxied := ldapx.Proxied(ctx)
+	if !proxied {
+		err = s.ldap.Do(ctx, func(c *ldap.Conn) (err error) {
+			res, err = c.PasswordModify(ldap.NewPasswordModifyRequest(r.DN, "", r.Password))
+			return err
+		})
+	}
+	if proxied || ldap.IsErrorWithCode(err, ldap.LDAPResultConfidentialityRequired) {
 		if r.Password == "" {
 			return nil, ErrPasswordGenerationUnavailable
 		}
-		req := ldap.NewModifyRequest(r.DN, nil)
+		req := ldap.NewModifyRequest(r.DN, ldapx.ProxyControls(ctx))
 		req.Replace("userPassword", []string{r.Password})
 		if err := s.ldap.Do(ctx, func(c *ldap.Conn) error { return c.Modify(req) }); err != nil {
 			return nil, err

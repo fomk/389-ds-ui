@@ -32,7 +32,7 @@ func registerAccounts(api huma.API, d Deps) {
 			return err
 		})
 		if op != "" && d.Tasks != nil {
-			d.Tasks.Record(op, dn, err)
+			d.Tasks.Record(ctx, op, dn, err)
 		}
 		if err != nil {
 			return nil, toHTTPError(err)

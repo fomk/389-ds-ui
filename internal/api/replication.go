@@ -172,7 +172,7 @@ func registerReplication(api huma.API, d Deps) {
 		func(ctx context.Context, in *agreementPath) (*agreementOutput, error) {
 			out, err := agreement(ctx, func(c *ldap.Conn) (*ds.Agreement, error) { return ds.InitAgreement(c, in.Suffix, in.Name) })
 			if d.Tasks != nil {
-				d.Tasks.Record(ds.OpInitReplica, in.Name, err)
+				d.Tasks.Record(ctx, ds.OpInitReplica, in.Name, err)
 			}
 			return out, err
 		})

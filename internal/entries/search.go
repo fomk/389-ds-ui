@@ -99,7 +99,7 @@ func (s *Service) Search(ctx context.Context, r SearchRequest) (*SearchResult, e
 	out := &SearchResult{Entries: []SearchHit{}}
 	err = s.ldap.Do(ctx, func(c *ldap.Conn) error {
 		res, err := c.Search(ldap.NewSearchRequest(r.Base, scope, ldap.NeverDerefAliases,
-			limit, SearchTimeLimit, false, filter, attrs, nil))
+			limit, SearchTimeLimit, false, filter, attrs, ldapx.ProxyControls(ctx)))
 		if ldap.IsErrorWithCode(err, ldap.LDAPResultSizeLimitExceeded) ||
 			ldap.IsErrorWithCode(err, ldap.LDAPResultTimeLimitExceeded) {
 			out.Truncated = true
@@ -171,7 +171,7 @@ func (s *Service) eachEntry(ctx context.Context, r ExportRequest, fn func(*ldap.
 				return err
 			}
 			res, err := c.Search(ldap.NewSearchRequest(r.Base, scope, ldap.NeverDerefAliases,
-				0, 0, false, filter, attrs, []ldap.Control{paging}))
+				0, 0, false, filter, attrs, ldapx.ProxyControls(ctx, paging)))
 			if err != nil {
 				return err
 			}
@@ -321,19 +321,22 @@ func (s *Service) ApplyLDIF(ctx context.Context, text string, stopOnError bool) 
 			switch {
 			case rec.Entry != nil:
 				r = ApplyResult{DN: rec.Entry.DN, Op: "add"}
-				req := ldap.NewAddRequest(rec.Entry.DN, nil)
+				req := ldap.NewAddRequest(rec.Entry.DN, ldapx.ProxyControls(ctx))
 				for _, a := range rec.Entry.Attributes {
 					req.Attribute(a.Name, a.Values)
 				}
 				opErr = c.Add(req)
 			case rec.Add != nil:
 				r = ApplyResult{DN: rec.Add.DN, Op: "add"}
+				rec.Add.Controls = ldapx.ProxyControls(ctx, rec.Add.Controls...)
 				opErr = c.Add(rec.Add)
 			case rec.Modify != nil:
 				r = ApplyResult{DN: rec.Modify.DN, Op: "modify"}
+				rec.Modify.Controls = ldapx.ProxyControls(ctx, rec.Modify.Controls...)
 				opErr = c.Modify(rec.Modify)
 			case rec.Del != nil:
 				r = ApplyResult{DN: rec.Del.DN, Op: "delete"}
+				rec.Del.Controls = ldapx.ProxyControls(ctx, rec.Del.Controls...)
 				opErr = c.Del(rec.Del)
 			default:
 				continue
@@ -379,7 +382,7 @@ func (s *Service) ReplaceFromLDIF(ctx context.Context, dn, ifMatch, text string)
 	var cur *ldap.Entry
 	err = s.ldap.Do(ctx, func(c *ldap.Conn) error {
 		res, err := c.Search(ldap.NewSearchRequest(dn, ldap.ScopeBaseObject, ldap.NeverDerefAliases,
-			1, 0, false, "(objectClass=*)", []string{"*"}, nil))
+			1, 0, false, "(objectClass=*)", []string{"*"}, ldapx.ProxyControls(ctx)))
 		if err != nil {
 			return err
 		}

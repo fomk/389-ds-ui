@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-ldap/ldap/v3"
 
+	"github.com/fomk/389-ds-ui/internal/auth"
 	"github.com/fomk/389-ds-ui/internal/certs"
 	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/entries"
@@ -44,6 +45,7 @@ type Deps struct {
 	Events         *events.Bus
 	Files          *providers.Files // nil when the server's files are not reachable
 	Certs          *certs.Store     // nil when the NSS database is not reachable
+	Auth           *auth.Service    // nil: no authentication (DSUI_AUTH=none)
 	TLSHost        string           // host of the LDAPS port, for the handshake check
 	Lifecycle      providers.Lifecycle
 	Capabilities   providers.Capabilities
@@ -68,7 +70,7 @@ func NewHandler(d Deps) http.Handler {
 		d.Logger = slog.Default()
 	}
 	r := chi.NewRouter()
-	r.Use(middleware.Recoverer, requestLogger(d.Logger), hostGuard(d.AllowedOrigins), csrfGuard(d.AllowedOrigins),
+	r.Use(middleware.Recoverer, requestLogger(d.Logger), hostGuard(d.AllowedOrigins), csrfGuard(d.AllowedOrigins), authGuard(d.Auth),
 		middleware.Compress(5, "application/json", "application/problem+json"))
 
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
@@ -121,6 +123,7 @@ func apiConfig(version string) huma.Config {
 }
 
 func register(api huma.API, d Deps) {
+	registerAuth(api, d)
 	registerSystem(api, d)
 	registerBrowser(api, d)
 	registerBrowserWrites(api, d)

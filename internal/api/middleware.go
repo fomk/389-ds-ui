@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -51,11 +52,16 @@ func writeProblem(w http.ResponseWriter, status int, detail string) {
 }
 
 // requestLogger logs API requests; static assets are logged at debug level.
+type logUserKey struct{}
+
 func requestLogger(log *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 			start := time.Now()
+			// authGuard, further down the chain, fills in the user.
+			who := new(string)
+			r = r.WithContext(context.WithValue(r.Context(), logUserKey{}, who))
 			next.ServeHTTP(ww, r)
 			level := slog.LevelInfo
 			if !strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/api/v1/system/state" {
@@ -63,7 +69,7 @@ func requestLogger(log *slog.Logger) func(http.Handler) http.Handler {
 			}
 			log.Log(r.Context(), level, "http",
 				"method", r.Method, "path", r.URL.Path, "status", ww.Status(),
-				"bytes", ww.BytesWritten(), "duration", time.Since(start).Round(time.Microsecond))
+				"bytes", ww.BytesWritten(), "duration", time.Since(start).Round(time.Microsecond), "user", *who)
 		})
 	}
 }

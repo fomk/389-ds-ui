@@ -17,6 +17,7 @@ import (
 	"github.com/go-ldap/ldap/v3"
 
 	"github.com/fomk/389-ds-ui/internal/api"
+	"github.com/fomk/389-ds-ui/internal/auth"
 	"github.com/fomk/389-ds-ui/internal/certs"
 	"github.com/fomk/389-ds-ui/internal/config"
 	"github.com/fomk/389-ds-ui/internal/ds"
@@ -115,6 +116,13 @@ func serve() error {
 		Files:     files != nil,
 		Certs:     providers.DetectCerts(files),
 		Offline:   false,
+		Auth:      cfg.Auth,
+	}
+
+	var authService *auth.Service
+	if cfg.Auth == "ldap" {
+		authService = auth.New(client, auth.Config{AdminGroups: cfg.AdminGroups, OperatorGroups: cfg.OperatorGroups,
+			IdleTimeout: cfg.SessionIdle, MaxAge: cfg.SessionMax})
 	}
 
 	var certStore *certs.Store
@@ -156,6 +164,7 @@ func serve() error {
 		Events:         bus,
 		Files:          files,
 		Certs:          certStore,
+		Auth:           authService,
 		TLSHost:        cfg.TLSHost,
 		Lifecycle:      lifecycle,
 		Capabilities:   caps,
@@ -181,8 +190,12 @@ func serve() error {
 	}
 	log.Info("ds-ui started", "version", version, "listen", ln.Addr().String(), "mode", cfg.Mode,
 		"ldap", cfg.LDAPURL, "auth", caps.LDAPAuth, "lifecycle", caps.Lifecycle,
-		"files", caps.Files, "certs", caps.Certs)
-	log.Warn("ds-ui has NO authentication: expose it only on localhost or a trusted network")
+		"files", caps.Files, "certs", caps.Certs, "users", cfg.Auth)
+	if cfg.Auth == "none" {
+		log.Warn("ds-ui has NO authentication (DSUI_AUTH=none): expose it only on localhost or a trusted network")
+	} else if len(cfg.AdminGroups)+len(cfg.OperatorGroups) == 0 {
+		log.Info("only the root DN (Directory Manager) can sign in; set DSUI_ADMIN_GROUPS / DSUI_OPERATOR_GROUPS for other users")
+	}
 
 	go func() {
 		// Warm up the connection so that misconfiguration is visible in the log immediately.

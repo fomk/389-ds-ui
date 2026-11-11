@@ -107,6 +107,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign in with a directory account */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign out */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in user */
+        get: operations["me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/backends": {
         parameters: {
             query?: never;
@@ -1535,6 +1586,12 @@ export interface components {
             /** @description All ACIs of the entry; empty removes them */
             acis: string[];
         };
+        Actor: {
+            dn: string;
+            name: string;
+            /** @enum {string} */
+            role: "admin" | "operator";
+        };
         Agreement: {
             bindDN?: string;
             /** @enum {string} */
@@ -1746,6 +1803,11 @@ export interface components {
             tries: number;
         };
         Capabilities: {
+            /**
+             * @description How users sign in to ds-ui
+             * @enum {string}
+             */
+            auth: "none" | "ldap";
             /** @description Management of the NSS certificate database */
             certs: boolean;
             /** @description Access to logs, LDIF and backup files */
@@ -2109,11 +2171,21 @@ export interface components {
             /** @description Writes into the same file as another log */
             sameAs?: string;
         };
+        LoginInputBody: {
+            password: string;
+            /** @description uid, DN or Directory Manager */
+            username: string;
+        };
         MatchingRule: {
             names: string[];
             oid: string;
             /** @description Assertion syntax OID */
             syntax?: string;
+        };
+        Me: {
+            /** @description Authentication is on (DSUI_AUTH=ldap) */
+            enabled: boolean;
+            user?: components["schemas"]["Actor"];
         };
         ModifyInputBody: {
             changes: components["schemas"]["Change"][];
@@ -2645,6 +2717,8 @@ export interface components {
             truncated: boolean;
         };
         Task: {
+            /** @description DN of the signed-in user who started it */
+            by?: string;
             /** Format: int64 */
             current?: number;
             dn: string;
@@ -2928,6 +3002,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EntryACIs"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                dsui_session?: string;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    me: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                dsui_session?: string;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
                 };
             };
             /** @description Error */

@@ -14,6 +14,7 @@ type Capabilities struct {
 	Files     bool   `json:"files" doc:"Access to logs, LDIF and backup files"`
 	Certs     bool   `json:"certs" doc:"Management of the NSS certificate database"`
 	Offline   bool   `json:"offline" doc:"Offline database operations (dsctl)"`
+	Auth      string `json:"auth" enum:"none,ldap" doc:"How users sign in to ds-ui"`
 }
 
 // Files gives access to the server's data volume.

@@ -180,6 +180,41 @@ func (c *Client) drop(conn *ldap.Conn) {
 }
 
 func (c *Client) dial() (*ldap.Conn, error) {
+	conn, err := c.connect()
+	if err != nil {
+		return nil, err
+	}
+	switch c.auth {
+	case AuthExternal:
+		err = conn.ExternalBind()
+	case AuthSimple:
+		err = conn.Bind(c.opts.BindDN, c.opts.BindPassword)
+	}
+	if err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("ldap bind (%s): %w", c.auth, err)
+	}
+	return conn, nil
+}
+
+// CheckPassword verifies a DN and password with a simple bind on a separate
+// connection (same URL and TLS settings as the client); the shared
+// connection keeps its own identity.
+func (c *Client) CheckPassword(dn, password string) error {
+	if password == "" {
+		// An empty password would be an unauthenticated bind, which succeeds.
+		return ldap.NewError(ldap.LDAPResultInvalidCredentials, errors.New("empty password"))
+	}
+	conn, err := c.connect()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close() }()
+	return conn.Bind(dn, password)
+}
+
+// connect opens a connection (with StartTLS when configured), not yet bound.
+func (c *Client) connect() (*ldap.Conn, error) {
 	opts := []ldap.DialOpt{ldap.DialWithDialer(&net.Dialer{Timeout: c.opts.Timeout})}
 	if c.scheme == "ldaps" {
 		opts = append(opts, ldap.DialWithTLSConfig(c.tls))
@@ -195,17 +230,6 @@ func (c *Client) dial() (*ldap.Conn, error) {
 			_ = conn.Close()
 			return nil, &ConnError{Op: "starttls", Err: err}
 		}
-	}
-
-	switch c.auth {
-	case AuthExternal:
-		err = conn.ExternalBind()
-	case AuthSimple:
-		err = conn.Bind(c.opts.BindDN, c.opts.BindPassword)
-	}
-	if err != nil {
-		_ = conn.Close()
-		return nil, fmt.Errorf("ldap bind (%s): %w", c.auth, err)
 	}
 	return conn, nil
 }

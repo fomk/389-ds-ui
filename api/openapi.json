@@ -77,6 +77,30 @@
         ],
         "type": "object"
       },
+      "Actor": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "admin",
+              "operator"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "dn",
+          "name",
+          "role"
+        ],
+        "type": "object"
+      },
       "Agreement": {
         "additionalProperties": false,
         "properties": {
@@ -701,6 +725,14 @@
       "Capabilities": {
         "additionalProperties": false,
         "properties": {
+          "auth": {
+            "description": "How users sign in to ds-ui",
+            "enum": [
+              "none",
+              "ldap"
+            ],
+            "type": "string"
+          },
           "certs": {
             "description": "Management of the NSS certificate database",
             "type": "boolean"
@@ -746,7 +778,8 @@
           "lifecycle",
           "files",
           "certs",
-          "offline"
+          "offline",
+          "auth"
         ],
         "type": "object"
       },
@@ -1807,6 +1840,25 @@
         ],
         "type": "object"
       },
+      "LoginInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "password": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "username": {
+            "description": "uid, DN or Directory Manager",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password"
+        ],
+        "type": "object"
+      },
       "MatchingRule": {
         "additionalProperties": false,
         "properties": {
@@ -1827,6 +1879,22 @@
         "required": [
           "oid",
           "names"
+        ],
+        "type": "object"
+      },
+      "Me": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "description": "Authentication is on (DSUI_AUTH=ldap)",
+            "type": "boolean"
+          },
+          "user": {
+            "$ref": "#/components/schemas/Actor"
+          }
+        },
+        "required": [
+          "enabled"
         ],
         "type": "object"
       },
@@ -3637,6 +3705,10 @@
       "Task": {
         "additionalProperties": false,
         "properties": {
+          "by": {
+            "description": "DN of the signed-in user who started it",
+            "type": "string"
+          },
           "current": {
             "format": "int64",
             "type": "integer"
@@ -4189,6 +4261,134 @@
         "summary": "ACIs of the ancestors of an entry, nearest first",
         "tags": [
           "access control"
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "OK",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Sign in with a directory account",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "dsui_session",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content",
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Sign out",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "me",
+        "parameters": [
+          {
+            "in": "cookie",
+            "name": "dsui_session",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "The signed-in user",
+        "tags": [
+          "auth"
         ]
       }
     },

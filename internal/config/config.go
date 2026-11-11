@@ -33,6 +33,13 @@ type Config struct {
 	LDAPTimeout      time.Duration
 
 	DataDir string
+
+	// Auth is how users sign in: ldap (directory accounts) or none.
+	Auth           string
+	AdminGroups    []string
+	OperatorGroups []string
+	SessionIdle    time.Duration
+	SessionMax     time.Duration
 	// TLSHost is where ds-ui reaches the server's LDAPS port to see the
 	// certificate it presents (the port comes from nsslapd-securePort).
 	TLSHost string
@@ -98,9 +105,23 @@ func load(getenv func(string) string) (*Config, error) {
 
 	cfg.TLSHost = env("DSUI_TLS_HOST", defaultTLSHost(cfg.LDAPURL))
 
+	cfg.Auth = env("DSUI_AUTH", "ldap")
+	if cfg.Auth != "ldap" && cfg.Auth != "none" {
+		return nil, fmt.Errorf("DSUI_AUTH: %q (want ldap or none)", cfg.Auth)
+	}
+	// DNs contain commas: groups are separated by semicolons.
+	cfg.AdminGroups = splitDNs(env("DSUI_ADMIN_GROUPS", ""))
+	cfg.OperatorGroups = splitDNs(env("DSUI_OPERATOR_GROUPS", ""))
+
 	var err error
 	if cfg.LDAPTimeout, err = time.ParseDuration(env("DSUI_LDAP_TIMEOUT", "10s")); err != nil {
 		return nil, fmt.Errorf("DSUI_LDAP_TIMEOUT: %w", err)
+	}
+	if cfg.SessionIdle, err = time.ParseDuration(env("DSUI_SESSION_IDLE", "30m")); err != nil {
+		return nil, fmt.Errorf("DSUI_SESSION_IDLE: %w", err)
+	}
+	if cfg.SessionMax, err = time.ParseDuration(env("DSUI_SESSION_MAX", "12h")); err != nil {
+		return nil, fmt.Errorf("DSUI_SESSION_MAX: %w", err)
 	}
 
 	defaultLifecycle := "none"
@@ -143,4 +164,14 @@ func defaultTLSHost(ldapURL string) string {
 		return u.Hostname()
 	}
 	return "ds"
+}
+
+func splitDNs(v string) []string {
+	var out []string
+	for _, d := range strings.Split(v, ";") {
+		if d = strings.TrimSpace(d); d != "" {
+			out = append(out, d)
+		}
+	}
+	return out
 }

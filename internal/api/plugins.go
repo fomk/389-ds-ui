@@ -84,7 +84,7 @@ func registerPlugins(api huma.API, d Deps) {
 				if in.Body.Enabled {
 					op = ds.OpEnablePlugin
 				}
-				d.Tasks.Record(op, in.Name, err)
+				d.Tasks.Record(ctx, op, in.Name, err)
 			}
 			if err != nil {
 				return nil, toHTTPError(err)

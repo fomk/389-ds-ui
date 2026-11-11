@@ -85,7 +85,7 @@ func (s *Service) Get(ctx context.Context, dn string) (*Entry, error) {
 	var raw *ldap.Entry
 	err = s.ldap.Do(ctx, func(c *ldap.Conn) error {
 		res, err := c.Search(ldap.NewSearchRequest(dn, ldap.ScopeBaseObject, ldap.NeverDerefAliases,
-			1, 0, false, "(objectClass=*)", []string{"*", "+"}, nil))
+			1, 0, false, "(objectClass=*)", []string{"*", "+"}, ldapx.ProxyControls(ctx)))
 		if err != nil {
 			return err
 		}

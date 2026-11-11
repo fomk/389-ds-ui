@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-ldap/ldap/v3"
 
+	"github.com/fomk/389-ds-ui/internal/actor"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 )
 
@@ -82,7 +83,8 @@ func (s *Service) Children(ctx context.Context, dn, cursor string, limit int, re
 		offset = n
 	}
 
-	key := ldapx.NormDN(dn)
+	// With Proxied Authorization each user may see different children.
+	key := actor.Name(ctx) + "\x00" + ldapx.NormDN(dn)
 	items, ok := s.children.get(key)
 	if !ok || refresh {
 		total, err := s.countChildren(ctx, dn)
@@ -114,7 +116,7 @@ func (s *Service) countChildren(ctx context.Context, dn string) (int, error) {
 	n := -1
 	err := s.ldap.Do(ctx, func(c *ldap.Conn) error {
 		res, err := c.Search(ldap.NewSearchRequest(dn, ldap.ScopeBaseObject, ldap.NeverDerefAliases,
-			1, 0, false, "(objectClass=*)", []string{"numSubordinates"}, nil))
+			1, 0, false, "(objectClass=*)", []string{"numSubordinates"}, ldapx.ProxyControls(ctx)))
 		if err != nil {
 			return err
 		}
@@ -135,7 +137,7 @@ func (s *Service) pagedChildren(ctx context.Context, dn string, cookie []byte, l
 		paging := ldap.NewControlPaging(uint32(limit))
 		paging.SetCookie(cookie)
 		res, err := c.Search(ldap.NewSearchRequest(dn, ldap.ScopeSingleLevel, ldap.NeverDerefAliases,
-			0, 0, false, "(objectClass=*)", summaryAttrs, []ldap.Control{paging}))
+			0, 0, false, "(objectClass=*)", summaryAttrs, ldapx.ProxyControls(ctx, paging)))
 		if err != nil {
 			if cookie != nil && !ldapx.IsConnError(err) {
 				return ErrPagingExpired
@@ -160,7 +162,7 @@ func (s *Service) fetchChildren(ctx context.Context, dn string) ([]Summary, erro
 	var items []Summary
 	err := s.ldap.Do(ctx, func(c *ldap.Conn) error {
 		res, err := c.SearchWithPaging(ldap.NewSearchRequest(dn, ldap.ScopeSingleLevel, ldap.NeverDerefAliases,
-			0, 0, false, "(objectClass=*)", summaryAttrs, nil), 500)
+			0, 0, false, "(objectClass=*)", summaryAttrs, ldapx.ProxyControls(ctx)), 500)
 		if err != nil {
 			return err
 		}
@@ -198,7 +200,7 @@ func (s *Service) Roots(ctx context.Context, system bool) ([]Summary, error) {
 	var out []Summary
 	err := s.ldap.Do(ctx, func(c *ldap.Conn) error {
 		res, err := c.Search(ldap.NewSearchRequest("", ldap.ScopeBaseObject, ldap.NeverDerefAliases,
-			1, 0, false, "(objectClass=*)", []string{"namingContexts"}, nil))
+			1, 0, false, "(objectClass=*)", []string{"namingContexts"}, ldapx.ProxyControls(ctx)))
 		if err != nil {
 			return err
 		}
@@ -215,7 +217,7 @@ func (s *Service) Roots(ctx context.Context, system bool) ([]Summary, error) {
 		for i, dn := range dns {
 			sum := Summary{DN: dn, RDN: dn, ObjectClasses: []string{}, System: i >= n}
 			r, err := c.Search(ldap.NewSearchRequest(dn, ldap.ScopeBaseObject, ldap.NeverDerefAliases,
-				1, 0, false, "(objectClass=*)", summaryAttrs, nil))
+				1, 0, false, "(objectClass=*)", summaryAttrs, ldapx.ProxyControls(ctx)))
 			switch {
 			case err == nil && len(r.Entries) == 1:
 				sum = summarize(r.Entries[0])
@@ -282,9 +284,14 @@ func (c *childCache) put(key string, list []Summary) {
 	c.items[key] = childCacheItem{list: list, fetched: time.Now()}
 }
 
-func (c *childCache) drop(key string) {
+// drop forgets the children of a normalized DN for every user.
+func (c *childCache) drop(dn string) {
 	c.mu.Lock()
-	delete(c.items, key)
+	for k := range c.items {
+		if k == dn || strings.HasSuffix(k, "\x00"+dn) {
+			delete(c.items, k)
+		}
+	}
 	c.mu.Unlock()
 }
 
@@ -301,7 +308,7 @@ func (s *Service) NextNumber(ctx context.Context, base, attr string, floor int) 
 	maxV := floor - 1
 	err := s.ldap.Do(ctx, func(c *ldap.Conn) error {
 		res, err := c.SearchWithPaging(ldap.NewSearchRequest(base, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases,
-			0, 0, false, "("+attr+"=*)", []string{attr}, nil), 1000)
+			0, 0, false, "("+attr+"=*)", []string{attr}, ldapx.ProxyControls(ctx)), 1000)
 		if err != nil {
 			return err
 		}

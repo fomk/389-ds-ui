@@ -57,7 +57,7 @@ func registerSecurity(api huma.API, d Deps) {
 				return ds.SetRootPassword(c, in.Body.Password)
 			})
 			if d.Tasks != nil {
-				d.Tasks.Record(ds.OpRootPassword, out.RootDN, err)
+				d.Tasks.Record(ctx, ds.OpRootPassword, out.RootDN, err)
 			}
 			if err != nil {
 				return nil, toHTTPError(err)
