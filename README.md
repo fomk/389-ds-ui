@@ -8,11 +8,10 @@ shipped as a lightweight Docker service next to the DS container.
 ## Key features
 
 - **Go backend**: a single static binary with the SPA embedded, 20–150 MB image.
-- **389-ds-base in Docker on Debian** (trixie, 389-ds 3.x, LMDB by default).
+- **389-ds-base in Docker on Debian** (trixie, 389-ds 3.x, LMDB by default). The DS image is maintained in a separate repository, 389-ds-base-docker; ds-ui runs next to it and is not bundled into it.
 - **Deployment modes** (one codebase, different providers):
   - **C — sidecar** (default): two containers, shared `/data` volume, LDAPI autobind, restart through a Docker API proxy;
-  - **B — remote**: LDAP over the network only (for remote nodes / replicas);
-  - **A — all-in-one**: DS and UI in a single container under s6-overlay (planned).
+  - **B — remote**: LDAP over the network only (for remote nodes / replicas).
 - **Sign-in with directory accounts** (`DSUI_AUTH=ldap`, the default): Directory Manager or members of the configured admin/operator groups; directory data is accessed as the signed-in user, so the server's ACIs apply ([docs/deployment.md](docs/deployment.md#sign-in)).
 - **Multilingual UI**: English and Russian; adding a language is a single JSON file ([docs/i18n.md](docs/i18n.md)).
 

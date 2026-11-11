@@ -31,7 +31,7 @@ Format: context → decision → consequences → alternatives considered. Statu
 
 **Context.** Some functions are not available over LDAP (logs, LDIF/backup files, NSS DB, restart, offline operations). Options: everything in one container (A), LDAP only (B), two containers with a shared volume (C).
 
-**Decision.** The primary mode is **C**: `ds` and `ui` containers with a shared volume `/data` (LDAPI socket, logs, ldif, bak, NSS DB) and docker-socket-proxy for restart. Environment-dependent capabilities are factored out into providers; modes A and B are different provider sets of the same binary.
+**Decision.** The primary mode is **C**: `ds` and `ui` containers with a shared volume `/data` (LDAPI socket, logs, ldif, bak, NSS DB) and docker-socket-proxy for restart. Environment-dependent capabilities are factored out into providers; mode B is a different provider set of the same binary. Mode A was later dropped (ADR-012).
 
 **Consequences.**
 - (+) ~95% of cockpit's functionality; UI upgrades without DS downtime; separate logs, limits, healthchecks; maps naturally onto Kubernetes (sidecar in a Pod).
@@ -164,3 +164,18 @@ Verified: create, exec, requests to other containers, and requests not from `ui`
 **Decision.** Users sign in with their directory accounts (the password is checked with a simple bind to the server). The role comes from configured groups: *administrator* (everything) or *operator* (reads the administration, works with data); Directory Manager is always an administrator. Directory data — the LDAP browser, search, LDIF, export — is accessed with the Proxied Authorization control (RFC 4370) as the user, so the server's ACIs decide what they may see and change; server administration stays with ds-ui's own privileges and is limited by role. Sessions are in memory with idle and absolute timeouts; failed sign-ins are rate-limited.
 
 **Consequences.** No extra service and no second user database; password policies, lockout and the security log of 389-ds apply to ds-ui sign-in. Users who should edit data need ACIs. 389-ds records ds-ui's bind DN in `modifiersName` for proxied operations, so authorship lives in the ds-ui log and task history. The Password Modify extended operation cannot carry the control in go-ldap, so signed-in users change passwords with a modify of `userPassword` (no generated passwords). Sessions do not survive a ds-ui restart. A reverse-proxy or OIDC mode can be added later on top of the same roles.
+
+## ADR-012. No all-in-one image; the DS image lives in its own repository
+
+**Status:** Accepted (supersedes the mode A part of ADR-002)
+
+**Context.** ADR-002 planned an all-in-one mode A: DS and ds-ui in one container under s6-overlay, with an `s6` Lifecycle provider and offline operations. The 389-ds image is now built and published from a separate repository, 389-ds-base-docker (Debian trixie, upstream release tarball with a checked SHA-256, `dsconf`/`dsctl`, the same `/data` layout, uid/gid 389 and `DS_DM_PASSWORD_FILE` / `DS_SUFFIX` wrapper as `deploy/ds`).
+
+**Decision.** There is no all-in-one image. ds-ui is shipped as its own image and runs next to the DS container (mode C) or against a remote server (mode B). The `aio` mode and the `s6` Lifecycle value are removed from the configuration. `deploy/ds` stays as the development and test image.
+
+**Consequences.**
+- (+) One way to run ds-ui; upgrading the UI never restarts the directory; the DS image has a single owner and release cycle.
+- (+) No process supervisor inside the DS container.
+- (−) Offline operations (dbverify, db2ldif/ldif2db, BDB→LMDB) are not offered by the UI; they stay `docker exec ds dsctl …`.
+- (−) The layout contract between the images (paths, socket, uid/gid) must be kept in step across two repositories.
+

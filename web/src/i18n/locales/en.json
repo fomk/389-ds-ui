@@ -56,8 +56,7 @@
       "mode": "Mode",
       "modes": {
         "sidecar": "sidecar (shared volume)",
-        "remote": "remote (LDAP only)",
-        "aio": "all-in-one"
+        "remote": "remote (LDAP only)"
       },
       "features": {
         "lifecycle": "Process control",
@@ -457,7 +456,7 @@
     "deleteConfirm": "Delete backup {name}?",
     "deleted": "Backup {name} deleted",
     "none": "No backups yet",
-    "noFiles": "Backups can be created, but listing, downloading and deleting them needs access to the server's files (sidecar or all-in-one mode).",
+    "noFiles": "Backups can be created, but listing, downloading and deleting them needs access to the server's files (sidecar mode).",
     "error": "Backup operation failed",
     "dir": "Directory: {dir}",
     "sensitive": "Backups contain the server configuration including TLS private keys (config_files). Keep downloaded archives as secrets.",
@@ -471,7 +470,7 @@
     "deleteConfirm": "Delete {name}?",
     "deleted": "{name} deleted",
     "error": "File operation failed",
-    "noFiles": "LDIF files on the server need access to its files (sidecar or all-in-one mode). For small amounts of data use the LDIF import/export of the LDAP browser."
+    "noFiles": "LDIF files on the server need access to its files (sidecar mode). For small amounts of data use the LDIF import/export of the LDAP browser."
   },
   "transfer": {
     "tab": "Export / import",
@@ -509,7 +508,7 @@
     "truncated": "Only the last 64 MB of the file were searched",
     "buffered": "The access log is buffered: new lines appear in batches.",
     "sameAs": "Written to the same file as the {other} log",
-    "noFiles": "Logs need access to the server's files (sidecar or all-in-one mode).",
+    "noFiles": "Logs need access to the server's files (sidecar mode).",
     "error": "Could not read the log",
     "shown": "{n} line | {n} lines",
     "streaming": "Following…",

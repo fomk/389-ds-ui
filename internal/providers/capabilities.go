@@ -8,9 +8,9 @@ import (
 
 // Capabilities tells the UI which feature groups are available in this deployment.
 type Capabilities struct {
-	Mode      string `json:"mode" enum:"sidecar,remote,aio"`
+	Mode      string `json:"mode" enum:"sidecar,remote"`
 	LDAPAuth  string `json:"ldapAuth" enum:"sasl-external,simple,anonymous" doc:"How ds-ui authenticates to the server"`
-	Lifecycle string `json:"lifecycle" enum:"docker,s6,none" doc:"Server process control (restart/stop/start)"`
+	Lifecycle string `json:"lifecycle" enum:"docker,none" doc:"Server process control (restart/stop/start)"`
 	Files     bool   `json:"files" doc:"Access to logs, LDIF and backup files"`
 	Certs     bool   `json:"certs" doc:"Management of the NSS certificate database"`
 	Offline   bool   `json:"offline" doc:"Offline database operations (dsctl)"`

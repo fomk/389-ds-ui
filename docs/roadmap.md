@@ -20,11 +20,11 @@ Dependencies: `0 → 1 → 2 → {3, 4, 5, 6} → 7`. After M2, stages 3–6 can
 
 ---
 
-## Stage 0. Foundation (1–1.5 wk) — ✅ done (except mode A)
+## Stage 0. Foundation (1–1.5 wk) — ✅ done
 
 **Goal:** a working skeleton in all three modes, CI, integration tests against a real 389-ds.
 
-**Outcome:** modes C (sidecar) and B (remote) work and are verified manually and by tests; the all-in-one image (A) and the s6 provider were moved to stage 7 — that mode is not needed to develop stages 1–6. Answers to the open questions are at the end of this document. Deviations from the plan:
+**Outcome:** modes C (sidecar) and B (remote) work and are verified manually and by tests; the all-in-one image (A) and the s6 provider were moved to stage 7 and later dropped (ADR-012). Answers to the open questions are at the end of this document. Deviations from the plan:
 - docker-socket-proxy replaced with `wollomatic/socket-proxy`: tecnativa cannot allow restart without allowing all POSTs (including `create`/`exec`);
 - ds-ui runs as uid 389, not 0 — 389-ds maps both root and its own user to DM (see ADR-003);
 - UI library: PrimeVue replaced with Naive UI — PrimeVue 5.x moved to a commercial license (see ADR-004);
@@ -39,7 +39,7 @@ Work items:
 - LDAP pool: ldapi+EXTERNAL and ldap(s)+simple bind, reconnect, timeouts.
 - SPA skeleton: Vue 3 + Vite + Naive UI + vue-router + Pinia, layout (sidebar navigation, header with server info), TS client generation from OpenAPI.
 - `go:embed` SPA, multi-stage UI Dockerfile.
-- `compose.yaml` (mode C), `compose.remote.yaml` (B); all-in-one Dockerfile (A) — skeleton.
+- `compose.yaml` (mode C), `compose.remote.yaml` (B) (the all-in-one skeleton was dropped, ADR-012).
 - CI: lint (golangci-lint, eslint), unit, integration tests (testcontainers-go with the DS image), image builds.
 - Verify and document the open questions (see "Open questions").
 
@@ -77,7 +77,7 @@ Work items:
 **Outcome:** every item of the definition of done works through the UI and is covered by integration tests (backup → change → restore verified to roll the change back). Deviations:
 - *VLV indexes* are listed, not created or deleted yet (moved to stage 3, together with *default indexes*).
 - *"Server" page* merged into Monitoring (version, uptime, start time) and Overview (paths, mode).
-- *Restart* uses the Docker proxy (sidecar); the s6 provider comes with the all-in-one image (stage 7).
+- *Restart* uses the Docker proxy (sidecar); there is no s6 provider (ADR-012).
 - Findings: the default entry cache of the container (512 KB, 16 % hit ratio on 100k entries) is flagged on the monitoring page; backups contain TLS private keys (`config_files`) — the UI warns; huma silently dropped path parameters of inputs embedding an unexported struct (fixed, HTTP-level tests added); `cn=config` answers searches under a missing base with success (handled).
 
 Work items:
@@ -87,7 +87,7 @@ Work items:
 - Indexes: list, create/modify/delete, reindex task; default indexes; VLV indexes.
 - Backup/restore (online tasks), list of backups from `nsslapd-bakdir`, download/delete (modes A/C).
 - LDIF export/import via tasks; upload/download of files in `nsslapd-ldifdir` (A/C), files owned by uid `dirsrv`.
-- Restart: Lifecycle provider (docker-socket-proxy for C/B, s6 for A); "restart required" banner (registry of attributes that require a restart).
+- Restart: Lifecycle provider (docker-socket-proxy for C/B); "restart required" banner (registry of attributes that require a restart).
 - Logs: list of files from `cn=config`, viewing from the end, tail via SSE, filter by substring/conn/op; rotated files.
 - "Server" page: version, uptime, ports, paths, state.
 
@@ -151,7 +151,7 @@ Work items:
 ## Stage 6. TLS and certificates (1.5–2 wk) → v0.5 — ✅ done
 
 **Outcome:** in the integration suite a fresh server gets a new certificate only through the API — a key and CSR made in its NSS database, signed by a test CA, imported, chosen as the server certificate, TLS 1.3 required — and after a restart the LDAPS handshake shows exactly that certificate and version. The UI shows the presented certificate, the TLS settings and the certificate database. Deviations:
-- The NSS tools run in the sidecar image (`certutil`, `pk12util`, `openssl`); in remote mode only the LDAP settings and the handshake check are available. The all-in-one variant (stage 7) runs them the same way, not through `dsconf`.
+- The NSS tools run in the sidecar image (`certutil`, `pk12util`, `openssl`); in remote mode only the LDAP settings and the handshake check are available.
 - A CSR leaves its key in the database until the issued certificate arrives; keys without a certificate are not listed or removed yet.
 
 Work items:
@@ -165,8 +165,8 @@ Work items:
 
 Work items:
 - Multi-server: registry of remote servers (mode B), context switching in the UI; replication lag monitoring across the topology (comparing RUVs between nodes).
-- Healthcheck: a set of checks (LDAP part of an equivalent of `dsctl healthcheck` + file checks in A/C), "Health" page.
-- Mode A (all-in-one): `deploy/aio` image (DS image + s6-overlay + ds-ui), `s6` Lifecycle provider (moved from stage 0).
+- Healthcheck: a set of checks (LDAP part of an equivalent of `dsctl healthcheck` + file checks in C), "Health" page.
+- ~~Mode A (all-in-one)~~ — dropped (ADR-012): the DS image is built in the separate 389-ds-base-docker repository, ds-ui runs next to it (modes C and B).
 - e2e tests (Playwright) for key scenarios, editor load smoke test.
 - User documentation, CHANGELOG, image versioning, publishing to a registry.
 - ✅ Sign-in (moved ahead of stage 7, ADR-011): directory accounts, administrator/operator roles from groups, directory data with Proxied Authorization.
@@ -178,7 +178,6 @@ Work items:
 - Sign-in through a reverse proxy (trusted header) or OIDC, as alternatives to directory accounts.
 - Visual ACI builder.
 - Access log statistics (similar to `logconv`).
-- Offline operations (dbverify, BDB→LMDB) in mode A.
 - Chaining, Winsync (on request).
 
 ---

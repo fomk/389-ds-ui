@@ -17,7 +17,6 @@ type Mode string
 const (
 	ModeSidecar Mode = "sidecar" // ds + ui containers sharing the /data volume (default)
 	ModeRemote  Mode = "remote"  // LDAP over the network only
-	ModeAIO     Mode = "aio"     // ds and ui in one container under s6
 )
 
 // Config is the complete runtime configuration of ds-ui.
@@ -44,7 +43,7 @@ type Config struct {
 	// certificate it presents (the port comes from nsslapd-securePort).
 	TLSHost string
 
-	Lifecycle       string // docker | s6 | none
+	Lifecycle       string // docker | none
 	DockerHost      string
 	DSContainer     string
 	AllowedOrigins  []string
@@ -78,9 +77,9 @@ func load(getenv func(string) string) (*Config, error) {
 	}
 
 	switch cfg.Mode {
-	case ModeSidecar, ModeRemote, ModeAIO:
+	case ModeSidecar, ModeRemote:
 	default:
-		return nil, fmt.Errorf("DSUI_MODE: unknown mode %q (want sidecar, remote or aio)", cfg.Mode)
+		return nil, fmt.Errorf("DSUI_MODE: unknown mode %q (want sidecar or remote)", cfg.Mode)
 	}
 
 	defaultURL := ""
@@ -125,23 +124,18 @@ func load(getenv func(string) string) (*Config, error) {
 	}
 
 	defaultLifecycle := "none"
-	switch cfg.Mode {
-	case ModeSidecar:
-		if cfg.DockerHost != "" {
-			defaultLifecycle = "docker"
-		}
-	case ModeAIO:
-		defaultLifecycle = "s6"
+	if cfg.Mode == ModeSidecar && cfg.DockerHost != "" {
+		defaultLifecycle = "docker"
 	}
 	cfg.Lifecycle = env("DSUI_LIFECYCLE", defaultLifecycle)
 	switch cfg.Lifecycle {
-	case "none", "s6":
+	case "none":
 	case "docker":
 		if cfg.DockerHost == "" || cfg.DSContainer == "" {
 			return nil, errors.New("DSUI_LIFECYCLE=docker requires DSUI_DOCKER_HOST and DSUI_DS_CONTAINER")
 		}
 	default:
-		return nil, fmt.Errorf("DSUI_LIFECYCLE: unknown value %q (want docker, s6 or none)", cfg.Lifecycle)
+		return nil, fmt.Errorf("DSUI_LIFECYCLE: unknown value %q (want docker or none)", cfg.Lifecycle)
 	}
 
 	for _, o := range strings.Split(env("DSUI_ALLOWED_ORIGINS", "http://127.0.0.1:8080,http://localhost:8080"), ",") {

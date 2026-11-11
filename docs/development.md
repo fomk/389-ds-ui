@@ -37,7 +37,7 @@
 └─ docs/
 ```
 
-Planned by stage: `deploy/aio/` (stage 7), `test/e2e/` (Playwright, stage 7).
+Planned by stage: `test/e2e/` (Playwright, stage 7).
 
 ## Tools
 

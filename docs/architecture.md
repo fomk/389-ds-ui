@@ -23,19 +23,19 @@
         └──────────────────── ds-data ─────────────────────────┘
 ```
 
-This is mode **C (sidecar)** — the primary one. Modes A and B differ only in the set of active providers.
+This is mode **C (sidecar)** — the primary one. Mode B differs only in the set of active providers. There is no all-in-one mode (ADR-012).
 
 ## Deployment modes
 
-| | A. All-in-one | B. Remote | C. Sidecar |
-|---|---|---|---|
-| Containers | 1 (s6-overlay: ns-slapd + ds-ui) | ui (+proxy) separate from DS | ds + ui + docker-socket-proxy |
-| LDAPConn | ldapi + SASL EXTERNAL | ldap(s) + simple bind (DM/service account) | ldapi + SASL EXTERNAL |
-| Lifecycle | s6 (`s6-svc`) | docker-socket-proxy / none | docker-socket-proxy |
-| Files | local `/data` | none | shared volume `/data` |
-| Certs | `dsconf security ... -j` | none | `certutil`/`pk12util` |
-| Offline | `dsctl` (stopping ns-slapd via s6) | none | none (`docker exec ds dsctl …`) |
-| Feature coverage | ~100% | ~85% | ~95% |
+| | B. Remote | C. Sidecar |
+|---|---|---|
+| Containers | ui (+proxy) separate from DS | ds + ui + docker-socket-proxy |
+| LDAPConn | ldap(s) + simple bind (DM/service account) | ldapi + SASL EXTERNAL |
+| Lifecycle | docker-socket-proxy / none | docker-socket-proxy |
+| Files | none | shared volume `/data` |
+| Certs | none | `certutil`/`pk12util` |
+| Offline | none | none (`docker exec ds dsctl …`) |
+| Feature coverage | ~85% | ~95% |
 
 Details — in [decisions.md](decisions.md) (ADR-002) and [features.md](features.md).
 
@@ -63,7 +63,7 @@ internal/ds/            389-ds knowledge ("mini-lib389"):
   ├─ security           cn=encryption, TLS flags
   └─ restartreg         registry of attributes requiring a restart
 internal/pages/         declarative page engine (YAML in defs/, go:embed → GET/PATCH)
-internal/providers/     interfaces and implementations: lifecycle (s6, docker, none),
+internal/providers/     interfaces and implementations: lifecycle (docker, none),
                         files (local, none), certs (certutil, dsconf, none), offline
 internal/logs/          log reading, tail, filtering
 internal/events/        event bus → SSE (tasks, logs, server state)
@@ -98,7 +98,6 @@ type Files interface {
 }
 
 type Certs interface { /* list, get, importPEM, importP12, csr, delete, setTrust */ }
-type Offline interface { /* dbverify, db2ldif, ldif2db — mode A only */ }
 ```
 
 On startup ds-ui checks the availability of each provider (socket, volume, proxy, binaries) and publishes the result at `GET /api/v1/system/capabilities`. The SPA hides/disables unavailable functions.

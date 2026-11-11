@@ -22,7 +22,7 @@ var ErrNotSupported = errors.New("operation not supported by this deployment")
 
 // Lifecycle controls the directory server process.
 type Lifecycle interface {
-	// Name identifies the implementation ("docker", "s6", "none").
+	// Name identifies the implementation ("docker", "none").
 	Name() string
 	Status(ctx context.Context) (ServerState, error)
 	Restart(ctx context.Context) error

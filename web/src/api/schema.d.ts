@@ -1821,9 +1821,9 @@ export interface components {
              * @description Server process control (restart/stop/start)
              * @enum {string}
              */
-            lifecycle: "docker" | "s6" | "none";
+            lifecycle: "docker" | "none";
             /** @enum {string} */
-            mode: "sidecar" | "remote" | "aio";
+            mode: "sidecar" | "remote";
             /** @description Offline database operations (dsctl) */
             offline: boolean;
         };

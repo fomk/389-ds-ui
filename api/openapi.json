@@ -754,7 +754,6 @@
             "description": "Server process control (restart/stop/start)",
             "enum": [
               "docker",
-              "s6",
               "none"
             ],
             "type": "string"
@@ -762,8 +761,7 @@
           "mode": {
             "enum": [
               "sidecar",
-              "remote",
-              "aio"
+              "remote"
             ],
             "type": "string"
           },

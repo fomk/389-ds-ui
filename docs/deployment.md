@@ -9,7 +9,8 @@
 | `ds` | `deploy/ds/Dockerfile` | `debian:trixie-slim` | 389-ds-base 3.1.2, tini, `dscontainer` + `ds-entrypoint` wrapper | ~436 MB |
 | `ui` (sidecar) | `deploy/ui/Dockerfile`, target `sidecar` | `debian:trixie-slim` | ds-ui + `libnss3-tools` (certutil), user 389 | ~152 MB |
 | `ui` (static) | `deploy/ui/Dockerfile`, target `static` | `distroless/static:nonroot` | ds-ui only (mode B) | ~20 MB |
-| `aio` | — | — | mode A, stage 7 | — |
+
+The `ds` image here is for development and tests. For production the DS image comes from the separate repository 389-ds-base-docker (built from the upstream release tarball); it keeps the same layout — state in `/data`, LDAPI socket `/data/run/slapd-localhost.socket`, uid/gid 389, `DS_DM_PASSWORD_FILE` / `DS_SUFFIX` — so ds-ui works with it unchanged. There is no all-in-one image (ADR-012).
 
 The uid/gid of the `dirsrv` user in the `ds` and `ui` (sidecar) images is fixed: **389:389** (`--build-arg DS_UID/DS_GID`).
 
@@ -58,25 +59,21 @@ The bind password is taken from `secrets/dm_password`. For LDAPS with a custom C
 
 Not available: logs, backup/LDIF files, NSS certificates, restart.
 
-## Mode A — all-in-one
-
-Planned for stage 7 (DS image + s6-overlay + ds-ui, Lifecycle provider `s6`). Currently `DSUI_LIFECYCLE=s6` makes ds-ui exit with a "not implemented" error.
-
 ## ds-ui environment variables
 
 | Variable | Default | Description |
 |---|---|---|
 | `DSUI_LISTEN` | `:8080` | HTTP address |
-| `DSUI_MODE` | `sidecar` | `sidecar` / `remote` / `aio` |
+| `DSUI_MODE` | `sidecar` | `sidecar` / `remote` |
 | `DSUI_INSTANCE` | `localhost` | 389 instance name |
-| `DSUI_LDAP_URL` | sidecar/aio: `ldapi://%2Fdata%2Frun%2Fslapd-<instance>.socket`; remote: required | `ldapi://…`, `ldap://…`, `ldaps://…` |
+| `DSUI_LDAP_URL` | sidecar: `ldapi://%2Fdata%2Frun%2Fslapd-<instance>.socket`; remote: required | `ldapi://…`, `ldap://…`, `ldaps://…` |
 | `DSUI_LDAP_BIND_DN` | — | simple bind (otherwise: SASL EXTERNAL for ldapi, anonymous for ldap) |
 | `DSUI_LDAP_BIND_PASSWORD_FILE` | — | password file; required with `DSUI_LDAP_BIND_DN` |
 | `DSUI_LDAP_CA_FILE` | — | CA for LDAPS / StartTLS |
 | `DSUI_LDAP_TIMEOUT` | `10s` | connection and operation timeout |
-| `DSUI_DATA_DIR` | `/data` | root of the shared volume (sidecar/aio) |
+| `DSUI_DATA_DIR` | `/data` | root of the shared volume (sidecar) |
 | `DSUI_TLS_HOST` | the host of an `ldap(s)://` URL, else `ds` | where ds-ui reaches the LDAPS port to check the certificate the server presents (the port is `nsslapd-securePort`) |
-| `DSUI_LIFECYCLE` | `docker` if `DSUI_DOCKER_HOST` is set (sidecar); `s6` (aio); otherwise `none` | process management provider |
+| `DSUI_LIFECYCLE` | `docker` if `DSUI_DOCKER_HOST` is set (sidecar), otherwise `none` | process management provider |
 | `DSUI_DOCKER_HOST` | — | `tcp://docker-proxy:2375` |
 | `DSUI_DS_CONTAINER` | — | DS container name for the Docker API |
 | `DSUI_ALLOWED_ORIGINS` | `http://127.0.0.1:8080,http://localhost:8080` | origins under which the UI is opened: the `Host` header of every request (except `/healthz`, `/readyz`) must match one of them (DNS-rebinding protection, otherwise 421), and state-changing requests must carry a matching `Origin`. Add your URL when using an SSH tunnel on another port or a hostname; in compose it can be overridden from the environment |

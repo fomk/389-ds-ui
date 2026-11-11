@@ -36,7 +36,6 @@ const modeLabel = (m: Capabilities['mode']) =>
   ({
     sidecar: t('overview.deployment.modes.sidecar'),
     remote: t('overview.deployment.modes.remote'),
-    aio: t('overview.deployment.modes.aio'),
   })[m]
 const dbLabel = computed(() => {
   switch (info.value?.dbImplementation) {

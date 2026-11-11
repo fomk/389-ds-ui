@@ -3,7 +3,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -101,8 +100,6 @@ func serve() error {
 		if lifecycle, err = providers.NewDockerLifecycle(cfg.DockerHost, cfg.DSContainer); err != nil {
 			return err
 		}
-	case "s6":
-		return errors.New("DSUI_LIFECYCLE=s6 (all-in-one mode) is not implemented yet")
 	}
 
 	var files *providers.Files
