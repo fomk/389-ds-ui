@@ -2219,6 +2219,36 @@
         ],
         "type": "object"
       },
+      "NewUniqueness": {
+        "additionalProperties": false,
+        "properties": {
+          "attributes": {
+            "description": "Attributes whose values must be unique",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "name": {
+            "description": "Plug-in cn, e.g. mail uniqueness",
+            "minLength": 1,
+            "type": "string"
+          },
+          "subtrees": {
+            "description": "Where values must be unique; empty: the suffixes of the server",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "attributes"
+        ],
+        "type": "object"
+      },
       "NewVLV": {
         "additionalProperties": false,
         "properties": {
@@ -2436,6 +2466,10 @@
             "description": "cn of the plug-in this page configures; shown on the Plugins page",
             "type": "string"
           },
+          "pluginPath": {
+            "description": "nsslapd-pluginPath of the plug-in instances this page configures",
+            "type": "string"
+          },
           "section": {
             "description": "Menu section: server, database, logging, security, …",
             "type": "string"
@@ -2603,6 +2637,10 @@
           "plugin": {
             "type": "string"
           },
+          "pluginPath": {
+            "description": "The page configures every instance of this plug-in library (?dn= of the instance)",
+            "type": "string"
+          },
           "section": {
             "type": "string"
           }
@@ -2658,6 +2696,77 @@
         },
         "required": [
           "values"
+        ],
+        "type": "object"
+      },
+      "PassThruServer": {
+        "additionalProperties": false,
+        "properties": {
+          "connLifetime": {
+            "description": "Seconds before a connection is reopened; 0: never (default 300)",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "hosts": {
+            "description": "host or host:port; tried in order",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "ldapVersion": {
+            "description": "Protocol version (default 3)",
+            "enum": [
+              2,
+              3
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "maxConns": {
+            "description": "Connections to each server (default 3)",
+            "format": "int64",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxOps": {
+            "description": "Outstanding operations per connection (default 5)",
+            "format": "int64",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "secure": {
+            "description": "ldaps://",
+            "type": "boolean"
+          },
+          "startTLS": {
+            "description": "StartTLS on ldap:// connections",
+            "type": "boolean"
+          },
+          "subtree": {
+            "description": "Bind DNs under it are passed through",
+            "minLength": 1,
+            "type": "string"
+          },
+          "timeout": {
+            "description": "Seconds to wait for a server (default 300)",
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "secure",
+          "hosts",
+          "subtree",
+          "maxConns",
+          "maxOps",
+          "timeout",
+          "ldapVersion",
+          "connLifetime",
+          "startTLS"
         ],
         "type": "object"
       },
@@ -2890,7 +2999,9 @@
             "enum": [
               "dn",
               "filter",
-              "enum"
+              "enum",
+              "int",
+              "path"
             ],
             "type": "string"
           },
@@ -7253,7 +7364,161 @@
         ]
       }
     },
+    "/api/v1/plugins/passthru/servers": {
+      "get": {
+        "operationId": "listPassThru",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PassThruServer"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Servers of the LDAP Pass-Through Authentication plug-in",
+        "tags": [
+          "plugins"
+        ]
+      },
+      "put": {
+        "operationId": "setPassThru",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/PassThruServer"
+                },
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PassThruServer"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replace the servers of the LDAP Pass-Through Authentication plug-in (read when the plug-in starts)",
+        "tags": [
+          "plugins"
+        ]
+      }
+    },
+    "/api/v1/plugins/uniqueness": {
+      "post": {
+        "operationId": "createUniqueness",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewUniqueness"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plugin"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add an Attribute Uniqueness instance (disabled)",
+        "tags": [
+          "plugins"
+        ]
+      }
+    },
     "/api/v1/plugins/{name}": {
+      "delete": {
+        "operationId": "deletePlugin",
+        "parameters": [
+          {
+            "description": "Plug-in cn",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "Plug-in cn",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete an added Attribute Uniqueness instance (disabled)",
+        "tags": [
+          "plugins"
+        ]
+      },
       "get": {
         "operationId": "getPlugin",
         "parameters": [

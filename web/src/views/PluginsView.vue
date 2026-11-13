@@ -9,6 +9,7 @@ import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vu
 import { useI18n } from 'vue-i18n'
 import {
   NAlert,
+  NButton,
   NCard,
   NEmpty,
   NGrid,
@@ -27,13 +28,16 @@ import {
   useMessage,
   useThemeVars,
 } from 'naive-ui'
-import { Lock, Search, SlidersHorizontal } from '@lucide/vue'
+import { Lock, Plus, Search, SlidersHorizontal, Trash2 } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { useServerStore } from '@/stores/server'
 import CollectionPanel from '@/components/settings/CollectionPanel.vue'
 import PluginTaskButton from '@/components/settings/PluginTaskButton.vue'
 import SettingsPage from '@/components/settings/SettingsPage.vue'
+import PassThruPanel from '@/components/settings/PassThruPanel.vue'
+import UniquenessDialog from '@/components/settings/UniquenessDialog.vue'
+import { useAuthStore } from '@/stores/auth'
 
 type Plugin = Schemas['Plugin']
 
@@ -48,6 +52,11 @@ const server = useServerStore()
 const plugins = ref<Plugin[]>()
 const dynamic = ref(true)
 const pages = ref<Record<string, string>>({}) // plug-in cn → page id
+const pathPages = ref<Record<string, string>>({}) // plug-in library → page id (every instance, ?dn=)
+const auth = useAuthStore()
+const UNIQUENESS = 'libattr-unique-plugin'
+const PASSTHRU = 'pass through authentication'
+const addingUniqueness = ref(false)
 const collections = ref<Schemas['CollectionSummary'][]>([])
 const pluginTasks = ref<Schemas['PluginTask'][]>([])
 const error = ref<LocalizedError>()
@@ -70,19 +79,47 @@ async function load() {
     plugins.value = list.plugins
     dynamic.value = list.dynamic
     pages.value = Object.fromEntries(summaries.filter((p) => p.plugin).map((p) => [p.plugin!.toLowerCase(), p.id]))
+    pathPages.value = Object.fromEntries(summaries.filter((p) => p.pluginPath).map((p) => [p.pluginPath!.toLowerCase(), p.id]))
   } catch (e) {
     error.value = localizeError(e)
   }
 }
 onMounted(load)
 
-const pageOf = (p: Plugin) => pages.value[p.name.toLowerCase()]
+const pageOf = (p: Plugin) => pages.value[p.name.toLowerCase()] ?? (p.path ? pathPages.value[p.path.toLowerCase()] : undefined)
+/** Pages bound to a plug-in library edit the selected instance. */
+const pageDN = (p: Plugin) => (p.path && pathPages.value[p.path.toLowerCase()] === pageOf(p) ? p.dn : undefined)
+const isUniqueness = (p: Plugin) => p.path?.toLowerCase() === UNIQUENESS
+const isPassThru = (p: Plugin) => p.name.toLowerCase() === PASSTHRU
 const same = (a?: string, b?: string) => !!a && !!b && a.toLowerCase() === b.toLowerCase()
 /** Top-level collections of a plug-in; nested ones are shown inside their parent's items. */
 const collectionsOf = (p: Plugin) => collections.value.filter((c) => same(c.plugin, p.name) && !c.under).sort((a, b) => a.order - b.order)
 const nestedIn = (id: string) => collections.value.filter((c) => c.under === id).map((c) => c.id)
 const tasksOf = (p: Plugin) => pluginTasks.value.filter((x) => same(x.plugin, p.name))
-const configurable = (p: Plugin) => !!pageOf(p) || collectionsOf(p).length > 0 || tasksOf(p).length > 0
+const configurable = (p: Plugin) => !!pageOf(p) || collectionsOf(p).length > 0 || tasksOf(p).length > 0 || isPassThru(p)
+
+async function onUniquenessCreated(p: Plugin) {
+  await load()
+  select(p.name)
+  message.success(t('uniqueness.created', { name: p.name }), { duration: 6000 })
+}
+function removeInstance(p: Plugin) {
+  dialog.warning({
+    title: t('uniqueness.delete'),
+    content: t('uniqueness.deleteConfirm', { name: p.name }),
+    positiveText: t('uniqueness.delete'),
+    negativeText: t('edit.cancel'),
+    onPositiveClick: async () => {
+      try {
+        await call(api.DELETE('/api/v1/plugins/{name}', { params: { path: { name: p.name } } }))
+        await load()
+        router.replace({ path: '/plugins' })
+      } catch (e) {
+        message.error(localizeError(e).summary, { duration: 8000 })
+      }
+    },
+  })
+}
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -219,7 +256,7 @@ onBeforeRouteLeave(confirmLeave)
               {{ selected.enabled ? t('plugins.on') : t('plugins.off') }}
             </NTag>
           </template>
-          <p v-if="!selectedPage && description(selected)" class="description">{{ description(selected) }}</p>
+          <p v-if="!selectedPage && known(description(selected))" class="description">{{ description(selected) }}</p>
           <dl class="facts">
             <dt>{{ t('plugins.type') }}</dt><dd class="mono">{{ selected.type }}</dd>
             <template v-if="known(selected.version)"><dt>{{ t('plugins.version') }}</dt><dd>{{ selected.version }}</dd></template>
@@ -230,18 +267,43 @@ onBeforeRouteLeave(confirmLeave)
             </template>
             <dt>DN</dt><dd class="mono">{{ selected.dn }}</dd>
           </dl>
-          <NSpace v-if="tasksOf(selected).length" class="tasks">
+          <NSpace v-if="tasksOf(selected).length || (isUniqueness(selected) && !auth.readOnly)" class="tasks">
             <PluginTaskButton v-for="task in tasksOf(selected)" :key="task.id" :task="task" />
+            <template v-if="isUniqueness(selected) && !auth.readOnly">
+              <NButton size="small" @click="addingUniqueness = true">
+                <template #icon><NIcon><Plus /></NIcon></template>
+                {{ t('uniqueness.add') }}
+              </NButton>
+              <NButton
+                v-if="selected.name.toLowerCase() !== 'attribute uniqueness'"
+                size="small"
+                :disabled="selected.enabled"
+                :title="selected.enabled ? t('uniqueness.disableFirst') : undefined"
+                @click="removeInstance(selected)"
+              >
+                <template #icon><NIcon><Trash2 /></NIcon></template>
+                {{ t('uniqueness.delete') }}
+              </NButton>
+            </template>
           </NSpace>
           <NAlert v-if="configurable(selected) && !selected.enabled" type="default" :show-icon="false" class="hint">
             {{ t('plugins.disabledHint') }}
           </NAlert>
         </NCard>
-        <SettingsPage v-if="selectedPage" :id="selectedPage" :key="selectedPage" v-model:dirty="dirty" class="settings" />
+        <SettingsPage
+          v-if="selectedPage && selected"
+          :id="selectedPage"
+          :key="selectedPage + selected.dn"
+          v-model:dirty="dirty"
+          :dn="pageDN(selected)"
+          class="settings"
+        />
+        <PassThruPanel v-if="selected && isPassThru(selected)" class="settings" />
         <CollectionPanel v-for="c in selected ? collectionsOf(selected) : []" :id="c.id" :key="c.id" :nested="nestedIn(c.id)" class="settings" />
       </NGridItem>
     </NGrid>
   </template>
+  <UniquenessDialog v-model:show="addingUniqueness" @created="onUniquenessCreated" />
 </template>
 
 <style scoped>

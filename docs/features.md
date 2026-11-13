@@ -69,7 +69,7 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 |---|---|---|---|---|
 | Schema browsing (search, dependencies, inherited attributes) — done | LDAP | 4 | ✅ | ✅ |
 | Creating/changing/deleting custom AT/OC — done (deletion only while unused) | LDAP (`cn=schema`) | 4 | ✅ | ✅ |
-| Schema reload (after editing schema files on disk; needs the Schema Reload plug-in) | Task | later | ✅ | ✅ |
+| Schema reload (after editing schema files on disk; needs the Schema Reload plug-in) — done | Task | 7 | ✅ | ✅ |
 | Global password policy — done | LDAP | 3 | ✅ | ✅ |
 | Local password policies (subtree via CoS, user via `pwdpolicysubentry`) — done | LDAP (CoS) | 4 | ✅ | ✅ |
 | Account status (lock, role/CoS lock, lockout, expiry, must-change, policy, last login), lock/unlock — done (LDAP browser) | LDAP | 4 | ✅ | ✅ |
@@ -82,7 +82,11 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 | Plugin | Stage | Notes |
 |---|---|---|
 | List, on/off, dynamic plugins | 3 ✅ | required plug-ins (syntaxes, matching rules, ldbm, ACL) cannot be disabled |
-| Referential Integrity, Attribute Uniqueness (default instance), Retro Changelog, Account Policy, Root DN Access | 3 ✅ | YAML pages (`internal/pages/defs/plugins.yaml`); USN is on/off only |
+| Referential Integrity, Retro Changelog, Account Policy, Root DN Access | 3 ✅ | YAML pages (`internal/pages/defs/plugins.yaml`) |
+| Attribute Uniqueness | 3 ✅ / 7 ✅ | any number of instances (rule sets): add, configure with the shared page (bound by `nsslapd-pluginPath`), delete when disabled; the shipped instance stays |
+| USN | 7 ✅ | global counter, entryUSN of imported entries, tombstone cleanup task |
+| LDAP Pass-Through Authentication | 7 ✅ | remote server sets (plug-in arguments): hosts, subtree, ldap/ldaps/StartTLS, connection options |
+| Schema Reload | 7 ✅ | task, also on the Schema page |
 | MemberOf | 3 ✅ / 4 ✅ | settings, fixup task |
 | DNA | 4 ✅ | ranges (collection `dna-ranges`), shared config DN; range transfer between replicas — stage 5 |
 | Auto Membership | 4 ✅ | definitions, nested regex rules, rebuild task |

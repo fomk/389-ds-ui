@@ -894,6 +894,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plugins/passthru/servers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Servers of the LDAP Pass-Through Authentication plug-in */
+        get: operations["listPassThru"];
+        /** Replace the servers of the LDAP Pass-Through Authentication plug-in (read when the plug-in starts) */
+        put: operations["setPassThru"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plugins/uniqueness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add an Attribute Uniqueness instance (disabled) */
+        post: operations["createUniqueness"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/plugins/{name}": {
         parameters: {
             query?: never;
@@ -905,7 +940,8 @@ export interface paths {
         get: operations["getPlugin"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete an added Attribute Uniqueness instance (disabled) */
+        delete: operations["deletePlugin"];
         options?: never;
         head?: never;
         /** Enable or disable a plug-in */
@@ -2347,6 +2383,14 @@ export interface components {
             parent: string;
             roles?: string[];
         };
+        NewUniqueness: {
+            /** @description Attributes whose values must be unique */
+            attributes: string[];
+            /** @description Plug-in cn, e.g. mail uniqueness */
+            name: string;
+            /** @description Where values must be unique; empty: the suffixes of the server */
+            subtrees?: string[];
+        };
         NewVLV: {
             base: string;
             filter: string;
@@ -2397,6 +2441,8 @@ export interface components {
             order: number;
             /** @description cn of the plug-in this page configures; shown on the Plugins page */
             plugin?: string;
+            /** @description nsslapd-pluginPath of the plug-in instances this page configures */
+            pluginPath?: string;
             /** @description Menu section: server, database, logging, security, … */
             section: string;
             /** @description Attributes may be absent until set (plug-in configuration, local policies); the UI shows an explicit default state */
@@ -2452,6 +2498,8 @@ export interface components {
             /** Format: int64 */
             order: number;
             plugin?: string;
+            /** @description The page configures every instance of this plug-in library (?dn= of the instance) */
+            pluginPath?: string;
             section: string;
         };
         PageUpdate: {
@@ -2466,6 +2514,42 @@ export interface components {
             values: {
                 [key: string]: string[];
             };
+        };
+        PassThruServer: {
+            /**
+             * Format: int64
+             * @description Seconds before a connection is reopened; 0: never (default 300)
+             */
+            connLifetime: number;
+            /** @description host or host:port; tried in order */
+            hosts: string[];
+            /**
+             * Format: int64
+             * @description Protocol version (default 3)
+             * @enum {integer}
+             */
+            ldapVersion: 2 | 3;
+            /**
+             * Format: int64
+             * @description Connections to each server (default 3)
+             */
+            maxConns: number;
+            /**
+             * Format: int64
+             * @description Outstanding operations per connection (default 5)
+             */
+            maxOps: number;
+            /** @description ldaps:// */
+            secure: boolean;
+            /** @description StartTLS on ldap:// connections */
+            startTLS: boolean;
+            /** @description Bind DNs under it are passed through */
+            subtree: string;
+            /**
+             * Format: int64
+             * @description Seconds to wait for a server (default 300)
+             */
+            timeout: number;
         };
         PasswordRequest: {
             dn: string;
@@ -2531,7 +2615,7 @@ export interface components {
             attr: string;
             default?: string;
             /** @enum {string} */
-            kind: "dn" | "filter" | "enum";
+            kind: "dn" | "filter" | "enum" | "int" | "path";
             required?: boolean;
             values?: string[];
         };
@@ -5197,6 +5281,101 @@ export interface operations {
             };
         };
     };
+    listPassThru: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassThruServer"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setPassThru: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PassThruServer"][];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PassThruServer"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createUniqueness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewUniqueness"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Plugin"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     getPlugin: {
         parameters: {
             query?: never;
@@ -5217,6 +5396,36 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Plugin"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deletePlugin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Plug-in cn */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

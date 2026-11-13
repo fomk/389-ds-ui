@@ -29,10 +29,13 @@ pages:
       - {attr: memberOfEntryScope, type: list, group: scope}
       - {attr: memberOfEntryScopeExcludeSubtree, type: list, group: scope}
 
+  # Every Attribute Uniqueness instance (the shipped one and those added
+  # through ds-ui) is configured with this page, bound by ?dn=.
   - id: plugin-uniqueness
     section: plugins
-    plugin: attribute uniqueness
-    dn: cn=attribute uniqueness,cn=plugins,cn=config
+    entryClass: nsSlapdPlugin
+    entryFilter: (nsslapd-pluginPath=libattr-unique-plugin)
+    pluginPath: libattr-unique-plugin
     sparse: true
     fields:
       - {attr: uniqueness-attribute-name, type: list}
@@ -41,6 +44,15 @@ pages:
       - {attr: uniqueness-across-all-subtrees, type: bool, group: scope}
       - {attr: uniqueness-top-entry-oc, type: string, group: scope}
       - {attr: uniqueness-subtree-entries-oc, type: string, group: scope}
+
+  # USN itself has no settings; the global counter lives in cn=config.
+  - id: plugin-usn
+    section: plugins
+    plugin: USN
+    dn: cn=config
+    fields:
+      - {attr: nsslapd-entryusn-global, type: bool}
+      - {attr: nsslapd-entryusn-import-initval, type: string}
 
   - id: plugin-rootdn
     section: plugins

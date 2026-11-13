@@ -114,6 +114,10 @@ func registerCollections(api huma.API, d Deps) {
 				return nil, toHTTPError(err)
 			}
 			t, err := d.Tasks.Start(ctx, task.Container, target, attrs)
+			if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
+				// The task container exists only while the plug-in runs.
+				return nil, problem(http.StatusConflict, "the task is not available: the plug-in "+task.Plugin+" is not running (enable it; without dynamic plug-ins, restart the server)")
+			}
 			if err != nil {
 				return nil, toHTTPError(err)
 			}

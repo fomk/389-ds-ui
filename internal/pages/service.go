@@ -32,6 +32,7 @@ type PageSummary struct {
 	Plugin  string `json:"plugin,omitempty"`
 	// Pages for entries named by the caller are not in the settings menu.
 	EntryClass string `json:"entryClass,omitempty"`
+	PluginPath string `json:"pluginPath,omitempty" doc:"The page configures every instance of this plug-in library (?dn= of the instance)"`
 }
 
 // PageState is a page together with the current values on the server.
@@ -66,7 +67,7 @@ func (s *Service) List(c *ldap.Conn) ([]PageSummary, error) {
 	out := []PageSummary{}
 	for _, p := range s.pages {
 		if p.Applies(facts) {
-			out = append(out, PageSummary{ID: p.ID, Section: p.Section, Order: p.Order, Plugin: p.Plugin, EntryClass: p.EntryClass})
+			out = append(out, PageSummary{ID: p.ID, Section: p.Section, Order: p.Order, Plugin: p.Plugin, EntryClass: p.EntryClass, PluginPath: p.PluginPath})
 		}
 	}
 	return out, nil
@@ -88,8 +89,12 @@ func (s *Service) page(c *ldap.Conn, id, dn string) (*Page, error) {
 	if _, err := ldap.ParseDN(dn); err != nil || dn == "" {
 		return nil, fmt.Errorf("%w: page %s needs the DN of a %s entry", ErrInvalidValue, id, p.EntryClass)
 	}
+	filter := "(objectClass=" + ldap.EscapeFilter(p.EntryClass) + ")"
+	if p.EntryFilter != "" {
+		filter = "(&" + filter + p.EntryFilter + ")"
+	}
 	res, err := c.Search(ldap.NewSearchRequest(dn, ldap.ScopeBaseObject, ldap.NeverDerefAliases, 1, 0, false,
-		"(objectClass="+ldap.EscapeFilter(p.EntryClass)+")", []string{"1.1"}, nil))
+		filter, []string{"1.1"}, nil))
 	if err != nil && !ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
 		return nil, err
 	}

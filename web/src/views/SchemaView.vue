@@ -29,11 +29,13 @@ import {
   type DataTableColumns,
 } from 'naive-ui'
 import { Pencil, Plus, Search, Trash2 } from '@lucide/vue'
-import { api, call, type AttributeType, type ObjectClass } from '@/api/client'
+import { api, call, type AttributeType, type ObjectClass, type Schemas } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { useSchemaStore } from '@/stores/schema'
 import AttributeTypeDialog from '@/components/schema/AttributeTypeDialog.vue'
 import ObjectClassDialog from '@/components/schema/ObjectClassDialog.vue'
+import PluginTaskButton from '@/components/settings/PluginTaskButton.vue'
+import { useAuthStore } from '@/stores/auth'
 
 type Kind = 'attr' | 'class'
 type Row = { name: string; oid: string; user: boolean; desc?: string }
@@ -48,6 +50,15 @@ const store = useSchemaStore()
 
 const loadError = ref<LocalizedError>()
 onMounted(() => store.load().catch((e) => (loadError.value = localizeError(e))))
+
+/** Reload of the schema files (Schema Reload plug-in task); administrators only. */
+const auth = useAuthStore()
+const reloadTask = ref<Schemas['PluginTask']>()
+onMounted(async () => {
+  if (auth.readOnly) return
+  const tasks = await call(api.GET('/api/v1/plugin-tasks')).catch(() => [])
+  reloadTask.value = tasks.find((x) => x.id === 'schema-reload')
+})
 
 const kind = computed<Kind>({
   get: () => (route.query.kind === 'class' ? 'class' : 'attr'),
@@ -182,7 +193,10 @@ const selectedUser = computed(() => isUser((attr.value ?? cls.value)?.origin))
 </script>
 
 <template>
-  <NH1 class="title">{{ t('nav.schema') }}</NH1>
+  <div class="head">
+    <NH1 class="title">{{ t('nav.schema') }}</NH1>
+    <PluginTaskButton v-if="reloadTask" :task="reloadTask" />
+  </div>
   <NAlert v-if="loadError" type="error">{{ loadError.summary }}</NAlert>
 
   <NGrid v-else cols="1 l:5" responsive="screen" :x-gap="16" :y-gap="16">
@@ -313,7 +327,15 @@ const selectedUser = computed(() => isUser((attr.value ?? cls.value)?.origin))
 
 <style scoped>
 .title {
-  margin: 0 0 20px;
+  margin: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .filters {

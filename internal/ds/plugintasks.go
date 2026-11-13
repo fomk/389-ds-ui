@@ -2,6 +2,7 @@ package ds
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/go-ldap/ldap/v3"
@@ -10,7 +11,7 @@ import (
 // PluginTaskParam is an attribute of a plug-in task entry.
 type PluginTaskParam struct {
 	Attr     string   `json:"attr"`
-	Kind     string   `json:"kind" enum:"dn,filter,enum"`
+	Kind     string   `json:"kind" enum:"dn,filter,enum,int,path"`
 	Required bool     `json:"required,omitempty"`
 	Default  string   `json:"default,omitempty"`
 	Values   []string `json:"values,omitempty"`
@@ -37,6 +38,13 @@ var PluginTasks = []PluginTask{
 	}},
 	{ID: "linkedattrs-fixup", Plugin: "Linked Attributes", Container: "fixup linked attributes", Params: []PluginTaskParam{
 		{Attr: "linkdn", Kind: "dn"},
+	}},
+	{ID: "usn-cleanup", Plugin: "USN", Container: "USN tombstone cleanup task", Params: []PluginTaskParam{
+		{Attr: "suffix", Kind: "dn", Required: true},
+		{Attr: "maxusn_to_delete", Kind: "int"},
+	}},
+	{ID: "schema-reload", Plugin: "Schema Reload", Container: "schema reload task", Params: []PluginTaskParam{
+		{Attr: "schemadir", Kind: "path"},
 	}},
 }
 
@@ -76,6 +84,14 @@ func PluginTaskAttrs(id string, params map[string]string) (*PluginTask, string, 
 		case "filter":
 			if _, err := ldap.CompileFilter(v); err != nil {
 				return nil, "", nil, fmt.Errorf("%w: %s: %v", ErrInvalidValue, p.Attr, err)
+			}
+		case "int":
+			if n, err := strconv.ParseInt(v, 10, 64); err != nil || n < 0 {
+				return nil, "", nil, fmt.Errorf("%w: %s must be a non-negative number", ErrInvalidValue, p.Attr)
+			}
+		case "path":
+			if !strings.HasPrefix(v, "/") || strings.Contains(v, "..") {
+				return nil, "", nil, fmt.Errorf("%w: %s must be an absolute path", ErrInvalidValue, p.Attr)
 			}
 		case "enum":
 			ok := false

@@ -118,3 +118,26 @@ func TestApplies(t *testing.T) {
 		t.Error("Applies")
 	}
 }
+
+// An attribute of an entry belongs on one page only: two pages editing it
+// confuse users and can undo each other's changes.
+func TestNoAttributeOnTwoPages(t *testing.T) {
+	pages, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[string]string{}
+	for _, p := range pages {
+		entry := strings.ToLower(p.DN)
+		if p.EntryClass != "" {
+			entry = "class:" + strings.ToLower(p.EntryClass+p.EntryFilter)
+		}
+		for _, f := range p.Fields {
+			key := entry + "|" + strings.ToLower(f.Attr)
+			if other, ok := seen[key]; ok && other != p.ID {
+				t.Errorf("%s of %s is on pages %s and %s", f.Attr, entry, other, p.ID)
+			}
+			seen[key] = p.ID
+		}
+	}
+}

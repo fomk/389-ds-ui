@@ -94,9 +94,20 @@ func TestCollectionsAndPluginTasks(t *testing.T) {
 	if code, body := do("POST", "/api/v1/plugin-tasks/memberof-fixup", `{"params":{}}`); code != 422 {
 		t.Errorf("memberof fixup without basedn: %d %s", code, body)
 	}
+	if code, body := do("POST", "/api/v1/plugin-tasks/usn-cleanup", `{"params":{"suffix":"`+suffix+`","maxusn_to_delete":"x"}}`); code != 422 {
+		t.Errorf("usn cleanup with a bad number: %d %s", code, body)
+	}
+	if code, body := do("POST", "/api/v1/plugin-tasks/schema-reload", `{"params":{"schemadir":"../etc"}}`); code != 422 {
+		t.Errorf("schema reload with a relative path: %d %s", code, body)
+	}
+	// USN is off on a fresh server: its task container does not exist.
+	if code, body := do("POST", "/api/v1/plugin-tasks/usn-cleanup", `{"params":{"suffix":"`+suffix+`"}}`); code != 202 && !(code == 409 && strings.Contains(body, "not running")) {
+		t.Errorf("usn cleanup: %d %s", code, body)
+	}
 	for _, run := range []struct{ id, params string }{
 		{"automember-rebuild", `{"params":{"basedn":"` + people + `","filter":"(objectClass=inetOrgPerson)"}}`},
 		{"linkedattrs-fixup", `{"params":{}}`},
+		{"schema-reload", `{"params":{}}`},
 	} {
 		code, body := do("POST", "/api/v1/plugin-tasks/"+run.id, run.params)
 		var task ds.Task

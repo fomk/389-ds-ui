@@ -442,7 +442,9 @@
       "init-replica": "Replica initialization",
       "cert-from-files": "Certificate from files",
       "encrypt-attr": "Attribute encryption on",
-      "decrypt-attr": "Attribute encryption off"
+      "decrypt-attr": "Attribute encryption off",
+      "create-plugin": "Plug-in instance created",
+      "delete-plugin": "Plug-in instance deleted"
     },
     "progress": "{current} of {total}",
     "completed": "Completed."
@@ -864,10 +866,6 @@
           "label": "Maintain modification attributes",
           "help": "creatorsName, modifyTimestamp and friends."
         },
-        "nsslapd-entryusn-global": {
-          "label": "Global entry USN",
-          "help": "One USN counter for all backends."
-        },
         "nsslapd-ignore-virtual-attrs": {
           "label": "Ignore virtual attributes",
           "help": "Faster searches; disable if you use CoS or roles in filters."
@@ -1264,7 +1262,7 @@
     },
     "plugin-uniqueness": {
       "title": "Attribute Uniqueness",
-      "description": "Rejects changes that would give two entries the same value of an attribute (the default uid instance).",
+      "description": "Rejects changes that would give two entries the same value of an attribute. Each instance has its own attributes and subtrees; add another one for a separate set of rules.",
       "fields": {
         "uniqueness-attribute-name": {
           "label": "Unique attributes"
@@ -1621,6 +1619,20 @@
           "help": "Use this module for TLS."
         }
       }
+    },
+    "plugin-usn": {
+      "title": "USN",
+      "description": "Update sequence numbers (entryUSN) for clients that synchronise by change counter.",
+      "fields": {
+        "nsslapd-entryusn-global": {
+          "label": "One counter for all backends",
+          "help": "Otherwise each backend counts on its own."
+        },
+        "nsslapd-entryusn-import-initval": {
+          "label": "entryUSN of imported entries",
+          "help": "A number, or \"next\" for the next value of the counter."
+        }
+      }
     }
   },
   "plugins": {
@@ -1877,7 +1889,10 @@
       "basedn": "Base DN",
       "filter": "Filter",
       "scope": "Scope",
-      "linkdn": "Only this link configuration (DN)"
+      "linkdn": "Only this link configuration (DN)",
+      "suffix": "Suffix",
+      "maxusn_to_delete": "Only tombstones up to this USN (empty: all)",
+      "schemadir": "Schema directory (empty: the server's)"
     },
     "memberof-fixup": {
       "title": "Rebuild memberOf",
@@ -1890,6 +1905,14 @@
     "linkedattrs-fixup": {
       "title": "Fix up links",
       "description": "Recreates the managed attributes from the link attributes."
+    },
+    "usn-cleanup": {
+      "title": "Clean up tombstones",
+      "description": "Deletes tombstone entries (deleted entries kept for USN-based synchronisation) of the suffix."
+    },
+    "schema-reload": {
+      "title": "Reload schema",
+      "description": "Reads the schema files again after they were edited on disk; definitions in 99user.ldif made through LDAP stay."
     }
   },
   "roles": {
@@ -2202,5 +2225,35 @@
     "removeConfirm": "Stop encrypting {attr}?",
     "hasValues": "Entries have values of {attr}. Once the server stops encrypting it, values stored encrypted read back as unreadable data after the next restart. First export the suffix with the clear-text option, then remove the setting and import that export.",
     "removeAnyway": "Remove anyway"
+  },
+  "passthru": {
+    "title": "Remote servers",
+    "description": "Binds of DNs under a subtree are checked by these LDAP servers instead of this one. The subtree should not be stored on this server. Changes apply when the plug-in starts (after a restart).",
+    "add": "Add server set",
+    "edit": "Edit",
+    "remove": "Remove",
+    "none": "No servers",
+    "saved": "Saved; applies after the plug-in starts again (restart).",
+    "subtree": "Subtree",
+    "subtreeHint": "Bind DNs below it are passed through.",
+    "hosts": "Servers",
+    "hostsHint": "host or host:port; tried in order.",
+    "protocol": "Protocol",
+    "maxConns": "Connections",
+    "maxOps": "Operations per connection",
+    "timeout": "Timeout, s",
+    "connLifetime": "Connection lifetime, s"
+  },
+  "uniqueness": {
+    "add": "Add rule set",
+    "addHint": "Another instance of the plug-in with its own attributes and subtrees. It is created disabled; enable it in the list.",
+    "name": "Name",
+    "attributes": "Unique attributes",
+    "subtrees": "Subtrees",
+    "subtreesHint": "Empty: all suffixes of the server.",
+    "created": "{name} created (disabled).",
+    "delete": "Delete rule set",
+    "deleteConfirm": "Delete the plug-in instance {name}?",
+    "disableFirst": "Disable it first"
   }
 }

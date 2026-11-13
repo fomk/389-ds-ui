@@ -35,6 +35,9 @@ type pluginPatchInput struct {
 	}
 }
 type pluginPatchOutput struct{ Body PluginChange }
+type newUniquenessInput struct{ Body ds.NewUniqueness }
+type passThruOutput struct{ Body []ds.PassThruServer }
+type passThruInput struct{ Body []ds.PassThruServer }
 
 func registerPlugins(api huma.API, d Deps) {
 	tags := []string{"plugins"}
@@ -93,5 +96,66 @@ func registerPlugins(api huma.API, d Deps) {
 				d.Restart.Change(in.Name, strconv.FormatBool(!in.Body.Enabled), strconv.FormatBool(in.Body.Enabled))
 			}
 			return &pluginPatchOutput{Body: out}, nil
+		})
+
+	huma.Register(api, huma.Operation{OperationID: "createUniqueness", Method: http.MethodPost, Path: apiPrefix + "/plugins/uniqueness",
+		Summary: "Add an Attribute Uniqueness instance (disabled)", Tags: tags, DefaultStatus: http.StatusCreated},
+		func(ctx context.Context, in *newUniquenessInput) (*pluginOutput, error) {
+			var p *ds.Plugin
+			err := conn(ctx, func(c *ldap.Conn) (err error) {
+				if err = ds.CreateUniqueness(c, in.Body); err != nil {
+					return err
+				}
+				p, err = ds.GetPlugin(c, in.Body.Name)
+				return err
+			})
+			d.Tasks.Record(ctx, ds.OpCreatePlugin, in.Body.Name, err)
+			if err != nil {
+				return nil, toHTTPError(err)
+			}
+			return &pluginOutput{Body: p}, nil
+		})
+	huma.Register(api, huma.Operation{OperationID: "deletePlugin", Method: http.MethodDelete, Path: apiPrefix + "/plugins/{name}",
+		Summary: "Delete an added Attribute Uniqueness instance (disabled)", Tags: tags, DefaultStatus: http.StatusNoContent},
+		func(ctx context.Context, in *pluginPath) (*noContent, error) {
+			err := conn(ctx, func(c *ldap.Conn) error { return ds.DeleteUniqueness(c, in.Name) })
+			d.Tasks.Record(ctx, ds.OpDeletePlugin, in.Name, err)
+			return emptyResult(err)
+		})
+
+	huma.Register(api, huma.Operation{OperationID: "listPassThru", Method: http.MethodGet, Path: apiPrefix + "/plugins/passthru/servers",
+		Summary: "Servers of the LDAP Pass-Through Authentication plug-in", Tags: tags},
+		func(ctx context.Context, _ *struct{}) (*passThruOutput, error) {
+			var list []ds.PassThruServer
+			err := conn(ctx, func(c *ldap.Conn) (err error) { list, err = ds.ListPassThru(c); return })
+			if err != nil {
+				return nil, toHTTPError(err)
+			}
+			return &passThruOutput{Body: list}, nil
+		})
+	huma.Register(api, huma.Operation{OperationID: "setPassThru", Method: http.MethodPut, Path: apiPrefix + "/plugins/passthru/servers",
+		Summary: "Replace the servers of the LDAP Pass-Through Authentication plug-in (read when the plug-in starts)", Tags: tags},
+		func(ctx context.Context, in *passThruInput) (*passThruOutput, error) {
+			var list []ds.PassThruServer
+			var enabled bool
+			err := conn(ctx, func(c *ldap.Conn) error {
+				if err := ds.SetPassThru(c, in.Body); err != nil {
+					return err
+				}
+				p, err := ds.GetPlugin(c, "Pass Through Authentication")
+				if err != nil {
+					return err
+				}
+				enabled = p.Enabled
+				list, err = ds.ListPassThru(c)
+				return err
+			})
+			if err != nil {
+				return nil, toHTTPError(err)
+			}
+			if enabled && d.Restart != nil {
+				d.Restart.Require("Pass Through Authentication")
+			}
+			return &passThruOutput{Body: list}, nil
 		})
 }

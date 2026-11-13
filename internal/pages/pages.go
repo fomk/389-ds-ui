@@ -85,7 +85,12 @@ type Page struct {
 	Sparse  bool              `yaml:"sparse,omitempty" json:"sparse,omitempty" doc:"Attributes may be absent until set (plug-in configuration, local policies); the UI shows an explicit default state"`
 	// EntryClass makes the page edit any entry of this object class, named
 	// by the caller (?dn=), instead of the fixed DN.
-	EntryClass string      `yaml:"entryClass,omitempty" json:"entryClass,omitempty" doc:"The page edits the entry given as ?dn=, which must have this object class"`
+	EntryClass string `yaml:"entryClass,omitempty" json:"entryClass,omitempty" doc:"The page edits the entry given as ?dn=, which must have this object class"`
+	// EntryFilter narrows the entries an entryClass page accepts.
+	EntryFilter string `yaml:"entryFilter,omitempty" json:"-"`
+	// PluginPath binds the page to every instance of a plug-in library
+	// (several Attribute Uniqueness configurations); used with entryClass.
+	PluginPath string      `yaml:"pluginPath,omitempty" json:"pluginPath,omitempty" doc:"nsslapd-pluginPath of the plug-in instances this page configures"`
 	Fields     []PageField `yaml:"fields" json:"fields"`
 }
 
@@ -217,6 +222,14 @@ func (p *Page) validate() error {
 	case p.EntryClass == "":
 		if _, err := ldap.ParseDN(p.DN); err != nil || p.DN == "" {
 			return fmt.Errorf("page %s: invalid dn %q", p.ID, p.DN)
+		}
+	}
+	if (p.EntryFilter != "" || p.PluginPath != "") && p.EntryClass == "" {
+		return fmt.Errorf("page %s: entryFilter and pluginPath need entryClass", p.ID)
+	}
+	if p.EntryFilter != "" {
+		if _, err := ldap.CompileFilter(p.EntryFilter); err != nil {
+			return fmt.Errorf("page %s: entryFilter: %w", p.ID, err)
 		}
 	}
 	if len(p.Fields) == 0 {

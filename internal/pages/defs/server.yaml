@@ -15,7 +15,6 @@ pages:
       - {attr: nsslapd-syntaxcheck, type: bool, group: behaviour}
       - {attr: nsslapd-dn-validate-strict, type: bool, group: behaviour}
       - {attr: nsslapd-lastmod, type: bool, group: behaviour}
-      - {attr: nsslapd-entryusn-global, type: bool, group: behaviour}
       - {attr: nsslapd-ignore-virtual-attrs, type: bool, group: behaviour}
       - {attr: nsslapd-return-exact-case, type: bool, group: behaviour, restart: true}
       - {attr: nsslapd-dynamic-plugins, type: bool, group: behaviour}
