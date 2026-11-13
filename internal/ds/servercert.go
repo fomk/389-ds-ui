@@ -48,6 +48,12 @@ func (s ServerCert) SetServerCert(ctx context.Context, nick string) error {
 	return s.LDAP.Do(ctx, func(c *ldap.Conn) error { return SetServerCertName(c, nick) })
 }
 
+// CheckServerKey refuses a key change while attributes are encrypted (see
+// the package function).
+func (s ServerCert) CheckServerKey(ctx context.Context, currentKey, newKey string) error {
+	return s.LDAP.Do(ctx, func(c *ldap.Conn) error { return CheckServerKey(c, currentKey, newKey) })
+}
+
 // Restarter restarts the server process (a providers.Lifecycle).
 type Restarter interface {
 	Restart(ctx context.Context) error

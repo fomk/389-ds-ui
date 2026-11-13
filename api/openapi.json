@@ -525,6 +525,10 @@
           "name": {
             "type": "string"
           },
+          "parentSuffix": {
+            "description": "Suffix this one is a sub-suffix of (nsslapd-parent-suffix)",
+            "type": "string"
+          },
           "readOnly": {
             "type": "boolean"
           },
@@ -912,6 +916,10 @@
           "pem": {
             "type": "string"
           },
+          "publicKey": {
+            "description": "SHA-256 of the public key (SubjectPublicKeyInfo): equal for certificates of the same key",
+            "type": "string"
+          },
           "selfSigned": {
             "type": "boolean"
           },
@@ -944,7 +952,8 @@
           "ipAddresses",
           "serial",
           "keyType",
-          "sha256"
+          "sha256",
+          "publicKey"
         ],
         "type": "object"
       },
@@ -1439,6 +1448,39 @@
         ],
         "type": "object"
       },
+      "EncryptedAttr": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "enum": [
+              "AES",
+              "3DES"
+            ],
+            "type": "string"
+          },
+          "attr": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "attr",
+          "algorithm"
+        ],
+        "type": "object"
+      },
+      "EncryptedAttrInputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "attr": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "attr"
+        ],
+        "type": "object"
+      },
       "Entry": {
         "additionalProperties": false,
         "properties": {
@@ -1578,6 +1620,10 @@
       "ExportTaskInputBody": {
         "additionalProperties": false,
         "properties": {
+          "decrypt": {
+            "description": "Write encrypted attributes in clear text (before turning their encryption off)",
+            "type": "boolean"
+          },
           "file": {
             "description": "File name in the LDIF directory; default \u003cbackend\u003e_\u003ctimestamp\u003e.ldif",
             "type": "string"
@@ -2025,6 +2071,10 @@
           "name": {
             "description": "Backend (database) name, e.g. userroot",
             "minLength": 1,
+            "type": "string"
+          },
+          "parentSuffix": {
+            "description": "Existing suffix to create a sub-suffix of; the suffix must be below it",
             "type": "string"
           },
           "suffix": {
@@ -4594,6 +4644,146 @@
           }
         },
         "summary": "Change backend settings",
+        "tags": [
+          "databases"
+        ]
+      }
+    },
+    "/api/v1/backends/{name}/encrypted-attrs": {
+      "get": {
+        "operationId": "listEncryptedAttrs",
+        "parameters": [
+          {
+            "description": "Backend name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "Backend name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EncryptedAttr"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Attributes the backend stores encrypted",
+        "tags": [
+          "databases"
+        ]
+      },
+      "post": {
+        "operationId": "addEncryptedAttr",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EncryptedAttrInputBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Encrypt an attribute (AES) from now on; existing values after a re-import",
+        "tags": [
+          "databases"
+        ]
+      }
+    },
+    "/api/v1/backends/{name}/encrypted-attrs/{attr}": {
+      "delete": {
+        "operationId": "deleteEncryptedAttr",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "attr",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Remove even if entries have values of the attribute (they read back as ciphertext after the next restart)",
+            "explode": false,
+            "in": "query",
+            "name": "force",
+            "schema": {
+              "description": "Remove even if entries have values of the attribute (they read back as ciphertext after the next restart)",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Stop encrypting an attribute (refused while entries have values, unless forced)",
         "tags": [
           "databases"
         ]

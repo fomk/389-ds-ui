@@ -135,6 +135,19 @@ Replacing the certificate requires a DS restart: the server loads the certificat
 
 NSS keeps **one nickname per subject**: a certificate whose subject matches one already in the database is filed under that nickname whatever `-n`/`-name` says, so a renewal imported as `New-Cert` lands under `Server-Cert`. The nickname then holds several certificates; `certutil -L -n X -a` prints all of them, 389-ds presents the newest valid one after a restart, and `certutil -D/-F -n X` removes the **newest** first, so an older one cannot be deleted selectively. To renew, remove the old certificate and key first (export them with `pk12util -o` to restore on failure), then import the new pair under the same nickname. A key left without its certificate keeps its label and is removed with `certutil -F -k <key id>`.
 
+## Attribute encryption
+
+| Object | DN | Attributes |
+|---|---|---|
+| Encrypted attribute | `cn=<attr>,cn=encrypted attributes,cn=<backend>,cn=ldbm database,cn=plugins,cn=config` (oc `nsAttributeEncryption`) | `nsEncryptionAlgorithm` (`AES`; `3DES` is legacy) |
+| Wrapped keys | `cn=AES,cn=encrypted attribute keys,cn=<backend>,…` | `nsSymmetricKey` |
+
+Verified on 3.3.1:
+
+- Adding the setting takes effect at once for new writes (no restart); values written earlier stay in clear text until the backend is exported and imported. `dbscan -D mdb -f /data/db/<backend>/id2entry.db` shows encrypted values base64-encoded.
+- The symmetric key is wrapped with the **server certificate's key**. After switching to a certificate with another key, the server cannot unwrap it ("Symmetric key failed to unwrap with the private key; Cert might have been renewed"), the backend does not start and `dscontainer` gives up. A renewal with the same key is fine. Once no attribute is encrypted any more, the leftover wrapped keys do not block a key change.
+- Removing the setting while values are stored encrypted: reads keep working until the restart, then the server returns the ciphertext as the value and searches by value find nothing. The safe order: export with `nsExportDecrypt: true`, remove the setting, import the export.
+
 ## Useful controls and extensions
 
 | OID | Purpose |

@@ -21,6 +21,7 @@ type Backend struct {
 	RequireIndex   bool   `json:"requireIndex" doc:"Reject unindexed searches"`
 	State          string `json:"state" enum:"backend,disabled,referral,referral on update," doc:"Mapping tree state"`
 	Referral       string `json:"referral,omitempty"`
+	ParentSuffix   string `json:"parentSuffix,omitempty" doc:"Suffix this one is a sub-suffix of (nsslapd-parent-suffix)"`
 	CacheMemSize   int64  `json:"cacheMemSize" doc:"Entry cache, bytes (nsslapd-cachememsize)"`
 	DNCacheMemSize int64  `json:"dnCacheMemSize" doc:"DN cache, bytes"`
 	RootExists     bool   `json:"rootExists" doc:"The suffix root entry exists"`
@@ -31,6 +32,8 @@ var (
 	ErrInvalidName = errors.New("invalid name")
 	// ErrNotFound is returned for an unknown backend or index.
 	ErrNotFound = errors.New("not found")
+	// ErrHasSubSuffixes protects a suffix other suffixes hang under.
+	ErrHasSubSuffixes = errors.New("the suffix has sub-suffixes")
 	// ErrSystemIndex protects indexes the server needs.
 	ErrSystemIndex = errors.New("system indexes cannot be deleted")
 )
@@ -55,7 +58,7 @@ func ListBackends(c *ldap.Conn) ([]Backend, error) {
 		return nil, err
 	}
 	mt, err := c.Search(ldap.NewSearchRequest(dnMappingTree, ldap.ScopeSingleLevel, ldap.NeverDerefAliases, 0, 0, false,
-		"(objectClass=nsMappingTree)", []string{"nsslapd-backend", "nsslapd-state", "nsslapd-referral"}, nil))
+		"(objectClass=nsMappingTree)", []string{"nsslapd-backend", "nsslapd-state", "nsslapd-referral", "nsslapd-parent-suffix"}, nil))
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +79,7 @@ func ListBackends(c *ldap.Conn) ([]Backend, error) {
 		if m := mapping[strings.ToLower(b.Name)]; m != nil {
 			b.State = m.GetAttributeValue("nsslapd-state")
 			b.Referral = m.GetAttributeValue("nsslapd-referral")
+			b.ParentSuffix = m.GetAttributeValue("nsslapd-parent-suffix")
 		}
 		if _, err := readEntry(c, b.Suffix, "1.1"); err == nil {
 			b.RootExists = true
@@ -105,6 +109,23 @@ type NewBackend struct {
 	Name       string `json:"name" minLength:"1" doc:"Backend (database) name, e.g. userroot"`
 	Suffix     string `json:"suffix" minLength:"1" doc:"e.g. dc=example,dc=org"`
 	CreateRoot bool   `json:"createRoot" doc:"Also create the suffix root entry"`
+	// ParentSuffix makes a sub-suffix: its entries appear under the parent
+	// suffix in the tree although they live in their own backend.
+	ParentSuffix string `json:"parentSuffix,omitempty" doc:"Existing suffix to create a sub-suffix of; the suffix must be below it"`
+}
+
+// sameDN compares two DNs ignoring case and spacing.
+func sameDN(a, b string) bool {
+	pa, err1 := ldap.ParseDN(a)
+	pb, err2 := ldap.ParseDN(b)
+	return err1 == nil && err2 == nil && pa.EqualFold(pb)
+}
+
+// below reports whether dn is strictly below base.
+func below(dn, base string) bool {
+	pd, err1 := ldap.ParseDN(dn)
+	pb, err2 := ldap.ParseDN(base)
+	return err1 == nil && err2 == nil && len(pd.RDNs) > len(pb.RDNs) && pb.AncestorOfFold(pd)
 }
 
 // CreateBackend creates the backend, its mapping tree entry and optionally the
@@ -115,6 +136,20 @@ func CreateBackend(c *ldap.Conn, nb NewBackend) error {
 	}
 	if _, err := ldap.ParseDN(nb.Suffix); err != nil || nb.Suffix == "" {
 		return fmt.Errorf("%w: suffix %q", ErrInvalidName, nb.Suffix)
+	}
+	if nb.ParentSuffix != "" {
+		list, err := ListBackends(c)
+		if err != nil {
+			return err
+		}
+		i := slices.IndexFunc(list, func(b Backend) bool { return sameDN(b.Suffix, nb.ParentSuffix) })
+		if i < 0 {
+			return fmt.Errorf("%w: parent suffix %s", ErrNotFound, nb.ParentSuffix)
+		}
+		if !below(nb.Suffix, list[i].Suffix) {
+			return fmt.Errorf("%w: %s is not below the parent suffix %s", ErrInvalidName, nb.Suffix, list[i].Suffix)
+		}
+		nb.ParentSuffix = list[i].Suffix // as the server spells it
 	}
 	be := ldap.NewAddRequest(backendDN(nb.Name), nil)
 	be.Attribute("objectClass", []string{"top", "extensibleObject", "nsBackendInstance"})
@@ -128,6 +163,9 @@ func CreateBackend(c *ldap.Conn, nb NewBackend) error {
 	mt.Attribute("cn", []string{nb.Suffix})
 	mt.Attribute("nsslapd-state", []string{"backend"})
 	mt.Attribute("nsslapd-backend", []string{nb.Name})
+	if nb.ParentSuffix != "" {
+		mt.Attribute("nsslapd-parent-suffix", []string{nb.ParentSuffix})
+	}
 	if err := c.Add(mt); err != nil {
 		_ = c.Del(ldap.NewDelRequest(backendDN(nb.Name), nil)) // roll back
 		return fmt.Errorf("create mapping tree: %w", err)
@@ -168,9 +206,23 @@ func rootEntry(suffix string) *ldap.AddRequest {
 
 // DeleteBackend removes the mapping tree entry and the backend (with its data).
 func DeleteBackend(c *ldap.Conn, name string) error {
-	b, err := GetBackend(c, name)
+	list, err := ListBackends(c)
 	if err != nil {
 		return err
+	}
+	i := slices.IndexFunc(list, func(b Backend) bool { return strings.EqualFold(b.Name, name) })
+	if i < 0 {
+		return fmt.Errorf("%w: backend %s", ErrNotFound, name)
+	}
+	b := list[i]
+	var subs []string
+	for _, o := range list {
+		if o.ParentSuffix != "" && sameDN(o.ParentSuffix, b.Suffix) {
+			subs = append(subs, o.Suffix)
+		}
+	}
+	if len(subs) > 0 {
+		return fmt.Errorf("%w: delete %s first", ErrHasSubSuffixes, strings.Join(subs, "; "))
 	}
 	mt, err := c.Search(ldap.NewSearchRequest(dnMappingTree, ldap.ScopeSingleLevel, ldap.NeverDerefAliases, 0, 0, false,
 		"(nsslapd-backend="+ldap.EscapeFilter(b.Name)+")", []string{"1.1"}, nil))

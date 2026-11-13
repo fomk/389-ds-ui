@@ -266,6 +266,8 @@ const (
 	OpLockAccount   = "lock-account"
 	OpUnlockAccount = "unlock-account"
 	OpInitReplica   = "init-replica"
+	OpEncryptAttr   = "encrypt-attr"
+	OpDecryptAttr   = "decrypt-attr"
 	// OpCertFromFiles: a server certificate imported from the watched files.
 	OpCertFromFiles = "cert-from-files"
 )

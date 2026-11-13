@@ -80,7 +80,8 @@ func toHTTPError(err error) error {
 	case errors.Is(err, schema.ErrInvalidDefinition):
 		return problem(http.StatusUnprocessableEntity, err.Error())
 	case errors.Is(err, ds.ErrSchemaInUse), errors.Is(err, ds.ErrSchemaNotUser), errors.Is(err, ds.ErrSchemaExists),
-		errors.Is(err, ds.ErrExists):
+		errors.Is(err, ds.ErrExists), errors.Is(err, ds.ErrHasSubSuffixes), errors.Is(err, ds.ErrEncryptedValues),
+		errors.Is(err, ds.ErrEncryptionKey):
 		return problem(http.StatusConflict, err.Error())
 	case errors.Is(err, certs.ErrInvalid), errors.Is(err, certs.ErrTool):
 		return problem(http.StatusUnprocessableEntity, err.Error())

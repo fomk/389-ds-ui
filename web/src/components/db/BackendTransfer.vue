@@ -18,6 +18,7 @@ const tasks = useTasksStore()
 
 const exportFile = ref('')
 const replication = ref(false)
+const decrypt = ref(false)
 const importFile = ref<string | null>(null)
 const confirming = ref(false)
 const files = ref<Schemas['Info'][]>([])
@@ -33,7 +34,7 @@ async function startExport() {
     tasks.upsert(
       await call(api.POST('/api/v1/backends/{name}/export', {
         params: { path: { name: props.backend.name } },
-        body: { file: exportFile.value.trim() || undefined, replication: replication.value },
+        body: { file: exportFile.value.trim() || undefined, replication: replication.value, decrypt: decrypt.value },
       })),
     )
     message.info(t('transfer.exportStarted'))
@@ -67,6 +68,7 @@ async function startImport() {
         <NInput v-model:value="exportFile" :placeholder="`${backend.name}_<time>.ldif`" :input-props="{ class: 'mono' }" class="file" />
       </NFormItem>
       <NCheckbox v-model:checked="replication">{{ t('transfer.replication') }}</NCheckbox>
+      <NCheckbox v-model:checked="decrypt">{{ t('transfer.decrypt') }}</NCheckbox>
       <div class="actions"><NButton type="primary" attr-type="submit">{{ t('transfer.export') }}</NButton></div>
     </NForm>
   </NCard>

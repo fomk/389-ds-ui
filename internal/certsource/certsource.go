@@ -47,6 +47,9 @@ type Store interface {
 type Server interface {
 	ServerCert(ctx context.Context) (string, error)
 	SetServerCert(ctx context.Context, nick string) error
+	// CheckServerKey refuses a certificate with another key while the
+	// server needs the current one (attribute encryption).
+	CheckServerKey(ctx context.Context, currentKey, newKey string) error
 }
 
 // Hooks connect the watcher to the rest of ds-ui; nil functions are skipped.
@@ -263,6 +266,14 @@ func (w *Watcher) check(ctx context.Context, now time.Time) (*source, bool, erro
 	}
 	if now.After(f.Leaf.NotAfter) {
 		return src, false, fmt.Errorf("the certificate in the files expired on %s", f.Leaf.NotAfter.UTC().Format(time.RFC3339))
+	}
+
+	for _, c := range list {
+		if c.Nickname == current {
+			if err := w.server.CheckServerKey(ctx, c.PublicKey, desc.PublicKey); err != nil {
+				return src, false, err
+			}
+		}
 	}
 
 	// Import (unless the same certificate is already in the database under

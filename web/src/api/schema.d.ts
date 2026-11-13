@@ -194,6 +194,41 @@ export interface paths {
         patch: operations["updateBackend"];
         trace?: never;
     };
+    "/api/v1/backends/{name}/encrypted-attrs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Attributes the backend stores encrypted */
+        get: operations["listEncryptedAttrs"];
+        put?: never;
+        /** Encrypt an attribute (AES) from now on; existing values after a re-import */
+        post: operations["addEncryptedAttr"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/backends/{name}/encrypted-attrs/{attr}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Stop encrypting an attribute (refused while entries have values, unless forced) */
+        delete: operations["deleteEncryptedAttr"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/backends/{name}/export": {
         parameters: {
             query?: never;
@@ -1761,6 +1796,8 @@ export interface components {
              */
             dnCacheMemSize: number;
             name: string;
+            /** @description Suffix this one is a sub-suffix of (nsslapd-parent-suffix) */
+            parentSuffix?: string;
             readOnly: boolean;
             referral?: string;
             /** @description Reject unindexed searches */
@@ -1903,6 +1940,8 @@ export interface components {
             /** Format: date-time */
             notBefore: string;
             pem?: string;
+            /** @description SHA-256 of the public key (SubjectPublicKeyInfo): equal for certificates of the same key */
+            publicKey: string;
             selfSigned: boolean;
             serial: string;
             /** @description Fingerprint of the DER certificate */
@@ -2079,6 +2118,14 @@ export interface components {
             /** @enum {string} */
             role: "supplier" | "hub" | "consumer";
         };
+        EncryptedAttr: {
+            /** @enum {string} */
+            algorithm: "AES" | "3DES";
+            attr: string;
+        };
+        EncryptedAttrInputBody: {
+            attr: string;
+        };
         Entry: {
             attributes: components["schemas"]["Attribute"][];
             dn: string;
@@ -2137,6 +2184,8 @@ export interface components {
             type: string;
         };
         ExportTaskInputBody: {
+            /** @description Write encrypted attributes in clear text (before turning their encryption off) */
+            decrypt?: boolean;
             /** @description File name in the LDIF directory; default <backend>_<timestamp>.ldif */
             file?: string;
             /** @description Include replication state (for initialising replicas) */
@@ -2263,6 +2312,8 @@ export interface components {
             createRoot: boolean;
             /** @description Backend (database) name, e.g. userroot */
             name: string;
+            /** @description Existing suffix to create a sub-suffix of; the suffix must be below it */
+            parentSuffix?: string;
             /** @description e.g. dc=example,dc=org */
             suffix: string;
         };
@@ -3279,6 +3330,104 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Backend"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listEncryptedAttrs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Backend name */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EncryptedAttr"][];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    addEncryptedAttr: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EncryptedAttrInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteEncryptedAttr: {
+        parameters: {
+            query?: {
+                /** @description Remove even if entries have values of the attribute (they read back as ciphertext after the next restart) */
+                force?: boolean;
+            };
+            header?: never;
+            path: {
+                name: string;
+                attr: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

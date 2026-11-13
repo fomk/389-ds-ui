@@ -219,6 +219,11 @@ func registerTLS(api huma.API, d Deps) {
 				if before, err = ds.ServerCertName(lc); err != nil {
 					return err
 				}
+				if cur, err := s.Get(ctx, before); err == nil {
+					if err := ds.CheckServerKey(lc, cur.PublicKey, c.PublicKey); err != nil {
+						return err
+					}
+				}
 				return ds.SetServerCertName(lc, c.Nickname)
 			})
 			if err != nil {

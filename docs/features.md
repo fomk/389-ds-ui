@@ -53,6 +53,8 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 | Feature | Mechanism | B | C |
 |---|---|---|---|
 | Suffixes/backends: CRUD, read-only, referrals | LDAP | ✅ | ✅ |
+| Sub-suffixes (`nsslapd-parent-suffix`); a suffix with sub-suffixes cannot be deleted | LDAP | ✅ | ✅ |
+| Attribute encryption (AES): list, add, remove (guarded while values exist); decrypted LDIF export; the server certificate keeps its key while it is on | LDAP + Task | ✅ | ✅ |
 | Indexes: CRUD, reindex | LDAP + Task | ✅ | ✅ |
 | VLV indexes (listing; create/delete in stage 3) | LDAP + Task | ✅ | ✅ |
 | Backup / restore (online) | Task | ✅ | ✅ |

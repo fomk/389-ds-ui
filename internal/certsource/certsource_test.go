@@ -60,10 +60,19 @@ func (s *fakeStore) Delete(_ context.Context, nick string) error {
 	return nil
 }
 
-type fakeServer struct{ nick string }
+type fakeServer struct {
+	nick      string
+	lockedKey bool
+}
 
 func (s *fakeServer) ServerCert(context.Context) (string, error)      { return s.nick, nil }
 func (s *fakeServer) SetServerCert(_ context.Context, n string) error { s.nick = n; return nil }
+func (s *fakeServer) CheckServerKey(_ context.Context, cur, next string) error {
+	if s.lockedKey && cur != next {
+		return errors.New("key change refused")
+	}
+	return nil
+}
 
 // writePair writes a self-signed certificate and its key; it returns the
 // certificate file, the key file and the SHA-256 fingerprint.
@@ -165,6 +174,16 @@ func TestRejectedFiles(t *testing.T) {
 	w = New(Config{CertFile: cf, KeyFile: otherKey}, store, server, Hooks{}, nil)
 	if _, err := w.Check(context.Background()); err == nil || !strings.Contains(err.Error(), "does not match") {
 		t.Errorf("foreign key: %v", err)
+	}
+
+	// Attribute encryption pins the server key: a certificate of another key
+	// is refused and nothing is imported.
+	cf, kf, _ = writePair(t, dir, "new.example.org", now.Add(-time.Hour), now.Add(time.Hour))
+	pinned := &fakeStore{certs: []certs.Certificate{{Nickname: "Server-Cert", HasKey: true, SHA256: "AA", PublicKey: "KEY"}}}
+	locked := &fakeServer{nick: "Server-Cert", lockedKey: true}
+	w = New(Config{CertFile: cf, KeyFile: kf}, pinned, locked, Hooks{}, nil)
+	if _, err := w.Check(context.Background()); err == nil || locked.nick != "Server-Cert" || len(pinned.certs) != 1 {
+		t.Errorf("key change with encryption: %v, server %q, certs %d", err, locked.nick, len(pinned.certs))
 	}
 
 	// Missing file.

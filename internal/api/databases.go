@@ -71,6 +71,18 @@ type updateDefaultIndexInput struct {
 		MatchingRules []string `json:"matchingRules,omitempty"`
 	}
 }
+type encryptedAttrsOutput struct{ Body []ds.EncryptedAttr }
+type encryptedAttrInput struct {
+	Name string `path:"name"`
+	Body struct {
+		Attr string `json:"attr" minLength:"1"`
+	}
+}
+type encryptedAttrPath struct {
+	Name  string `path:"name"`
+	Attr  string `path:"attr"`
+	Force bool   `query:"force" doc:"Remove even if entries have values of the attribute (they read back as ciphertext after the next restart)"`
+}
 type tasksOutput struct{ Body []*ds.Task }
 type taskPath struct {
 	ID string `path:"id"`
@@ -138,6 +150,41 @@ func registerDatabases(api huma.API, d Deps) {
 				return nil, toHTTPError(err)
 			}
 			return &noContent{}, nil
+		})
+
+	huma.Register(api, huma.Operation{OperationID: "listEncryptedAttrs", Method: http.MethodGet, Path: apiPrefix + "/backends/{name}/encrypted-attrs",
+		Summary: "Attributes the backend stores encrypted", Tags: tags},
+		func(ctx context.Context, in *backendPath) (*encryptedAttrsOutput, error) {
+			var list []ds.EncryptedAttr
+			err := conn(ctx, func(c *ldap.Conn) (err error) { list, err = ds.ListEncryptedAttrs(c, in.Name); return })
+			if err != nil {
+				return nil, toHTTPError(err)
+			}
+			return &encryptedAttrsOutput{Body: list}, nil
+		})
+	huma.Register(api, huma.Operation{OperationID: "addEncryptedAttr", Method: http.MethodPost, Path: apiPrefix + "/backends/{name}/encrypted-attrs",
+		Summary: "Encrypt an attribute (AES) from now on; existing values after a re-import", Tags: tags, DefaultStatus: http.StatusNoContent},
+		func(ctx context.Context, in *encryptedAttrInput) (*noContent, error) {
+			attr := in.Body.Attr
+			if d.Schemas != nil {
+				if s, _, err := d.Schemas.Get(ctx, d.LDAP); err == nil {
+					if at := s.Attr(attr); at != nil && len(at.Names) > 0 {
+						attr = at.Names[0]
+					} else {
+						return nil, problem(http.StatusUnprocessableEntity, "unknown attribute "+attr)
+					}
+				}
+			}
+			err := conn(ctx, func(c *ldap.Conn) error { return ds.AddEncryptedAttr(c, in.Name, attr) })
+			d.Tasks.Record(ctx, ds.OpEncryptAttr, in.Name+": "+attr, err)
+			return emptyResult(err)
+		})
+	huma.Register(api, huma.Operation{OperationID: "deleteEncryptedAttr", Method: http.MethodDelete, Path: apiPrefix + "/backends/{name}/encrypted-attrs/{attr}",
+		Summary: "Stop encrypting an attribute (refused while entries have values, unless forced)", Tags: tags, DefaultStatus: http.StatusNoContent},
+		func(ctx context.Context, in *encryptedAttrPath) (*noContent, error) {
+			err := conn(ctx, func(c *ldap.Conn) error { return ds.DeleteEncryptedAttr(c, in.Name, in.Attr, in.Force) })
+			d.Tasks.Record(ctx, ds.OpDecryptAttr, in.Name+": "+in.Attr, err)
+			return emptyResult(err)
 		})
 
 	huma.Register(api, huma.Operation{OperationID: "listIndexes", Method: http.MethodGet, Path: apiPrefix + "/backends/{name}/indexes",
@@ -287,4 +334,11 @@ func registerDatabases(api huma.API, d Deps) {
 			}
 			return &taskOutput{Status: http.StatusOK, Body: t}, nil
 		})
+}
+
+func emptyResult(err error) (*noContent, error) {
+	if err != nil {
+		return nil, toHTTPError(err)
+	}
+	return &noContent{}, nil
 }

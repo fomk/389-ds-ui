@@ -27,6 +27,7 @@ import BackupsPanel from '@/components/db/BackupsPanel.vue'
 import LdifFilesPanel from '@/components/db/LdifFilesPanel.vue'
 import CreateBackendDialog from '@/components/db/CreateBackendDialog.vue'
 import VlvPanel from '@/components/db/VlvPanel.vue'
+import EncryptedAttrsPanel from '@/components/db/EncryptedAttrsPanel.vue'
 import TaskList from '@/components/TaskList.vue'
 import { useServerStore } from '@/stores/server'
 
@@ -45,6 +46,26 @@ const section = computed({
   set: (v: string) => router.replace({ path: '/databases', query: v === 'suffixes' ? {} : { section: v } }),
 })
 const creating = ref(false)
+
+/** Suffixes in tree order: each sub-suffix after its parent, with its depth. */
+const ordered = computed(() => {
+  const all = backends.value ?? []
+  const norm = (s: string) => s.replace(/\s*,\s*/g, ',').toLowerCase()
+  const out: { b: Backend; depth: number; label: string }[] = []
+  const isRoot = (x: Backend) => !x.parentSuffix || !all.some((p) => norm(p.suffix) === norm(x.parentSuffix!))
+  const walk = (parent: string | undefined, depth: number) => {
+    const children = all.filter((x) => (parent === undefined ? isRoot(x) : !!x.parentSuffix && norm(x.parentSuffix) === norm(parent)))
+    for (const b of children) {
+      // A sub-suffix shows only the part above its parent ("ou=Branch").
+      const tail = parent && norm(b.suffix).endsWith(',' + norm(parent))
+      const label = tail ? b.suffix.slice(0, b.suffix.length - parent.length).replace(/\s*,\s*$/, '') : b.suffix
+      out.push({ b, depth, label: label || b.suffix })
+      walk(b.suffix, depth + 1)
+    }
+  }
+  walk(undefined, 0)
+  return out
+})
 
 const selectedName = computed(() => (typeof route.query.be === 'string' ? route.query.be : backends.value?.[0]?.name))
 const selected = computed(() => backends.value?.find((b) => b.name === selectedName.value))
@@ -95,27 +116,27 @@ async function onDeleted() {
 
   <NGrid v-else cols="1 l:4" responsive="screen" :x-gap="16" :y-gap="16">
     <NGridItem>
-      <NCard size="small" :title="t('db.suffixes')">
+      <NCard size="small" :title="t('db.suffixes')" class="suffix-list">
         <template #header-extra>
-          <NButton size="small" type="primary" @click="creating = true">
+          <NButton size="small" type="primary" :title="t('db.create')" :aria-label="t('db.create')" @click="creating = true">
             <template #icon><NIcon><Plus /></NIcon></template>
-            {{ t('db.create') }}
           </NButton>
         </template>
         <NSkeleton v-if="!backends" text :repeat="3" />
         <NEmpty v-else-if="!backends.length" :description="t('db.none')" />
         <div v-else class="list">
           <button
-            v-for="b in backends"
+            v-for="{ b, depth, label } in ordered"
             :key="b.name"
             type="button"
             class="item"
             :class="{ active: b.name === selectedName }"
+            :style="{ paddingLeft: `${10 + depth * 18}px` }"
             @click="select(b.name)"
           >
             <NIcon :size="18"><Database /></NIcon>
             <span class="item-text">
-              <span class="mono suffix">{{ b.suffix }}</span>
+              <span class="mono suffix" :title="b.suffix">{{ label }}</span>
               <span class="muted">{{ b.name }}</span>
             </span>
             <NTag v-if="b.readOnly" size="tiny" :bordered="false" type="warning">{{ t('db.readOnly') }}</NTag>
@@ -150,15 +171,22 @@ async function onDeleted() {
           <NTabPane name="vlv" :tab="t('db.tabs.vlv')">
             <VlvPanel :backend="selected.name" :suffix="selected.suffix" />
           </NTabPane>
+          <NTabPane name="encryption" :tab="t('db.tabs.encryption')">
+            <EncryptedAttrsPanel :backend="selected.name" />
+          </NTabPane>
         </NTabs>
       </NCard>
     </NGridItem>
   </NGrid>
 
-  <CreateBackendDialog v-model:show="creating" @created="onCreated" />
+  <CreateBackendDialog v-model:show="creating" :suffixes="(backends ?? []).map((b) => b.suffix)" @created="onCreated" />
 </template>
 
 <style scoped>
+.suffix-list :deep(.n-card-header__main) {
+  white-space: nowrap;
+}
+
 .title {
   margin: 0 0 20px;
 }

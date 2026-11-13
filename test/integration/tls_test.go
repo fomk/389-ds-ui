@@ -141,7 +141,6 @@ func TestReplaceServerCertificate(t *testing.T) {
 		rec := serve(h, httptestRequest(method, path, body))
 		return rec.Code, rec.Body.String()
 	}
-	js := func(v any) string { b, _ := json.Marshal(v); return string(b) }
 
 	// What the fresh container has.
 	code, body := do("GET", "/api/v1/security/certs", "")

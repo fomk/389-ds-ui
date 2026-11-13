@@ -332,7 +332,8 @@
     "tabs": {
       "settings": "Settings",
       "indexes": "Indexes",
-      "vlv": "VLV indexes"
+      "vlv": "VLV indexes",
+      "encryption": "Encryption"
     },
     "name": "Backend name",
     "nameHint": "Letters, digits, - and _, e.g. userroot",
@@ -368,7 +369,10 @@
     "suffixesTab": "Suffixes",
     "dangerShort": "Removes the backend and all its entries for good.",
     "deleteButton": "Delete suffix…",
-    "deleteButtonFinal": "Delete suffix and data"
+    "deleteButtonFinal": "Delete suffix and data",
+    "parentSuffix": "Parent suffix",
+    "parentSuffixHint": "Optional: makes a sub-suffix — its entries appear under the parent in the tree but live in their own database.",
+    "noParent": "none (top-level suffix)"
   },
   "indexes": {
     "attribute": "Attribute",
@@ -436,7 +440,9 @@
       "fixup-linked-attributes": "Linked attributes fixup",
       "cleanallruv": "CleanAllRUV",
       "init-replica": "Replica initialization",
-      "cert-from-files": "Certificate from files"
+      "cert-from-files": "Certificate from files",
+      "encrypt-attr": "Attribute encryption on",
+      "decrypt-attr": "Attribute encryption off"
     },
     "progress": "{current} of {total}",
     "completed": "Completed."
@@ -486,7 +492,8 @@
     "importStarted": "Import started",
     "error": "Could not start the task",
     "importButton": "Import…",
-    "importWarning": "All entries of {suffix} will be replaced with the content of {file}."
+    "importWarning": "All entries of {suffix} will be replaced with the content of {file}.",
+    "decrypt": "Write encrypted attributes in clear text (before turning their encryption off)"
   },
   "logs": {
     "title": "Logs",
@@ -2099,5 +2106,20 @@
     "invalid": "Wrong user name or password.",
     "noAccess": "The password is right, but this account has no access to ds-ui. Ask an administrator to add it to a ds-ui group.",
     "tooMany": "Too many failed attempts. Wait a few minutes."
+  },
+  "encryption": {
+    "description": "Values of these attributes are stored encrypted (AES) in the database files, backups and changelog; clients read them in clear text as usual.",
+    "keyWarning": "The encryption key is protected by the key of the server certificate. Renew the certificate with the same key (certbot --reuse-key, cert-manager rotationPolicy: Never): with a certificate of another key the server does not start, so ds-ui refuses such a switch while attributes are encrypted.",
+    "choose": "Attribute",
+    "add": "Encrypt",
+    "added": "{attr} is encrypted from now on. Existing values are encrypted after an export and import of the suffix.",
+    "attribute": "Attribute",
+    "algorithm": "Algorithm",
+    "none": "No encrypted attributes",
+    "existingHint": "Values written before encryption was turned on stay unencrypted until the suffix is exported and imported again (Export / import tab).",
+    "remove": "Stop encrypting",
+    "removeConfirm": "Stop encrypting {attr}?",
+    "hasValues": "Entries have values of {attr}. Once the server stops encrypting it, values stored encrypted read back as unreadable data after the next restart. First export the suffix with the clear-text option, then remove the setting and import that export.",
+    "removeAnyway": "Remove anyway"
   }
 }

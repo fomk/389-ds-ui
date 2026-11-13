@@ -121,6 +121,7 @@ What happens on each check:
 - If the server is already configured with this certificate, nothing happens.
 - Otherwise the certificate, its key and chain are imported into the NSS database and made the server certificate (`nsSSLPersonalitySSL`), and the import is recorded in the task history. A certificate with the **same subject** as one already in the database (a renewal) replaces it under its nickname — NSS cannot keep two such certificates apart. A new subject gets the nickname `Server-Cert-auto-<date>-<time>`; earlier automatic imports are deleted once they are no longer the configured certificate.
 - The running server keeps presenting the old certificate until it restarts.
+- While a backend encrypts attributes, a certificate with **another key** is refused (the server would not start: the encryption key is wrapped with the server key). Renew with the same key — `certbot renew --reuse-key`, cert-manager `privateKey.rotationPolicy: Never` — or turn attribute encryption off first. The same check applies when the server certificate is chosen manually.
 
 The files must be readable by uid 389 inside the `ui` container. Examples:
 

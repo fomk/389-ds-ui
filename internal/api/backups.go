@@ -31,6 +31,7 @@ type exportTaskInput struct {
 	Body struct {
 		File        string `json:"file,omitempty" doc:"File name in the LDIF directory; default <backend>_<timestamp>.ldif"`
 		Replication bool   `json:"replication,omitempty" doc:"Include replication state (for initialising replicas)"`
+		Decrypt     bool   `json:"decrypt,omitempty" doc:"Write encrypted attributes in clear text (before turning their encryption off)"`
 	}
 }
 type importTaskInput struct {
@@ -227,6 +228,9 @@ func registerBackups(api huma.API, d Deps) {
 			attrs := map[string][]string{"nsInstance": {in.Name}, "nsFilename": {filepath.Join(ldif, file)}}
 			if in.Body.Replication {
 				attrs["nsExportReplica"] = []string{"true"}
+			}
+			if in.Body.Decrypt {
+				attrs["nsExportDecrypt"] = []string{"true"}
 			}
 			return startTask(ctx, ds.TaskExport, in.Name+" → "+file, attrs)
 		})

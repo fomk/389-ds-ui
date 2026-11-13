@@ -111,6 +111,7 @@ type Certificate struct {
 	Serial      string    `json:"serial"`
 	KeyType     string    `json:"keyType"`
 	SHA256      string    `json:"sha256" doc:"Fingerprint of the DER certificate"`
+	PublicKey   string    `json:"publicKey" doc:"SHA-256 of the public key (SubjectPublicKeyInfo): equal for certificates of the same key"`
 	PEM         string    `json:"pem,omitempty"`
 }
 
@@ -135,8 +136,10 @@ func Describe(der []byte) (*Certificate, error) {
 		return nil, fmt.Errorf("%w: %v", ErrInvalid, err)
 	}
 	sum := sha256.Sum256(der)
+	spki := sha256.Sum256(x.RawSubjectPublicKeyInfo)
 	c := &Certificate{
-		Subject: formatName(x.Subject), Issuer: formatName(x.Issuer), NotBefore: x.NotBefore, NotAfter: x.NotAfter,
+		PublicKey: strings.ToUpper(hex.EncodeToString(spki[:])),
+		Subject:   formatName(x.Subject), Issuer: formatName(x.Issuer), NotBefore: x.NotBefore, NotAfter: x.NotAfter,
 		DNSNames: append([]string{}, x.DNSNames...), IPAddresses: []string{}, Serial: x.SerialNumber.Text(16),
 		CA: x.IsCA, SHA256: strings.ToUpper(hex.EncodeToString(sum[:])),
 		SelfSigned: bytesEqual(x.RawSubject, x.RawIssuer) && x.CheckSignature(x.SignatureAlgorithm, x.RawTBSCertificate, x.Signature) == nil,
