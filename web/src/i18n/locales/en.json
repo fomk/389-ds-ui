@@ -20,7 +20,8 @@
     "roles": "Roles & CoS",
     "replication": "Replication",
     "security": "TLS & certificates",
-    "comingInStage": "Coming in stage {stage}"
+    "comingInStage": "Coming in stage {stage}",
+    "health": "Health"
   },
   "status": {
     "checking": "checking…",
@@ -2269,5 +2270,189 @@
     "all": "All: {n}",
     "truncated": "Only the first {n} accounts are shown; narrow the subtree or the filter.",
     "none": "No accounts"
+  },
+  "health": {
+    "run": "Check again",
+    "description": "Checks settings, certificates, disks, databases, replication and plug-ins for problems. Nothing is changed.",
+    "severity": {
+      "error": "errors",
+      "warning": "warnings",
+      "info": "notes"
+    },
+    "ran": "{checks} checks · {when} · {seconds} s",
+    "checkFailed": "Check {check} could not run:",
+    "allGood": "No problems found",
+    "open": "Open",
+    "areas": {
+      "security": "security",
+      "tls": "TLS",
+      "disk": "disk",
+      "database": "databases",
+      "replication": "replication",
+      "plugins": "plug-ins",
+      "logs": "logs"
+    },
+    "findings": {
+      "anonymous-access": {
+        "title": "Anonymous access is allowed",
+        "detail": "Anyone can read what the ACIs allow without binding.",
+        "fix": "Set anonymous access to \"rootdse\" if clients always bind."
+      },
+      "unauthenticated-binds": {
+        "title": "Unauthenticated binds are allowed",
+        "detail": "A bind with a DN and an empty password succeeds as anonymous; applications may take it for a successful login.",
+        "fix": "Turn off unauthenticated binds."
+      },
+      "plain-binds": {
+        "title": "Passwords may be sent without encryption",
+        "detail": "TLS is on, but simple binds over plain LDAP are still accepted.",
+        "fix": "Require secure binds or set a minimum SSF."
+      },
+      "password-scheme-weak": {
+        "title": "Weak password storage: {scheme}",
+        "detail": "User passwords are stored in clear text or with a fast unsalted hash.",
+        "fix": "Choose PBKDF2-SHA512; passwords are re-hashed when users change them."
+      },
+      "password-scheme-fast": {
+        "title": "Fast password hash: {scheme}",
+        "detail": "Salted SHA is fast to brute-force if the database leaks.",
+        "fix": "Prefer PBKDF2-SHA512."
+      },
+      "rootpw-scheme-weak": {
+        "title": "Weak storage of the Directory Manager password: {scheme}"
+      },
+      "rootpw-scheme-fast": {
+        "title": "Fast hash for the Directory Manager password: {scheme}",
+        "fix": "Prefer PBKDF2-SHA512, then set the password again."
+      },
+      "local-password-scheme-weak": {
+        "title": "Weak password storage in a local policy: {scheme}",
+        "detail": "{policy}",
+        "fix": "Choose PBKDF2-SHA512 in that policy."
+      },
+      "local-password-scheme-fast": {
+        "title": "Fast password hash in a local policy: {scheme}",
+        "detail": "{policy}",
+        "fix": "Prefer PBKDF2-SHA512 in that policy."
+      },
+      "tls-off": {
+        "title": "TLS is off",
+        "detail": "Passwords and data travel in clear text.",
+        "fix": "Add a server certificate and turn on TLS."
+      },
+      "tls-old-versions": {
+        "title": "Old TLS versions are allowed (from {version})",
+        "detail": "TLS 1.0 and 1.1 are deprecated.",
+        "fix": "Set the minimum version to TLS1.2."
+      },
+      "tls-weak-ciphers": {
+        "title": "Weak ciphers are allowed",
+        "fix": "Turn off weak ciphers."
+      },
+      "server-cert-expired": {
+        "title": "The server certificate has expired",
+        "detail": "{name}, {date}.",
+        "fix": "Replace it on the Security page."
+      },
+      "server-cert-expiring": {
+        "title": "The server certificate expires in {days} days",
+        "detail": "{name}, {date}.",
+        "fix": "Renew it in time; with attribute encryption keep the same key."
+      },
+      "ca-cert-expired": {
+        "title": "A trusted CA certificate has expired",
+        "detail": "{name}, {date}.",
+        "fix": "Remove it or import its successor."
+      },
+      "ca-cert-expiring": {
+        "title": "A trusted CA certificate expires in {days} days",
+        "detail": "{name}, {date}."
+      },
+      "server-cert-self-signed": {
+        "title": "The server certificate is self-signed",
+        "detail": "{name}: clients cannot verify it without trusting it explicitly.",
+        "fix": "Use a certificate from your CA."
+      },
+      "server-cert-missing": {
+        "title": "The server certificate is not in the database",
+        "detail": "nsSSLPersonalitySSL names {name}; TLS will not start.",
+        "fix": "Choose an existing certificate."
+      },
+      "disk-full": {
+        "title": "Disk almost full: {partition} {percent}%",
+        "detail": "The server stops writing when the disk is full.",
+        "fix": "Free space or enlarge the volume."
+      },
+      "disk-filling": {
+        "title": "Disk filling up: {partition} {percent}%",
+        "fix": "Free space or enlarge the volume; rotate and delete old logs."
+      },
+      "disk-monitoring-off": {
+        "title": "Disk monitoring is off",
+        "detail": "Without it the server does not protect itself from a full disk.",
+        "fix": "Turn on disk monitoring."
+      },
+      "suffix-no-root": {
+        "title": "Suffix without a root entry: {suffix}",
+        "detail": "The backend exists but holds no entries.",
+        "fix": "Create the root entry or import data."
+      },
+      "backend-read-only": {
+        "title": "Read-only suffix: {suffix}",
+        "detail": "Changes are refused."
+      },
+      "backend-not-serving": {
+        "title": "Suffix not served from its database: {suffix}",
+        "detail": "Mapping tree state: {state}."
+      },
+      "entry-cache-small": {
+        "title": "Entry cache too small: {backend}",
+        "detail": "The cache is full and serves only {ratio}% of lookups.",
+        "fix": "Enlarge the entry cache of the suffix."
+      },
+      "agreement-disabled": {
+        "title": "Replication agreement disabled: {agreement}",
+        "detail": "{suffix}"
+      },
+      "agreement-error": {
+        "title": "Replication fails: {agreement}",
+        "detail": "{status}",
+        "fix": "Check the consumer, credentials and network; see the errors log."
+      },
+      "agreement-init-error": {
+        "title": "Replica initialisation failed: {agreement}",
+        "detail": "{status}",
+        "fix": "Initialise the replica again."
+      },
+      "changelog-unbounded": {
+        "title": "Replication changelog grows without limit",
+        "detail": "{suffix}: no maximum age or number of entries.",
+        "fix": "Set a maximum age (e.g. 7d)."
+      },
+      "replication-conflicts": {
+        "title": "Replication conflicts: {count}",
+        "detail": "{suffix}",
+        "fix": "Resolve them in the Replication section."
+      },
+      "plugin-attr-not-indexed": {
+        "title": "{attribute} is not indexed in {backend}",
+        "detail": "The {plugin} plug-in searches by it on every change.",
+        "fix": "Add an equality index and reindex."
+      },
+      "retro-changelog-unbounded": {
+        "title": "Retro changelog grows without limit",
+        "detail": "The plug-in is on without a maximum age.",
+        "fix": "Set a maximum age."
+      },
+      "access-log-off": {
+        "title": "Access log is off",
+        "detail": "Operations cannot be traced."
+      },
+      "error-log-debug": {
+        "title": "Debug logging is on (level {level})",
+        "detail": "Extra error-log levels slow the server and fill the disk.",
+        "fix": "Set the level back to 16384 when done."
+      }
+    }
   }
 }

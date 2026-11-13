@@ -1139,6 +1139,22 @@
         },
         "type": "object"
       },
+      "CheckError": {
+        "additionalProperties": false,
+        "properties": {
+          "check": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "check",
+          "message"
+        ],
+        "type": "object"
+      },
       "ChildrenPage": {
         "additionalProperties": false,
         "properties": {
@@ -1750,6 +1766,52 @@
         },
         "required": [
           "name"
+        ],
+        "type": "object"
+      },
+      "Finding": {
+        "additionalProperties": false,
+        "properties": {
+          "area": {
+            "enum": [
+              "security",
+              "tls",
+              "disk",
+              "database",
+              "replication",
+              "plugins",
+              "logs"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "description": "What was found, e.g. tls-cert-expiring",
+            "type": "string"
+          },
+          "link": {
+            "description": "UI route where it is fixed",
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Values for the text (names, dates, numbers)",
+            "type": "object"
+          },
+          "severity": {
+            "enum": [
+              "error",
+              "warning",
+              "info"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "severity",
+          "area"
         ],
         "type": "object"
       },
@@ -3383,6 +3445,45 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "Report": {
+        "additionalProperties": false,
+        "properties": {
+          "checks": {
+            "description": "Checks that ran",
+            "format": "int64",
+            "type": "integer"
+          },
+          "duration": {
+            "description": "Seconds",
+            "format": "double",
+            "type": "number"
+          },
+          "failed": {
+            "items": {
+              "$ref": "#/components/schemas/CheckError"
+            },
+            "type": "array"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "type": "array"
+          },
+          "started": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "findings",
+          "checks",
+          "failed",
+          "started",
+          "duration"
+        ],
         "type": "object"
       },
       "Role": {
@@ -6947,6 +7048,37 @@
         "summary": "Stream entries as LDIF or CSV",
         "tags": [
           "search"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Report"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Check the server for problems (settings, certificates, disks, replication, indexes)",
+        "tags": [
+          "health"
         ]
       }
     },

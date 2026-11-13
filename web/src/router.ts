@@ -4,6 +4,7 @@ import {
   Activity,
   BookOpen,
   Database,
+  HeartPulse,
   House,
   KeyRound,
   Lock,
@@ -16,6 +17,7 @@ import {
 } from '@lucide/vue'
 import BrowserView from '@/views/BrowserView.vue'
 import DatabasesView from '@/views/DatabasesView.vue'
+import HealthView from '@/views/HealthView.vue'
 import LogsView from '@/views/LogsView.vue'
 import MonitorView from '@/views/MonitorView.vue'
 import OverviewView from '@/views/OverviewView.vue'
@@ -35,6 +37,7 @@ export type NavKey =
   | 'overview'
   | 'browser'
   | 'monitor'
+  | 'health'
   | 'databases'
   | 'logs'
   | 'settings'
@@ -60,6 +63,7 @@ export const nav: NavItem[] = [
   { path: '/', key: 'overview', icon: House, stage: 0, view: OverviewView },
   { path: '/browser', key: 'browser', icon: Network, stage: 1, view: BrowserView },
   { path: '/monitor', key: 'monitor', icon: Activity, stage: 2, view: MonitorView },
+  { path: '/health', key: 'health', icon: HeartPulse, stage: 7, view: HealthView },
   { path: '/databases', key: 'databases', icon: Database, stage: 2, view: DatabasesView },
   { path: '/logs', key: 'logs', icon: ScrollText, stage: 2, view: LogsView },
   { path: '/settings', key: 'settings', icon: Settings, stage: 3, view: SettingsView },

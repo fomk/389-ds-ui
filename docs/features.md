@@ -38,7 +38,7 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 | Root DN, DM password change | LDAP (`nsslapd-rootpw`) | 3 | ✅ | ✅ |
 | SASL: mechanisms, mappings | LDAP (`cn=sasl,cn=config`) | 3 | ✅ | ✅ |
 | LDAPI settings | LDAP | 3 | ✅ | ✅ |
-| Healthcheck | LDAP + File (+ CLI in A) | 7 | 🔄 | 🔄 |
+| Health check (bind and password-storage settings, TLS, server/CA certificate expiry, disk space and monitoring, suffixes, entry caches, replication agreements/changelog/conflicts, indexes plug-ins need, retro changelog, debug logging) — done | LDAP (+ NSS database in C) | 7 | ✅ (no certificate expiry) | ✅ |
 
 ## Logs (stages 2–3)
 

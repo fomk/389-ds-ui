@@ -146,6 +146,7 @@ func register(api huma.API, d Deps) {
 	registerRoles(api, d)
 	registerReplication(api, d)
 	registerTLS(api, d)
+	registerHealth(api, d)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

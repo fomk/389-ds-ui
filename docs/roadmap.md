@@ -165,7 +165,7 @@ Work items:
 
 Work items:
 - Multi-server: registry of remote servers (mode B), context switching in the UI; replication lag monitoring across the topology (comparing RUVs between nodes).
-- Healthcheck: a set of checks (LDAP part of an equivalent of `dsctl healthcheck` + file checks in C), "Health" page.
+- ✅ Health check: a set of checks over LDAP and the NSS database, "Health" page.
 - ~~Mode A (all-in-one)~~ — dropped (ADR-012): the DS image is built in the separate 389-ds-base-docker repository, ds-ui runs next to it (modes C and B).
 - e2e tests (Playwright) for key scenarios, editor load smoke test.
 - User documentation, CHANGELOG, image versioning, publishing to a registry.

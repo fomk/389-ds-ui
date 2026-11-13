@@ -22,6 +22,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/api"
 	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/events"
+	"github.com/fomk/389-ds-ui/internal/health"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 	"github.com/fomk/389-ds-ui/internal/providers"
 )
@@ -281,6 +282,18 @@ func TestTwoSupplierReplication(t *testing.T) {
 	})
 	if conflicts[0].Reason == "" || !strings.Contains(strings.ToLower(conflicts[0].DN), "uid=twin") {
 		t.Errorf("conflict = %+v", conflicts[0])
+	}
+	// The health check sees the conflicts of a replicated suffix.
+	found := false
+	for _, n := range []*node{ds1, ds2} {
+		rep := health.Run(context.Background(), health.Env{LDAP: n.c})
+		if len(rep.Failed) > 0 {
+			t.Errorf("health on %s: %+v", n.name, rep.Failed)
+		}
+		found = found || slices.ContainsFunc(rep.Findings, func(f health.Finding) bool { return f.ID == "replication-conflicts" })
+	}
+	if !found {
+		t.Error("health check did not report the conflict")
 	}
 
 	// Resolve it by keeping the conflict entry under a new RDN; any other

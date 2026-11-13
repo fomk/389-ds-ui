@@ -702,6 +702,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check the server for problems (settings, certificates, disks, replication, indexes) */
+        get: operations["healthCheck"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ldif-files": {
         parameters: {
             query?: never;
@@ -2083,6 +2100,10 @@ export interface components {
             /** Format: int64 */
             trimInterval?: number;
         };
+        CheckError: {
+            check: string;
+            message: string;
+        };
         ChildrenPage: {
             items: components["schemas"]["Summary"][];
             /** @description Pass as cursor to get the next page */
@@ -2294,6 +2315,20 @@ export interface components {
             /** @description May reference other fields as {attr}; {next:attr} is the next free number */
             default?: string;
             name: string;
+        };
+        Finding: {
+            /** @enum {string} */
+            area: "security" | "tls" | "disk" | "database" | "replication" | "plugins" | "logs";
+            /** @description What was found, e.g. tls-cert-expiring */
+            id: string;
+            /** @description UI route where it is fixed */
+            link?: string;
+            /** @description Values for the text (names, dates, numbers) */
+            params?: {
+                [key: string]: string;
+            };
+            /** @enum {string} */
+            severity: "error" | "warning" | "info";
         };
         GerInputBody: {
             /** @description Attributes the entry does not have yet */
@@ -2767,6 +2802,22 @@ export interface components {
              * @enum {string}
              */
             role?: "supplier" | "hub" | "consumer";
+        };
+        Report: {
+            /**
+             * Format: int64
+             * @description Checks that ran
+             */
+            checks: number;
+            /**
+             * Format: double
+             * @description Seconds
+             */
+            duration: number;
+            failed: components["schemas"]["CheckError"][];
+            findings: components["schemas"]["Finding"][];
+            /** Format: date-time */
+            started: string;
         };
         Role: {
             description?: string;
@@ -4926,6 +4977,35 @@ export interface operations {
                 content: {
                     "text/csv": unknown;
                     "text/ldif": unknown;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    healthCheck: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Report"];
                 };
             };
             /** @description Error */
