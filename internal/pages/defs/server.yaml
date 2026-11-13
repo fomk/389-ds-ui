@@ -20,6 +20,8 @@ pages:
       - {attr: nsslapd-ignore-virtual-attrs, type: bool, group: behaviour}
       - {attr: nsslapd-return-exact-case, type: bool, group: behaviour, restart: true}
       - {attr: nsslapd-dynamic-plugins, type: bool, group: behaviour}
+      - {attr: nsslapd-plugin-binddn-tracking, type: bool, group: behaviour}
+      - {attr: nsslapd-ignore-time-skew, type: bool, group: behaviour}
 
   - id: server-limits
     section: server
@@ -30,15 +32,31 @@ pages:
       - {attr: nsslapd-timelimit, type: duration, min: -1, group: search}
       - {attr: nsslapd-max-filter-nest-level, type: int, min: 0, group: search}
       - {attr: nsslapd-maxsimplepaged-per-conn, type: int, min: -1, group: search}
+      - {attr: nsslapd-pagedsizelimit, type: int, min: -1, group: search}
+      - {attr: nsslapd-maxcontrolsperop, type: int, min: 0, group: search}
       - {attr: nsslapd-idletimeout, type: duration, min: 0, group: connections}
       - {attr: nsslapd-ioblocktimeout, type: int, min: 0, unit: ms, group: connections}
       - {attr: nsslapd-maxbersize, type: size, min: 0, group: connections}
       - {attr: nsslapd-maxsasliosize, type: size, min: -1, group: connections}
       - {attr: nsslapd-maxdescriptors, type: int, min: 1, group: connections, restart: true}
+      - {attr: nsslapd-outbound-ldap-io-timeout, type: int, min: 0, unit: ms, group: connections}
+      - {attr: nsslapd-listen-backlog-size, type: int, min: 1, group: connections, restart: true}
+      - {attr: nsslapd-tcp-keepalive-time, type: duration, min: 0, group: connections}
+      - {attr: nsslapd-tcp-fin-timeout, type: duration, min: 0, group: connections}
       - {attr: nsslapd-threadnumber, type: int, min: -1, group: threads}
       - {attr: nsslapd-maxthreadsperconn, type: int, min: 1, group: threads}
+      - {attr: nsslapd-enable-turbo-mode, type: bool, group: threads}
       - {attr: nsslapd-ndn-cache-enabled, type: bool, group: caches}
       - {attr: nsslapd-ndn-cache-max-size, type: size, min: 0, group: caches}
+
+  # Unset by default, hence sparse.
+  - id: server-proxy
+    section: server
+    order: 25
+    dn: cn=config
+    sparse: true
+    fields:
+      - {attr: nsslapd-haproxy-trusted-ip, type: list, restart: true}
 
   - id: disk-monitoring
     section: server

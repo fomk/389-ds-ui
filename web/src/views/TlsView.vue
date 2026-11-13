@@ -231,6 +231,7 @@ const columns = computed<DataTableColumns<Cert>>(() => [
   <div class="settings">
     <SettingsPage id="tls-general" />
     <SettingsPage id="tls-protocol" />
+    <SettingsPage id="tls-module" />
   </div>
 
   <NCard size="small" :title="t('tls.certificates')" class="block">

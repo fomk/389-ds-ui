@@ -32,7 +32,8 @@ Mechanism: **LDAP** — entry operations; **Task** — a task in `cn=tasks,cn=co
 | Disk space | LDAP (`cn=disk space,cn=monitor`) | 2 | ✅ | ✅ |
 | Restart / stop / start | Docker | 2 | 🔄 (if a proxy is available) | ✅ restart |
 | "Restart required" banner | attribute registry | 2 | ✅ | ✅ |
-| General settings, limits, tuning | LDAP (`cn=config`) | 3 | ✅ | ✅ |
+| General settings, limits, tuning (incl. turbo mode, listen backlog, TCP keep-alive/FIN, outbound I/O timeout, paged size limit, controls per operation, plug-in bind DN tracking, time skew) | LDAP (`cn=config`) | 3 | ✅ | ✅ |
+| HAProxy PROXY protocol: trusted proxy addresses | LDAP (`cn=config`) | 7 | ✅ | ✅ |
 | DB settings (LMDB/BDB) | LDAP | 3 | ✅ | ✅ |
 | Root DN, DM password change | LDAP (`nsslapd-rootpw`) | 3 | ✅ | ✅ |
 | SASL: mechanisms, mappings | LDAP (`cn=sasl,cn=config`) | 3 | ✅ | ✅ |
@@ -110,7 +111,7 @@ All plugins are LDAP-based and available in all modes.
 
 | Feature | Mechanism | B | C |
 |---|---|---|---|
-| Enabling LDAPS, TLS versions, client certificates, ciphers — done | LDAP (`cn=encryption,cn=config`) | ✅ | ✅ |
+| Enabling LDAPS, TLS versions, client certificates, ciphers — done; LDAPS listen address, certificate validation at startup, host name check, PEM extraction, client renegotiation, session cache, encryption module (token) | LDAP (`cn=config`, `cn=encryption,cn=config`, `cn=RSA,…`) | ✅ | ✅ |
 | Server certificate selection — done | LDAP | ✅ | ✅ |
 | Certificates: list, import (CA, PKCS#12, PEM pair, issued), CSR, deletion, trust — done | CLI (`certutil`, `pk12util`, `openssl`) | ❌ | ✅ |
 | Verifying the served certificate — done | TLS handshake | ✅ | ✅ |

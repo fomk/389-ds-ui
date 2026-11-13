@@ -881,6 +881,14 @@
         "nsslapd-dynamic-plugins": {
           "label": "Dynamic plug-ins",
           "help": "Plug-in changes take effect without a restart."
+        },
+        "nsslapd-plugin-binddn-tracking": {
+          "label": "Track plug-in changes",
+          "help": "Record the plug-in that made a change in internalModifiersName / internalCreatorsName, next to the bound user in modifiersName."
+        },
+        "nsslapd-ignore-time-skew": {
+          "label": "Ignore time skew",
+          "help": "Keep replicating when replica clocks differ too much (otherwise replication stops with a time-skew error)."
         }
       }
     },
@@ -933,6 +941,34 @@
         },
         "nsslapd-ndn-cache-max-size": {
           "label": "DN cache size"
+        },
+        "nsslapd-pagedsizelimit": {
+          "label": "Paged search size limit",
+          "help": "Size limit for searches with the paged results control; 0 uses the general size limit, -1 is unlimited."
+        },
+        "nsslapd-maxcontrolsperop": {
+          "label": "Controls per operation",
+          "help": "Maximum number of request controls in one operation."
+        },
+        "nsslapd-outbound-ldap-io-timeout": {
+          "label": "Outbound I/O timeout",
+          "help": "Timeout of I/O on connections the server opens itself (replication, chaining, pass-through)."
+        },
+        "nsslapd-listen-backlog-size": {
+          "label": "Listen backlog",
+          "help": "Connections the operating system queues before the server accepts them."
+        },
+        "nsslapd-tcp-keepalive-time": {
+          "label": "TCP keep-alive",
+          "help": "Idle time before TCP keep-alive probes are sent on client connections."
+        },
+        "nsslapd-tcp-fin-timeout": {
+          "label": "TCP FIN timeout",
+          "help": "How long closing connections may stay in FIN-WAIT-2."
+        },
+        "nsslapd-enable-turbo-mode": {
+          "label": "Turbo mode",
+          "help": "A worker thread keeps serving a busy connection instead of returning it to the queue."
         }
       }
     },
@@ -1516,6 +1552,22 @@
         },
         "nsslapd-securePort": {
           "label": "LDAPS port"
+        },
+        "nsslapd-securelistenhost": {
+          "label": "LDAPS listen address",
+          "help": "Interface the LDAPS port listens on; empty: all."
+        },
+        "nsslapd-validate-cert": {
+          "label": "Validate the server certificate",
+          "help": "At startup: \"on\" refuses an invalid or expired certificate, \"warn\" only logs it."
+        },
+        "nsslapd-ssl-check-hostname": {
+          "label": "Check host names",
+          "help": "Verify the host name in certificates of servers this server connects to (replication, chaining)."
+        },
+        "nsslapd-extract-pemfiles": {
+          "label": "Extract PEM files",
+          "help": "Write the certificates and key as PEM files at startup for the OpenLDAP client library used by replication."
         }
       }
     },
@@ -1538,6 +1590,38 @@
         },
         "allowWeakCipher": {
           "label": "Allow weak ciphers"
+        },
+        "nsTLSAllowClientRenegotiation": {
+          "label": "Allow client renegotiation",
+          "help": "Let clients renegotiate TLS sessions."
+        },
+        "nsSSLSessionTimeout": {
+          "label": "Session cache timeout",
+          "help": "How long TLS sessions can be resumed; 0 uses the default."
+        }
+      }
+    },
+    "server-proxy": {
+      "title": "Proxy protocol",
+      "description": "Load balancers that may pass the original client address with the HAProxy PROXY protocol.",
+      "fields": {
+        "nsslapd-haproxy-trusted-ip": {
+          "label": "Trusted proxy addresses",
+          "help": "IP addresses (or networks) of HAProxy or other proxies whose PROXY header is accepted. Empty: the header is not accepted."
+        }
+      }
+    },
+    "tls-module": {
+      "title": "Encryption module",
+      "description": "The PKCS#11 token holding the server certificate and key.",
+      "fields": {
+        "nsSSLToken": {
+          "label": "Token",
+          "help": "\"internal (software)\" is the NSS database of the server."
+        },
+        "nsSSLActivation": {
+          "label": "Active",
+          "help": "Use this module for TLS."
         }
       }
     }

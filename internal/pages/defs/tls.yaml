@@ -8,6 +8,10 @@ pages:
     fields:
       - {attr: nsslapd-security, type: bool, restart: true}
       - {attr: nsslapd-securePort, type: int, min: 1, max: 65535, restart: true}
+      - {attr: nsslapd-securelistenhost, type: string, restart: true}
+      - {attr: nsslapd-validate-cert, type: enum, values: ["on", warn, "off"], restart: true}
+      - {attr: nsslapd-ssl-check-hostname, type: bool}
+      - {attr: nsslapd-extract-pemfiles, type: bool, restart: true}
 
   - id: tls-protocol
     section: tls
@@ -20,3 +24,14 @@ pages:
       - {attr: nsSSLClientAuth, type: enum, values: ["off", allowed, required], restart: true}
       - {attr: nsSSL3Ciphers, type: string, restart: true}
       - {attr: allowWeakCipher, type: bool, restart: true}
+      - {attr: nsTLSAllowClientRenegotiation, type: bool, restart: true}
+      - {attr: nsSSLSessionTimeout, type: duration, min: 0, restart: true}
+
+  # The encryption module (token) the server certificate is taken from.
+  - id: tls-module
+    section: tls
+    order: 30
+    dn: cn=RSA,cn=encryption,cn=config
+    fields:
+      - {attr: nsSSLToken, type: string, restart: true, danger: true}
+      - {attr: nsSSLActivation, type: bool, restart: true, danger: true}
