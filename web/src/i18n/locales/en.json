@@ -842,9 +842,6 @@
           "label": "LDAP port",
           "help": "0 disables plain LDAP. Inside the container ports are mapped by Docker."
         },
-        "nsslapd-securePort": {
-          "label": "LDAPS port"
-        },
         "nsslapd-listenhost": {
           "label": "Listen address",
           "help": "Empty listens on all interfaces."

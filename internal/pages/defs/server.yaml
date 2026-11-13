@@ -9,7 +9,6 @@ pages:
     fields:
       - {attr: nsslapd-localhost, type: string, group: network}
       - {attr: nsslapd-port, type: int, min: 0, max: 65535, group: network, restart: true, danger: true}
-      - {attr: nsslapd-securePort, type: int, min: 0, max: 65535, group: network, restart: true}
       - {attr: nsslapd-listenhost, type: string, group: network, restart: true, danger: true}
       - {attr: nsslapd-readonly, type: bool, group: behaviour}
       - {attr: nsslapd-schemacheck, type: bool, group: behaviour}

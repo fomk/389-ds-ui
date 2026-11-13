@@ -842,9 +842,6 @@
           "label": "Порт LDAP",
           "help": "0 отключает обычный LDAP. В контейнере порты публикует Docker."
         },
-        "nsslapd-securePort": {
-          "label": "Порт LDAPS"
-        },
         "nsslapd-listenhost": {
           "label": "Адрес прослушивания",
           "help": "Пусто — все интерфейсы."
