@@ -62,6 +62,43 @@ jobs:
       # The 389-ds-base-docker image is not published yet; test the bundled one.
       - run: make itest DS_IMAGE=389-ds-ui/ds:dev
 
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-fund --no-audit
+        working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      # The stack as users run it, with the bundled DS image.
+      - run: make ds-image
+      - run: make up DS_IMAGE=389-ds-ui/ds:dev
+        env:
+          DS_IMAGE: 389-ds-ui/ds:dev
+      - name: Wait for ds-ui and the suffix
+        run: |
+          for i in $(seq 90); do
+            docker compose logs ds | grep -q "suffix .* ready" && curl -sf http://127.0.0.1:8080/readyz && break
+            sleep 2
+          done
+          make seed
+      - run: npx playwright test
+        working-directory: web
+        env:
+          CI: "1"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: web/playwright-report
+      - if: always()
+        run: docker compose logs --tail 200
+
   images:
     runs-on: ubuntu-latest
     steps:

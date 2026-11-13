@@ -37,7 +37,7 @@
 └─ docs/
 ```
 
-Planned by stage: `test/e2e/` (Playwright, stage 7).
+Browser tests live in `web/e2e/` (Playwright).
 
 ## Tools
 
@@ -73,7 +73,7 @@ After changing API types in Go: run `make gen` and commit `api/openapi.json` and
 - **Integration (primary level):** `testcontainers-go` starts the built DS image (one per test package, `DS_IMAGE`, default `389-ds-base:3.3.1`), connecting via DM simple bind over TCP (LDAPI is not reachable from the host: autobind maps only uid 0/389). Each test works in its own suffix/subtree. Every function in `internal/ds` must have an integration test — this is our substitute for the "reference" lib389. Files are tagged `//go:build integration`.
 - **Replication:** a separate suite with 2 DS instances on a shared network; runs in CI nightly and on PRs touching `internal/ds/replication`.
 - **Version matrix:** CI runs the integration tests on the target Debian version and (optionally) on the upstream 389ds image to catch `cn=config` changes early.
-- **E2E:** Playwright — key scenarios (create a user, change an index, backup/restore, log tail).
+- **E2E:** Playwright in `web/e2e/`, against a running stack: `make up && make seed && make e2e` (`E2E_BASE_URL`, `E2E_PASSWORD` override the defaults http://127.0.0.1:8080 and `secrets/dm_password`). Scenarios: sign-in, every section renders without errors or untranslated keys, entry create/edit/delete, a setting saved and restored, suffix create/delete, health check. Tests restore what they change and run one at a time. Locate elements by role and accessible name — a missing name is an accessibility bug to fix in the component, not a reason for a CSS selector. CI runs them with the bundled DS image (job `e2e`).
 
 ## Conventions
 

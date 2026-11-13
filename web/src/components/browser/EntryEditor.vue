@@ -300,7 +300,7 @@ async function createEntry() {
 
     <div v-if="create" class="create-head">
       <label>{{ t('create.parent') }}</label>
-      <NInput v-model:value="parent" size="small" :input-props="{ class: 'mono', spellcheck: false }" />
+      <NInput v-model:value="parent" size="small" :input-props="{ class: 'mono', spellcheck: false, 'aria-label': t('create.parent') }" />
       <label>{{ t('create.rdnAttribute') }}</label>
       <NSelect v-model:value="rdnAttr" size="small" filterable :options="rdnOptions" class="rdn-select" />
       <label>{{ t('create.dnPreview') }}</label>
@@ -374,7 +374,7 @@ async function createEntry() {
                 size="small"
                 :type="row.values[i]!.includes('\n') ? 'textarea' : 'text'"
                 :autosize="row.values[i]!.includes('\n') ? { minRows: 2, maxRows: 10 } : undefined"
-                :input-props="{ class: kindOf(row.name) === 'dn' ? 'mono' : undefined, spellcheck: false }"
+                :input-props="{ class: kindOf(row.name) === 'dn' ? 'mono' : undefined, spellcheck: false, 'aria-label': row.name }"
               />
               <NButton
                 v-if="row.values.length > 1"
@@ -414,7 +414,13 @@ async function createEntry() {
 
     <div v-if="create?.password" class="create-head password">
       <label>{{ t('create.password') }}</label>
-      <NInput v-model:value="password" size="small" type="password" show-password-on="click" :input-props="{ autocomplete: 'new-password' }" />
+      <NInput
+        v-model:value="password"
+        size="small"
+        type="password"
+        show-password-on="click"
+        :input-props="{ autocomplete: 'new-password', 'aria-label': t('create.password') }"
+      />
       <label>{{ t('create.passwordConfirm') }}</label>
       <NInput
         v-model:value="password2"

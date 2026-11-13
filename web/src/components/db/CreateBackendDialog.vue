@@ -59,10 +59,10 @@ async function run() {
         />
       </NFormItem>
       <NFormItem :label="t('db.suffix')" :feedback="t('db.suffixHint')">
-        <NInput v-model:value="suffix" :input-props="{ class: 'mono', spellcheck: false }" placeholder="dc=example,dc=org" />
+        <NInput v-model:value="suffix" :input-props="{ class: 'mono', spellcheck: false, 'aria-label': t('db.suffix') }" placeholder="dc=example,dc=org" />
       </NFormItem>
       <NFormItem :label="t('db.name')" :feedback="t('db.nameHint')">
-        <NInput v-model:value="name" :input-props="{ class: 'mono', spellcheck: false }" placeholder="exampleroot" />
+        <NInput v-model:value="name" :input-props="{ class: 'mono', spellcheck: false, 'aria-label': t('db.name') }" placeholder="exampleroot" />
       </NFormItem>
       <NCheckbox v-model:checked="createRoot">{{ t('db.createRoot') }}</NCheckbox>
     </NForm>

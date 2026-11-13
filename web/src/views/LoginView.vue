@@ -52,7 +52,7 @@ async function submit() {
           <NInput
             v-model:value="username"
             :placeholder="t('login.usernameHint')"
-            :input-props="{ autocomplete: 'username', autofocus: true, spellcheck: false, name: 'username' }"
+            :input-props="{ autocomplete: 'username', autofocus: true, spellcheck: false, name: 'username', 'aria-label': t('login.username') }"
             :disabled="busy"
           />
         </NFormItem>
@@ -62,7 +62,7 @@ async function submit() {
             type="password"
             :placeholder="t('login.passwordHint')"
             show-password-on="click"
-            :input-props="{ autocomplete: 'current-password', name: 'password' }"
+            :input-props="{ autocomplete: 'current-password', name: 'password', 'aria-label': t('login.password') }"
             :disabled="busy"
           />
         </NFormItem>

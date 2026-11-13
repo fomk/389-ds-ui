@@ -73,6 +73,10 @@ seed: ## Load test/fixtures/sample.ldif into the running ds container (existing 
 	docker compose exec -T ds ldapadd -c -Y EXTERNAL -Q -H ldapi://%2fdata%2frun%2fslapd-localhost.socket \
 		< test/fixtures/sample.ldif 2>&1 | grep -vE '^(adding new entry|$$)' || true
 
+.PHONY: e2e
+e2e: web/node_modules ## End-to-end browser tests against the running stack (make up && make seed)
+	cd web && npx playwright install chromium >/dev/null && npx playwright test
+
 .PHONY: down
 down: ## Stop the stack (keeps the data volume)
 	docker compose down

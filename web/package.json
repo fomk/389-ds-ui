@@ -10,7 +10,8 @@
     "gen:api": "openapi-typescript ../api/openapi.json -o src/api/schema.d.ts",
     "check:licenses": "node scripts/check-licenses.mjs",
     "check:locales": "node scripts/check-locales.mjs",
-    "test": "vitest run"
+    "test": "vitest run",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@lucide/vue": "^1.70.0",
@@ -22,6 +23,7 @@
     "vue-router": "^5.4.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@types/node": "^26.6.6",
     "@vitejs/plugin-vue": "^6.0.10",
     "@vue/tsconfig": "^0.9.1",

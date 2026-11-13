@@ -6,9 +6,17 @@
  */
 import { dateEnUS, dateRuRU, enUS, ruRU, type NDateLocale, type NLocale } from 'naive-ui'
 
+/**
+ * Without a placeholder of their own, inputs would show "Please Input": noise
+ * that also becomes the accessible name of unlabelled fields.
+ */
+function quiet(l: NLocale): NLocale {
+  return { ...l, Input: { ...l.Input, placeholder: '' }, InputNumber: { ...l.InputNumber, placeholder: '' } }
+}
+
 export const naiveLocales: Record<string, { locale: NLocale; dateLocale: NDateLocale }> = {
-  en: { locale: enUS, dateLocale: dateEnUS },
-  ru: { locale: ruRU, dateLocale: dateRuRU },
+  en: { locale: quiet(enUS), dateLocale: dateEnUS },
+  ru: { locale: quiet(ruRU), dateLocale: dateRuRU },
 }
 
 export function naiveLocaleFor(code: string) {

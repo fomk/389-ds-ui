@@ -54,7 +54,11 @@ const editing = ref(false)
 const view = ref<'table' | 'ldif'>('table')
 const dialog = ref<'rename' | 'password' | 'delete' | null>(null)
 
+/** Only the answer for the latest request counts: an earlier, slower one
+ * (e.g. the previous entry while switching quickly) must not overwrite it. */
+let latest = 0
 async function load() {
+  const seq = ++latest
   loading.value = true
   error.value = undefined
   try {
@@ -62,12 +66,13 @@ async function load() {
       call(api.GET('/api/v1/entries', { params: { query: { dn: props.dn } } })),
       schema.load(),
     ])
-    entry.value = e
+    if (seq === latest) entry.value = e
   } catch (e) {
+    if (seq !== latest) return
     entry.value = undefined
     error.value = localizeError(e)
   } finally {
-    loading.value = false
+    if (seq === latest) loading.value = false
   }
 }
 
