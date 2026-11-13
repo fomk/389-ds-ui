@@ -136,11 +136,13 @@ func TestRolesAndCoS(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer c.Do(ctx, func(conn *ldap.Conn) error {
-		req := ldap.NewModifyRequest(jdoe, nil)
-		req.Delete("employeeType", nil)
-		return conn.Modify(req)
-	})
+	defer func() {
+		_ = c.Do(ctx, func(conn *ldap.Conn) error {
+			req := ldap.NewModifyRequest(jdoe, nil)
+			req.Delete("employeeType", nil)
+			return conn.Modify(req)
+		})
+	}()
 	eventually("businessCategory from classic CoS", func() bool { return slices.Contains(attr(jdoe, "businessCategory"), "external") })
 
 	code, body = do("GET", "/api/v1/cos", "")

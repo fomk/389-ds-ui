@@ -101,7 +101,7 @@ func TestCollectionsAndPluginTasks(t *testing.T) {
 		t.Errorf("schema reload with a relative path: %d %s", code, body)
 	}
 	// USN is off on a fresh server: its task container does not exist.
-	if code, body := do("POST", "/api/v1/plugin-tasks/usn-cleanup", `{"params":{"suffix":"`+suffix+`"}}`); code != 202 && !(code == 409 && strings.Contains(body, "not running")) {
+	if code, body := do("POST", "/api/v1/plugin-tasks/usn-cleanup", `{"params":{"suffix":"`+suffix+`"}}`); code != 202 && (code != 409 || !strings.Contains(body, "not running")) {
 		t.Errorf("usn cleanup: %d %s", code, body)
 	}
 	for _, run := range []struct{ id, params string }{

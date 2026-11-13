@@ -150,7 +150,8 @@ func checkCertificates(ctx context.Context, c *ldap.Conn, env Env) ([]Finding, e
 	var out []Finding
 	for _, cert := range list {
 		isServer := cert.Nickname == server
-		if !isServer && !(cert.CA && strings.Contains(cert.Trust, "C")) {
+		trustedCA := cert.CA && strings.Contains(cert.Trust, "C")
+		if !isServer && !trustedCA {
 			continue // only the server certificate and trusted CAs matter
 		}
 		days := int(cert.NotAfter.Sub(env.Now).Hours() / 24)

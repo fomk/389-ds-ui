@@ -29,7 +29,7 @@ build: web ## Build bin/ds-ui with the embedded SPA
 lint: web/node_modules ## go vet + gofmt check + golangci-lint (if installed) + vue-tsc
 	$(GO) vet ./...
 	@test -z "$$(gofmt -l cmd internal test)" || (gofmt -l cmd internal test; exit 1)
-	@if command -v golangci-lint >/dev/null; then golangci-lint run; else echo "golangci-lint not installed, skipped"; fi
+	@if command -v golangci-lint >/dev/null; then golangci-lint run --build-tags integration; else echo "golangci-lint not installed, skipped"; fi
 	cd web && $(NPM) run typecheck && $(NPM) run -s check:locales && $(NPM) run -s check:licenses
 
 .PHONY: check-gen
