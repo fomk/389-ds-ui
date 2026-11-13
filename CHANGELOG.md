@@ -4,7 +4,9 @@ All notable changes to 389 DS Admin (ds-ui) are recorded here. The format follow
 
 ## Unreleased
 
-The first release, 1.0.0, is being prepared. It is tested against 389 Directory Server 3.3.1 (`ghcr.io/fomk/389-ds-base-docker:3.3.1`).
+## 0.9.0 - 2026-11-13
+
+The first public release, a preview of 1.0. Images: `ghcr.io/fomk/389-ds-ui:0.9.0` (sidecar) and `ghcr.io/fomk/389-ds-ui:0.9.0-static` (remote). Tested against 389 Directory Server 3.3.1 (`ghcr.io/fomk/389-ds-base-docker:3.3.1`).
 
 ### Added
 
@@ -63,7 +65,7 @@ The first release, 1.0.0, is being prepared. It is tested against 389 Directory 
 
 ### Known limitations
 
-- Several servers in one interface, replication lag across a topology, Chaining (database links) and Windows synchronisation are not available yet.
+- Several servers in one interface and replication lag across a topology (planned for 1.0), Chaining (database links) and Windows synchronisation are not available yet.
 - Without access to the server's files (remote mode), logs, backup and LDIF file listings and certificates are not available.
 - Sessions are kept in memory: restarting ds-ui signs everyone out.
 - 389-ds records ds-ui's own account in `modifiersName`; the user who made a change is in ds-ui's request log and task history.
