@@ -4,7 +4,7 @@ All notable changes to 389 DS Admin (ds-ui) are recorded here. The format follow
 
 ## Unreleased
 
-The first release, 1.0.0, is being prepared. It is tested against 389 Directory Server 3.3.1 (the image from 389-ds-base-docker) and 3.1.2 (Debian trixie).
+The first release, 1.0.0, is being prepared. It is tested against 389 Directory Server 3.3.1 (`ghcr.io/fomk/389-ds-base-docker:3.3.1`).
 
 ### Added
 

@@ -59,8 +59,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      # The 389-ds-base-docker image is not published yet; test the bundled one.
-      - run: make itest DS_IMAGE=389-ds-ui/ds:dev
+      - run: make itest
 
   e2e:
     runs-on: ubuntu-latest
@@ -75,15 +74,12 @@ jobs:
         working-directory: web
       - run: npx playwright install --with-deps chromium
         working-directory: web
-      # The stack as users run it, with the bundled DS image.
-      - run: make ds-image
-      - run: make up DS_IMAGE=389-ds-ui/ds:dev
-        env:
-          DS_IMAGE: 389-ds-ui/ds:dev
+      # The stack as users run it.
+      - run: make up
       - name: Wait for ds-ui and the suffix
         run: |
           for i in $(seq 90); do
-            docker compose logs ds | grep -q "suffix .* ready" && curl -sf http://127.0.0.1:8080/readyz && break
+            docker compose logs ds | grep -q "suffix .* ready" && docker compose logs ds | grep -q "389-ds-container started" && curl -sf http://127.0.0.1:8080/readyz && break
             sleep 2
           done
           make seed
@@ -104,8 +100,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
-      - name: ds
-        run: docker build -t 389-ds-ui/ds:ci deploy/ds
       - name: ui (sidecar)
         run: docker build -f deploy/ui/Dockerfile --target sidecar -t 389-ds-ui/ui:ci .
       - name: ui (static)

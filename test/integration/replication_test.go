@@ -17,7 +17,6 @@ import (
 	"github.com/go-ldap/ldap/v3"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/network"
-	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/fomk/389-ds-ui/internal/api"
 	"github.com/fomk/389-ds-ui/internal/ds"
@@ -46,15 +45,14 @@ func startNode(t *testing.T, ctx context.Context, nw *testcontainers.DockerNetwo
 	t.Helper()
 	image := os.Getenv("DS_IMAGE")
 	if image == "" {
-		image = "389-ds-base:3.3.1"
+		image = "ghcr.io/fomk/389-ds-base-docker:3.3.1"
 	}
 	req := testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			Image:        image,
 			ExposedPorts: []string{"3389/tcp", "3636/tcp"},
 			Env:          map[string]string{"DS_DM_PASSWORD": dmPassword, "DS_SUFFIX": suffix},
-			WaitingFor: wait.ForLog("ds-entrypoint: suffix " + suffix + " ready").
-				WithStartupTimeout(3 * time.Minute).WithPollInterval(time.Second),
+			WaitingFor:   dsReady(),
 		},
 		Started: true,
 	}

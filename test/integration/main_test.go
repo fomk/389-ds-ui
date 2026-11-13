@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 func run(m *testing.M) int {
 	image := os.Getenv("DS_IMAGE")
 	if image == "" {
-		image = "389-ds-base:3.3.1"
+		image = "ghcr.io/fomk/389-ds-base-docker:3.3.1"
 	}
 	ctx := context.Background()
 	ds, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -51,10 +51,7 @@ func run(m *testing.M) int {
 				"DS_DM_PASSWORD": dmPassword,
 				"DS_SUFFIX":      suffix,
 			},
-			// The entrypoint logs this once the suffix exists (see deploy/ds/entrypoint.sh).
-			WaitingFor: wait.ForLog("ds-entrypoint: suffix " + suffix + " ready").
-				WithStartupTimeout(3 * time.Minute).
-				WithPollInterval(time.Second),
+			WaitingFor: dsReady(),
 		},
 		Started: true,
 	})
@@ -150,4 +147,15 @@ func serve(h http.Handler, req *http.Request) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
 	return rec
+}
+
+// dsReady waits until the suffix exists and the Directory Manager password
+// is set. The image's entrypoint creates the suffix over LDAPI, so its
+// "ready" line can come before dscontainer applies DS_DM_PASSWORD
+// ("389-ds-container started."); the order varies between starts.
+func dsReady() wait.Strategy {
+	return wait.ForAll(
+		wait.ForLog("ds-entrypoint: suffix "+suffix+" ready"),
+		wait.ForLog("INFO: 389-ds-container started."),
+	).WithDeadline(3 * time.Minute)
 }

@@ -96,7 +96,7 @@ Verified: create, exec, requests to other containers, and requests not from `ui`
 
 ## ADR-006. DS base image: Debian trixie + 389-ds-base from the Debian repository
 
-**Status:** Accepted (verified in stage 0)
+**Status:** Superseded by ADR-012 — the DS image is now built from the upstream release tarball in the 389-ds-base-docker project (`ghcr.io/fomk/389-ds-base-docker`), with the same layout; `deploy/ds` was removed
 
 **Decision.** `debian:trixie-slim` + the `389-ds-base` package (3.1.2, LMDB by default) + `tini`. The instance is created and started by upstream `dscontainer`; the wrapper `deploy/ds/entrypoint.sh` adds `DS_DM_PASSWORD_FILE` and creation of the `DS_SUFFIX` suffix. All state is in `/data`, the socket is `/data/run/slapd-localhost.socket`, ports 3389/3636, the process runs as `dirsrv` (389:389). Image size ~436 MB (Python and lib389 are package dependencies).
 
@@ -171,7 +171,7 @@ Verified: create, exec, requests to other containers, and requests not from `ui`
 
 **Context.** ADR-002 planned an all-in-one mode A: DS and ds-ui in one container under s6-overlay, with an `s6` Lifecycle provider and offline operations. The 389-ds image is now built and published from a separate repository, 389-ds-base-docker (Debian trixie, upstream release tarball with a checked SHA-256, `dsconf`/`dsctl`, the same `/data` layout, uid/gid 389 and `DS_DM_PASSWORD_FILE` / `DS_SUFFIX` wrapper as `deploy/ds`).
 
-**Decision.** There is no all-in-one image. ds-ui is shipped as its own image and runs next to the DS container (mode C) or against a remote server (mode B). The `aio` mode and the `s6` Lifecycle value are removed from the configuration. `deploy/ds` stays as the development and test image.
+**Decision.** There is no all-in-one image. ds-ui is shipped as its own image and runs next to the DS container (mode C) or against a remote server (mode B). The `aio` mode and the `s6` Lifecycle value are removed from the configuration. `deploy/ds` stayed as the development and test image until the 389-ds-base-docker image was published as `ghcr.io/fomk/389-ds-base-docker:<version>`; since then compose, CI and the integration tests use that image and `deploy/ds` is gone.
 
 **Consequences.**
 - (+) One way to run ds-ui; upgrading the UI never restarts the directory; the DS image has a single owner and release cycle.
