@@ -17,6 +17,7 @@ import (
 
 	"github.com/fomk/389-ds-ui/internal/auth"
 	"github.com/fomk/389-ds-ui/internal/certs"
+	"github.com/fomk/389-ds-ui/internal/certsource"
 	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/entries"
 	"github.com/fomk/389-ds-ui/internal/events"
@@ -43,10 +44,11 @@ type Deps struct {
 	Pages          *pages.Service
 	Tasks          *ds.Tasks
 	Events         *events.Bus
-	Files          *providers.Files // nil when the server's files are not reachable
-	Certs          *certs.Store     // nil when the NSS database is not reachable
-	Auth           *auth.Service    // nil: no authentication (DSUI_AUTH=none)
-	TLSHost        string           // host of the LDAPS port, for the handshake check
+	Files          *providers.Files    // nil when the server's files are not reachable
+	Certs          *certs.Store        // nil when the NSS database is not reachable
+	CertSource     *certsource.Watcher // nil unless DSUI_CERT_FILE is set
+	Auth           *auth.Service       // nil: no authentication (DSUI_AUTH=none)
+	TLSHost        string              // host of the LDAPS port, for the handshake check
 	Lifecycle      providers.Lifecycle
 	Capabilities   providers.Capabilities
 	Instance       string

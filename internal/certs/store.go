@@ -427,6 +427,150 @@ func (s *Store) ImportPEMPair(ctx context.Context, nick, certPEM, keyPEM, chainP
 	return added, nil
 }
 
+// ImportReplacing imports a certificate with its private key (and chain)
+// for use as a server certificate and returns the nickname it got.
+//
+// NSS keeps one nickname per subject: a certificate with the subject of one
+// already in the database joins that nickname whatever name is asked for, and
+// 389-ds then picks the newest of them; certutil cannot delete an older one
+// selectively. So a certificate with the same subject (a renewal) replaces
+// the old one under its nickname: the old certificate and key are exported,
+// removed, the new pair is imported, and on failure the old pair is put back.
+// The running server keeps using the old pair it loaded until a restart.
+func (s *Store) ImportReplacing(ctx context.Context, nick, certPEM, keyPEM, chainPEM string) (string, error) {
+	der, err := firstPEM(certPEM, "CERTIFICATE")
+	if err != nil {
+		return "", err
+	}
+	desc, err := Describe(der)
+	if err != nil {
+		return "", err
+	}
+	list, err := s.List(ctx)
+	if err != nil {
+		return "", err
+	}
+	same := ""
+	for _, c := range list {
+		if !c.CA && c.Subject == desc.Subject {
+			same = c.Nickname
+			break
+		}
+	}
+	if same == "" {
+		if _, err := s.ImportPEMPair(ctx, nick, certPEM, keyPEM, chainPEM); err != nil {
+			return "", err
+		}
+		return nick, s.expect(ctx, nick, desc.SHA256)
+	}
+
+	// Keep the old pair to restore it if the import fails.
+	passPath, c1, err := s.r.WriteTemp(ctx, []byte(randomPassword()))
+	if err != nil {
+		return "", err
+	}
+	defer c1()
+	backup, c2, err := s.r.WriteTemp(ctx, nil)
+	if err != nil {
+		return "", err
+	}
+	defer c2()
+	if _, err := s.run(ctx, "pk12util", "-o", backup, "-n", same, "-d", s.db(), "-k", s.pinFile, "-w", passPath); err != nil {
+		return "", err
+	}
+	restore := func(cause error) error {
+		_ = s.removeNickname(ctx, same)
+		if _, err := s.run(ctx, "pk12util", "-i", backup, "-d", s.db(), "-k", s.pinFile, "-w", passPath); err != nil {
+			return fmt.Errorf("%w; restoring the previous certificate %s also failed: %v", cause, same, err)
+		}
+		return cause
+	}
+	if err := s.removeNickname(ctx, same); err != nil {
+		return "", restore(err)
+	}
+	if _, err := s.ImportPEMPair(ctx, same, certPEM, keyPEM, chainPEM); err != nil {
+		return "", restore(err)
+	}
+	if err := s.expect(ctx, same, desc.SHA256); err != nil {
+		return "", restore(err)
+	}
+	return same, nil
+}
+
+// expect checks that nick holds the certificate with the fingerprint.
+func (s *Store) expect(ctx context.Context, nick, sha string) error {
+	c, err := s.Get(ctx, nick)
+	if err != nil {
+		return err
+	}
+	if !c.HasKey || !strings.EqualFold(c.SHA256, sha) {
+		return fmt.Errorf("%w: after the import %s holds another certificate (%s)", ErrTool, nick, c.SHA256)
+	}
+	return nil
+}
+
+// removeNickname deletes every certificate and private key under nick
+// (certutil removes one certificate per call, the newest first).
+func (s *Store) removeNickname(ctx context.Context, nick string) error {
+	for range 16 {
+		nicks, err := s.nicknames(ctx)
+		if err != nil {
+			return err
+		}
+		if !slices.ContainsFunc(nicks, func(n [2]string) bool { return n[0] == nick }) {
+			break
+		}
+		keys, err := s.keys(ctx)
+		if err != nil {
+			return err
+		}
+		flag := "-D"
+		if keys[nick] {
+			flag = "-F"
+		}
+		if _, err := s.run(ctx, "certutil", flag, "-d", s.db(), "-f", s.pinFile, "-n", nick); err != nil {
+			return err
+		}
+	}
+	// Keys left without their certificate keep the label.
+	ids, err := s.keyIDs(ctx, nick)
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
+		if _, err := s.run(ctx, "certutil", "-F", "-d", s.db(), "-f", s.pinFile, "-k", id); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+var keyIDLine = regexp.MustCompile(`^<\s*\d+>\s+\S+\s+([0-9a-fA-F]+)\s+(?:NSS Certificate DB:)?(.+)$`)
+
+// keyIDs returns the ids of the private keys labelled nick.
+func (s *Store) keyIDs(ctx context.Context, nick string) ([]string, error) {
+	out, err := s.run(ctx, "certutil", "-K", "-d", s.db(), "-f", s.pinFile)
+	if err != nil {
+		if strings.Contains(string(out), "no keys found") {
+			return nil, nil
+		}
+		return nil, err
+	}
+	var ids []string
+	for _, line := range strings.Split(string(out), "\n") {
+		if m := keyIDLine.FindStringSubmatch(strings.TrimSpace(line)); m != nil && strings.TrimSpace(m[2]) == nick {
+			ids = append(ids, m[1])
+		}
+	}
+	return ids, nil
+}
+
+func randomPassword() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	return hex.EncodeToString(b)
+}
+
 // CSRRequest describes a key and certificate request made in the database.
 type CSRRequest struct {
 	Subject  string   `json:"subject" minLength:"3" doc:"e.g. CN=ldap.example.org,O=Example"`

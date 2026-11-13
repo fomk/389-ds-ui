@@ -13,6 +13,7 @@ shipped as a lightweight Docker service next to the DS container.
   - **C — sidecar** (default): two containers, shared `/data` volume, LDAPI autobind, restart through a Docker API proxy;
   - **B — remote**: LDAP over the network only (for remote nodes / replicas).
 - **Sign-in with directory accounts** (`DSUI_AUTH=ldap`, the default): Directory Manager or members of the configured admin/operator groups; directory data is accessed as the signed-in user, so the server's ACIs apply ([docs/deployment.md](docs/deployment.md#sign-in)).
+- **Server certificate from files** of certbot, lego or cert-manager: ds-ui imports renewed certificates and can restart the server ([docs/deployment.md](docs/deployment.md#certificate-from-files)).
 - **Multilingual UI**: English and Russian; adding a language is a single JSON file ([docs/i18n.md](docs/i18n.md)).
 
 ## Documentation

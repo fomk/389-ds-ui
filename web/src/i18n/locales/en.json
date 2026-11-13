@@ -435,7 +435,8 @@
       "automember-rebuild-membership": "Auto membership rebuild",
       "fixup-linked-attributes": "Linked attributes fixup",
       "cleanallruv": "CleanAllRUV",
-      "init-replica": "Replica initialization"
+      "init-replica": "Replica initialization",
+      "cert-from-files": "Certificate from files"
     },
     "progress": "{current} of {total}",
     "completed": "Completed."
@@ -2060,7 +2061,27 @@
     "download": "Download",
     "close": "Close",
     "saved": "Certificate added.",
-    "imported": "Added: {names}."
+    "imported": "Added: {names}.",
+    "source": {
+      "title": "Certificate from files",
+      "description": "The server certificate follows PEM files kept up to date by an external tool (certbot, lego, cert-manager). When the files hold a new certificate, ds-ui imports it, makes it the server certificate and records it in the task history; a certificate with the same subject replaces the previous one.",
+      "checkNow": "Check now",
+      "failed": "Last check failed",
+      "files": "Files",
+      "schedule": "Checks",
+      "every": "every {interval}",
+      "autoRestart": "the server restarts after an import",
+      "manualRestart": "restart the server to apply a new certificate",
+      "lastCheck": "Last check",
+      "lastImport": "Last import",
+      "hint": "To follow a certificate from certbot, lego or cert-manager automatically, point ds-ui at its files with DSUI_CERT_FILE and DSUI_CERT_KEY_FILE (see the deployment guide).",
+      "units": {
+        "h": "{n} h",
+        "m": "{n} min",
+        "s": "{n} s"
+      },
+      "noImport": "none since ds-ui started"
+    }
   },
   "login": {
     "title": "Sign in",

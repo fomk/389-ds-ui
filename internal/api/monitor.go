@@ -79,18 +79,11 @@ func registerMonitor(api huma.API, d Deps) {
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 			defer cancel()
-			err := d.Lifecycle.Restart(ctx)
-			if d.Tasks != nil {
-				d.Tasks.Record(ctx, ds.OpRestart, "", err)
-			}
-			if err != nil {
+			if err := ds.RestartServer(ctx, d.Lifecycle, d.Tasks, d.Restart); err != nil {
 				d.Logger.Error("server restart failed", "err", err)
 				return
 			}
 			d.Logger.Info("directory server restarted")
-			if d.Restart != nil {
-				d.Restart.Clear()
-			}
 		}()
 		return &restartOutput{Status: http.StatusAccepted}, nil
 	})

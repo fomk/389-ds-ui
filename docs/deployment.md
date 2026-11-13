@@ -75,6 +75,7 @@ Not available: logs, backup/LDIF files, NSS certificates, restart.
 | `DSUI_LDAP_CA_FILE` | — | CA for LDAPS / StartTLS |
 | `DSUI_LDAP_TIMEOUT` | `10s` | connection and operation timeout |
 | `DSUI_DATA_DIR` | `/data` | root of the shared volume (sidecar) |
+| `DSUI_CERT_FILE`, `DSUI_CERT_KEY_FILE`, `DSUI_CERT_CHECK_INTERVAL`, `DSUI_CERT_AUTO_RESTART` | — | server certificate from files, see [Certificate from files](#certificate-from-files) |
 | `DSUI_TLS_HOST` | the host of an `ldap(s)://` URL, else `ds` | where ds-ui reaches the LDAPS port to check the certificate the server presents (the port is `nsslapd-securePort`) |
 | `DSUI_LIFECYCLE` | `docker` if `DSUI_DOCKER_HOST` is set (sidecar), otherwise `none` | process management provider |
 | `DSUI_DOCKER_HOST` | — | `tcp://docker-proxy:2375` |
@@ -102,6 +103,42 @@ The layout is defined by `dscontainer` (verified on 389-ds 3.1.2 and 3.3.1):
 
 - Regular backups — via a backup task (UI from stage 2) or `docker compose exec ds dsconf ldapi://%2fdata%2frun%2fslapd-localhost.socket backup create`; copy the `/data/bak` directory off the host.
 - A snapshot of the `ds-data` volume is consistent only while DS is stopped.
+
+## Certificate from files
+
+ds-ui can keep the server certificate in step with PEM files maintained by an external tool — certbot, lego, acme.sh, cert-manager, or a deploy script. ds-ui does not obtain certificates itself (no ACME client, ADR-013); it checks the files and imports what they contain. Sidecar mode only (it needs the NSS database).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DSUI_CERT_FILE` | — | PEM file with the server certificate first, then its chain (`fullchain.pem`, `tls.crt`). Turns the feature on |
+| `DSUI_CERT_KEY_FILE` | — | PEM private key, unencrypted (`privkey.pem`, `tls.key`); empty: the key is in `DSUI_CERT_FILE` |
+| `DSUI_CERT_CHECK_INTERVAL` | `10m` | How often the files are read (at least `10s`) |
+| `DSUI_CERT_AUTO_RESTART` | `false` | Restart the server after an import (needs the Docker proxy). Otherwise the "restart required" banner appears and the new certificate is presented after the next restart |
+
+What happens on each check:
+
+- The key must belong to the first certificate, and the certificate must be valid now; otherwise nothing changes and the error is shown on the Security page.
+- If the server is already configured with this certificate, nothing happens.
+- Otherwise the certificate, its key and chain are imported into the NSS database and made the server certificate (`nsSSLPersonalitySSL`), and the import is recorded in the task history. A certificate with the **same subject** as one already in the database (a renewal) replaces it under its nickname — NSS cannot keep two such certificates apart. A new subject gets the nickname `Server-Cert-auto-<date>-<time>`; earlier automatic imports are deleted once they are no longer the configured certificate.
+- The running server keeps presenting the old certificate until it restarts.
+
+The files must be readable by uid 389 inside the `ui` container. Examples:
+
+```yaml
+# compose.override.yaml — certbot on the host
+services:
+  ui:
+    environment:
+      DSUI_CERT_FILE: /certs/live/ldap.example.org/fullchain.pem
+      DSUI_CERT_KEY_FILE: /certs/live/ldap.example.org/privkey.pem
+      DSUI_CERT_AUTO_RESTART: "true"
+    volumes:
+      - /etc/letsencrypt:/certs:ro
+```
+
+certbot writes `privkey.pem` readable by root only; give uid 389 access, e.g. with a deploy hook (`/etc/letsencrypt/renewal-hooks/deploy/`) that copies the pair to a directory owned by 389, and mount that directory instead. In Kubernetes, mount the cert-manager secret (`tls.crt`, `tls.key`) into the ds-ui container with `defaultMode` and `fsGroup: 389`; the secret's symlinked files are re-read on every check.
+
+Public CAs: Let's Encrypt certificates no longer carry the client-authentication usage, so they do not suit replication agreements that authenticate with certificates (`SSLCLIENTAUTH`); use an internal CA there.
 
 ## Sign-in
 

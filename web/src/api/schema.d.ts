@@ -1271,6 +1271,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/security/cert-source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Server certificate kept in step with PEM files (DSUI_CERT_FILE) */
+        get: operations["certSource"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/cert-source/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check the certificate files now and import a new certificate */
+        post: operations["checkCertSource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/security/certs": {
         parameters: {
             query?: never;
@@ -1835,6 +1869,26 @@ export interface components {
         CertPEMInputBody: {
             nickname: string;
             pem: string;
+        };
+        CertSource: {
+            autoRestart: boolean;
+            certFile?: string;
+            enabled: boolean;
+            /** @description Why the last check failed */
+            error?: string;
+            /** @description The server is configured with the certificate from the files */
+            inUse: boolean;
+            /** @description Check interval, e.g. 10m0s */
+            interval?: string;
+            keyFile?: string;
+            /** Format: date-time */
+            lastCheck?: string;
+            /** Format: date-time */
+            lastImport?: string;
+            /** @description Nickname of that certificate in the database */
+            nickname?: string;
+            /** @description Certificate in the files */
+            source?: components["schemas"]["Certificate"];
         };
         Certificate: {
             ca: boolean;
@@ -6296,6 +6350,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchResult"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    certSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertSource"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    checkCertSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CertSource"];
                 };
             };
             /** @description Error */

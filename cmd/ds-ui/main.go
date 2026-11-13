@@ -18,6 +18,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/api"
 	"github.com/fomk/389-ds-ui/internal/auth"
 	"github.com/fomk/389-ds-ui/internal/certs"
+	"github.com/fomk/389-ds-ui/internal/certsource"
 	"github.com/fomk/389-ds-ui/internal/config"
 	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/entries"
@@ -149,18 +150,41 @@ func serve() error {
 	// UI refreshes as often as every second).
 	history := monitor.NewHistory(client, 2*time.Second, 1800, log)
 	bus := &events.Bus{}
+	restartReg := &ds.RestartRegistry{}
+	tasks := ds.NewTasks(client, bus, log)
+
+	var certWatcher *certsource.Watcher
+	if cfg.CertFile != "" {
+		if certStore == nil {
+			return fmt.Errorf("DSUI_CERT_FILE: the server's NSS database is not reachable (%s/config)", cfg.DataDir)
+		}
+		if cfg.CertAutoRestart && lifecycle.Name() == "none" {
+			return fmt.Errorf("DSUI_CERT_AUTO_RESTART needs control over the server process (DSUI_DOCKER_HOST)")
+		}
+		certWatcher = certsource.New(certsource.Config{
+			CertFile: cfg.CertFile, KeyFile: cfg.CertKeyFile, Interval: cfg.CertCheckInterval, AutoRestart: cfg.CertAutoRestart,
+		}, certStore, ds.ServerCert{LDAP: client}, certsource.Hooks{
+			Imported: func(string) { restartReg.Require("nsSSLPersonalitySSL") },
+			Record: func(ctx context.Context, target string, err error) {
+				tasks.Record(ctx, ds.OpCertFromFiles, target, err)
+			},
+			Restart: func(ctx context.Context) error { return ds.RestartServer(ctx, lifecycle, tasks, restartReg) },
+		}, log)
+	}
+
 	handler := api.NewHandler(api.Deps{
 		LDAP:           client,
 		Schemas:        schemas,
 		Entries:        entries.New(client, schemas, log),
 		Templates:      tpls,
 		History:        history,
-		Restart:        &ds.RestartRegistry{},
+		Restart:        restartReg,
 		Pages:          pages.New(pageDefs, collections),
-		Tasks:          ds.NewTasks(client, bus, log),
+		Tasks:          tasks,
 		Events:         bus,
 		Files:          files,
 		Certs:          certStore,
+		CertSource:     certWatcher,
 		Auth:           authService,
 		TLSHost:        cfg.TLSHost,
 		Lifecycle:      lifecycle,
@@ -192,6 +216,12 @@ func serve() error {
 		log.Warn("ds-ui has NO authentication (DSUI_AUTH=none): expose it only on localhost or a trusted network")
 	} else if len(cfg.AdminGroups)+len(cfg.OperatorGroups) == 0 {
 		log.Info("only the root DN (Directory Manager) can sign in; set DSUI_ADMIN_GROUPS / DSUI_OPERATOR_GROUPS for other users")
+	}
+
+	if certWatcher != nil {
+		log.Info("server certificate follows files", "cert", cfg.CertFile, "key", cfg.CertKeyFile,
+			"interval", cfg.CertCheckInterval, "autoRestart", cfg.CertAutoRestart)
+		go certWatcher.Run(ctx)
 	}
 
 	go func() {

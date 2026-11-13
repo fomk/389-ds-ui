@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -42,6 +43,13 @@ type Config struct {
 	// TLSHost is where ds-ui reaches the server's LDAPS port to see the
 	// certificate it presents (the port comes from nsslapd-securePort).
 	TLSHost string
+
+	// Server certificate kept in step with PEM files of an external tool
+	// (certbot, lego, cert-manager); empty CertFile: off.
+	CertFile          string
+	CertKeyFile       string
+	CertCheckInterval time.Duration
+	CertAutoRestart   bool
 
 	Lifecycle       string // docker | none
 	DockerHost      string
@@ -121,6 +129,21 @@ func load(getenv func(string) string) (*Config, error) {
 	}
 	if cfg.SessionMax, err = time.ParseDuration(env("DSUI_SESSION_MAX", "12h")); err != nil {
 		return nil, fmt.Errorf("DSUI_SESSION_MAX: %w", err)
+	}
+
+	cfg.CertFile = env("DSUI_CERT_FILE", "")
+	cfg.CertKeyFile = env("DSUI_CERT_KEY_FILE", "")
+	if cfg.CertCheckInterval, err = time.ParseDuration(env("DSUI_CERT_CHECK_INTERVAL", "10m")); err != nil || cfg.CertCheckInterval < 10*time.Second {
+		return nil, fmt.Errorf("DSUI_CERT_CHECK_INTERVAL: %q (a duration of at least 10s)", env("DSUI_CERT_CHECK_INTERVAL", "10m"))
+	}
+	if cfg.CertAutoRestart, err = strconv.ParseBool(env("DSUI_CERT_AUTO_RESTART", "false")); err != nil {
+		return nil, fmt.Errorf("DSUI_CERT_AUTO_RESTART: %w", err)
+	}
+	if cfg.CertFile == "" && cfg.CertKeyFile != "" {
+		return nil, errors.New("DSUI_CERT_KEY_FILE is set but DSUI_CERT_FILE is empty")
+	}
+	if cfg.CertFile != "" && cfg.Mode == ModeRemote {
+		return nil, errors.New("DSUI_CERT_FILE needs the server's NSS database (sidecar mode)")
 	}
 
 	defaultLifecycle := "none"

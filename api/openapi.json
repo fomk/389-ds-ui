@@ -820,6 +820,57 @@
         ],
         "type": "object"
       },
+      "CertSource": {
+        "additionalProperties": false,
+        "properties": {
+          "autoRestart": {
+            "type": "boolean"
+          },
+          "certFile": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "error": {
+            "description": "Why the last check failed",
+            "type": "string"
+          },
+          "inUse": {
+            "description": "The server is configured with the certificate from the files",
+            "type": "boolean"
+          },
+          "interval": {
+            "description": "Check interval, e.g. 10m0s",
+            "type": "string"
+          },
+          "keyFile": {
+            "type": "string"
+          },
+          "lastCheck": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastImport": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "nickname": {
+            "description": "Nickname of that certificate in the database",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Certificate",
+            "description": "Certificate in the files"
+          }
+        },
+        "required": [
+          "enabled",
+          "autoRestart",
+          "inUse"
+        ],
+        "type": "object"
+      },
       "Certificate": {
         "additionalProperties": false,
         "properties": {
@@ -8736,6 +8787,68 @@
         "summary": "Search entries (interactive, limited)",
         "tags": [
           "search"
+        ]
+      }
+    },
+    "/api/v1/security/cert-source": {
+      "get": {
+        "operationId": "certSource",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CertSource"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Server certificate kept in step with PEM files (DSUI_CERT_FILE)",
+        "tags": [
+          "tls"
+        ]
+      }
+    },
+    "/api/v1/security/cert-source/check": {
+      "post": {
+        "operationId": "checkCertSource",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CertSource"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Check the certificate files now and import a new certificate",
+        "tags": [
+          "tls"
         ]
       }
     },

@@ -11,6 +11,8 @@ import (
 	"github.com/go-ldap/ldap/v3"
 
 	"github.com/fomk/389-ds-ui/internal/certs"
+	"github.com/fomk/389-ds-ui/internal/certsource"
+	"github.com/fomk/389-ds-ui/internal/ds"
 	"github.com/fomk/389-ds-ui/internal/providers"
 )
 
@@ -70,22 +72,9 @@ type serverCertInput struct {
 }
 type presentedOutput struct{ Body *certs.Presented }
 
-const dnRSA = "cn=RSA,cn=encryption,cn=config"
-
-func serverCertName(c *ldap.Conn) (string, error) {
-	res, err := c.Search(ldap.NewSearchRequest(dnRSA, ldap.ScopeBaseObject, ldap.NeverDerefAliases, 1, 0, false,
-		"(objectClass=*)", []string{"nsSSLPersonalitySSL"}, nil))
-	if ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject) {
-		return "", nil
-	}
-	if err != nil {
-		return "", err
-	}
-	if len(res.Entries) == 0 {
-		return "", nil
-	}
-	return res.Entries[0].GetAttributeValue("nsSSLPersonalitySSL"), nil
-}
+// CertSource is the state of the certificate files ds-ui follows.
+type CertSource struct{ certsource.Status }
+type certSourceOutput struct{ Body CertSource }
 
 func registerTLS(api huma.API, d Deps) {
 	tags := []string{"tls"}
@@ -119,7 +108,7 @@ func registerTLS(api huma.API, d Deps) {
 			for i := range out.Certificates {
 				out.Certificates[i].PEM = ""
 			}
-			if err := conn(ctx, func(c *ldap.Conn) (err error) { out.ServerCert, err = serverCertName(c); return }); err != nil {
+			if err := conn(ctx, func(c *ldap.Conn) (err error) { out.ServerCert, err = ds.ServerCertName(c); return }); err != nil {
 				return nil, toHTTPError(err)
 			}
 			return &certListOutput{Body: out}, nil
@@ -203,7 +192,7 @@ func registerTLS(api huma.API, d Deps) {
 				return nil, err
 			}
 			var current string
-			if err := conn(ctx, func(c *ldap.Conn) (err error) { current, err = serverCertName(c); return }); err != nil {
+			if err := conn(ctx, func(c *ldap.Conn) (err error) { current, err = ds.ServerCertName(c); return }); err != nil {
 				return nil, toHTTPError(err)
 			}
 			if current == in.Nickname {
@@ -227,12 +216,10 @@ func registerTLS(api huma.API, d Deps) {
 			var before string
 			err = conn(ctx, func(lc *ldap.Conn) error {
 				var err error
-				if before, err = serverCertName(lc); err != nil {
+				if before, err = ds.ServerCertName(lc); err != nil {
 					return err
 				}
-				req := ldap.NewModifyRequest(dnRSA, nil)
-				req.Replace("nsSSLPersonalitySSL", []string{c.Nickname})
-				return lc.Modify(req)
+				return ds.SetServerCertName(lc, c.Nickname)
 			})
 			if err != nil {
 				return nil, toHTTPError(err)
@@ -241,6 +228,19 @@ func registerTLS(api huma.API, d Deps) {
 				d.Restart.Change("nsSSLPersonalitySSL", before, c.Nickname)
 			}
 			return &noContent{}, nil
+		})
+	huma.Register(api, op("certSource", http.MethodGet, "/security/cert-source", "Server certificate kept in step with PEM files (DSUI_CERT_FILE)", 0),
+		func(context.Context, *struct{}) (*certSourceOutput, error) {
+			return &certSourceOutput{Body: CertSource{d.CertSource.Status()}}, nil
+		})
+	huma.Register(api, op("checkCertSource", http.MethodPost, "/security/cert-source/check", "Check the certificate files now and import a new certificate", 0),
+		func(ctx context.Context, _ *struct{}) (*certSourceOutput, error) {
+			if d.CertSource == nil {
+				return nil, problem(http.StatusConflict, "no certificate files are configured (DSUI_CERT_FILE)")
+			}
+			// The outcome, including a failure, is part of the status.
+			st, _ := d.CertSource.Check(context.WithoutCancel(ctx))
+			return &certSourceOutput{Body: CertSource{st}}, nil
 		})
 	huma.Register(api, op("presentedCert", http.MethodGet, "/security/presented", "Certificate the server presents on its LDAPS port (TLS handshake)", 0),
 		func(ctx context.Context, _ *struct{}) (*presentedOutput, error) {

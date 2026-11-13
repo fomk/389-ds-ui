@@ -179,3 +179,17 @@ Verified: create, exec, requests to other containers, and requests not from `ui`
 - (−) Offline operations (dbverify, db2ldif/ldif2db, BDB→LMDB) are not offered by the UI; they stay `docker exec ds dsctl …`.
 - (−) The layout contract between the images (paths, socket, uid/gid) must be kept in step across two repositories.
 
+## ADR-013. Server certificates from files, not a built-in ACME client
+
+**Status:** Accepted
+
+**Context.** Certificates get shorter lifetimes, so renewing the LDAPS certificate by hand through the UI does not scale. ACME is the standard way to automate it. A built-in client would need, for public CAs, DNS-01 with credentials for the DNS provider (LDAP servers rarely expose port 80/443 for HTTP-01 or TLS-ALPN-01), and for internal CAs (step-ca, Vault, Dogtag) a custom directory and trust; it would also carry an account key and a renewal scheduler. Mature clients already do all of this (certbot, lego, acme.sh, cert-manager in Kubernetes).
+
+**Decision.** ds-ui follows PEM files written by such a tool (`DSUI_CERT_FILE`, `DSUI_CERT_KEY_FILE`): it checks them periodically and, when they hold a certificate the server is not configured with, imports it into the NSS database, makes it the server certificate, records the import and, if `DSUI_CERT_AUTO_RESTART` is on, restarts the server. A renewal with the same subject replaces the old certificate under its nickname, because NSS files certificates with one subject under one nickname and cannot delete the older one selectively (see ds-reference.md, TLS). A built-in ACME client stays an option after 1.0.
+
+**Consequences.**
+- (+) Works with any CA and validation method the external tool supports; no DNS credentials or ACME account in ds-ui.
+- (+) The same mechanism serves non-ACME deliveries (a script copying certificates from an internal PKI).
+- (−) One more component to run next to ds-ui (or cert-manager in Kubernetes); its files must be readable by uid 389.
+- (−) A new certificate is presented only after a restart; with `DSUI_CERT_AUTO_RESTART` connections are dropped once per renewal.
+

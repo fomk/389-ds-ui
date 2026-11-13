@@ -131,7 +131,9 @@ Common attributes: `nsslapd-pluginEnabled`, `nsslapd-pluginPath`, `nsslapd-plugi
 | Server certificate | `cn=RSA,cn=encryption,cn=config` | `nsSSLPersonalitySSL` (nickname in the NSS DB), `nsSSLToken`, `nsSSLActivation` |
 | NSS DB | files in `nsslapd-certdir` | `cert9.db`, `key4.db`, `pkcs11.txt`, `pwdfile.txt`/`pin.txt` |
 
-Replacing the certificate requires a DS restart.
+Replacing the certificate requires a DS restart: the server loads the certificate and key at startup and keeps serving them even if they are deleted from the NSS DB meanwhile (verified on 3.3.1).
+
+NSS keeps **one nickname per subject**: a certificate whose subject matches one already in the database is filed under that nickname whatever `-n`/`-name` says, so a renewal imported as `New-Cert` lands under `Server-Cert`. The nickname then holds several certificates; `certutil -L -n X -a` prints all of them, 389-ds presents the newest valid one after a restart, and `certutil -D/-F -n X` removes the **newest** first, so an older one cannot be deleted selectively. To renew, remove the old certificate and key first (export them with `pk12util -o` to restore on failure), then import the new pair under the same nickname. A key left without its certificate keeps its label and is removed with `certutil -F -k <key id>`.
 
 ## Useful controls and extensions
 

@@ -266,6 +266,8 @@ const (
 	OpLockAccount   = "lock-account"
 	OpUnlockAccount = "unlock-account"
 	OpInitReplica   = "init-replica"
+	// OpCertFromFiles: a server certificate imported from the watched files.
+	OpCertFromFiles = "cert-from-files"
 )
 
 // Record adds a finished operation to the history: ok when err is nil,

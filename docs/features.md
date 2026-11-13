@@ -112,6 +112,7 @@ All plugins are LDAP-based and available in all modes.
 | Server certificate selection — done | LDAP | ✅ | ✅ |
 | Certificates: list, import (CA, PKCS#12, PEM pair, issued), CSR, deletion, trust — done | CLI (`certutil`, `pk12util`, `openssl`) | ❌ | ✅ |
 | Verifying the served certificate — done | TLS handshake | ✅ | ✅ |
+| Server certificate from files of certbot / lego / cert-manager (check, import, switch, optional restart) | File + CLI + LDAP | ❌ | ✅ |
 
 ## Out of scope
 

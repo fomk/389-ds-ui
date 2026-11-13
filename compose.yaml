@@ -42,6 +42,12 @@ services:
       DSUI_AUTH: ${DSUI_AUTH:-ldap}
       DSUI_ADMIN_GROUPS: ${DSUI_ADMIN_GROUPS:-}
       DSUI_OPERATOR_GROUPS: ${DSUI_OPERATOR_GROUPS:-}
+      # Server certificate from files of certbot / lego / cert-manager (mount
+      # them read-only, readable by uid 389); see docs/deployment.md.
+      DSUI_CERT_FILE: ${DSUI_CERT_FILE:-}
+      DSUI_CERT_KEY_FILE: ${DSUI_CERT_KEY_FILE:-}
+      DSUI_CERT_CHECK_INTERVAL: ${DSUI_CERT_CHECK_INTERVAL:-10m}
+      DSUI_CERT_AUTO_RESTART: ${DSUI_CERT_AUTO_RESTART:-false}
     volumes:
       - ds-data:/data
     ports:

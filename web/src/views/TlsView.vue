@@ -28,6 +28,7 @@ import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { useServerStore } from '@/stores/server'
 import SettingsPage from '@/components/settings/SettingsPage.vue'
 import CertImportDialog, { type ImportKind } from '@/components/tls/CertImportDialog.vue'
+import CertSourceCard from '@/components/tls/CertSourceCard.vue'
 
 type Cert = Schemas['Certificate']
 
@@ -71,6 +72,17 @@ const daysLeft = (iso: string) => Math.floor((new Date(iso).getTime() - Date.now
 const expiryType = (iso: string) => (daysLeft(iso) < 0 ? 'error' : daysLeft(iso) < 30 ? 'warning' : 'default')
 /** The database certificate the server presents now, matched by fingerprint. */
 const presentedName = computed(() => list.value?.certificates.find((c) => c.sha256 === presented.value?.chain[0]?.sha256)?.nickname)
+/** The server certificate in the database differs from the presented one until a restart. */
+const pendingRestart = computed(() => {
+  const configured = list.value?.certificates.find((c) => c.nickname === list.value?.serverCert)
+  const leaf = presented.value?.chain[0]
+  return !!configured && !!leaf && configured.sha256 !== leaf.sha256
+})
+const sourceEnabled = ref(true)
+async function onImportedFromFiles() {
+  void server.refreshState()
+  await loadCerts()
+}
 
 // --- actions ------------------------------------------------------------------
 const fail = (e: unknown) => {
@@ -207,12 +219,14 @@ const columns = computed<DataTableColumns<Cert>>(() => [
           <dt>{{ t('tls.inDatabase') }}</dt>
           <dd>
             {{ presentedName ?? t('tls.notInDatabase') }}
-            <NTag v-if="presentedName && list && presentedName !== list.serverCert" size="small" type="warning" :bordered="false">{{ t('tls.pendingRestart') }}</NTag>
+            <NTag v-if="pendingRestart" size="small" type="warning" :bordered="false">{{ t('tls.pendingRestart') }}</NTag>
           </dd>
         </template>
       </template>
     </dl>
   </NCard>
+
+  <CertSourceCard v-if="canManage" class="block" @imported="onImportedFromFiles" @loaded="(on: boolean) => (sourceEnabled = on)" />
 
   <div class="settings">
     <SettingsPage id="tls-general" />
@@ -234,6 +248,7 @@ const columns = computed<DataTableColumns<Cert>>(() => [
       <template #empty><NEmpty size="small" :description="t('tls.none')" /></template>
     </NDataTable>
     <p v-if="canManage" class="hint">{{ t('tls.keysWarning') }}</p>
+    <p v-if="canManage && !sourceEnabled" class="hint">{{ t('tls.source.hint') }}</p>
   </NCard>
 
   <CertImportDialog v-model:show="importOpen" :kind="importKind" @done="loadCerts" />
