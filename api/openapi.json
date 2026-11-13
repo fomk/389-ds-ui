@@ -1,6 +1,108 @@
 {
   "components": {
     "schemas": {
+      "AccountReport": {
+        "additionalProperties": false,
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/AccountRow"
+            },
+            "type": "array"
+          },
+          "base": {
+            "type": "string"
+          },
+          "counts": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "description": "Accounts per state",
+            "type": "object"
+          },
+          "filter": {
+            "type": "string"
+          },
+          "truncated": {
+            "description": "More accounts match than the report holds",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "base",
+          "filter",
+          "accounts",
+          "counts",
+          "truncated"
+        ],
+        "type": "object"
+      },
+      "AccountRow": {
+        "additionalProperties": false,
+        "properties": {
+          "dn": {
+            "type": "string"
+          },
+          "failedBinds": {
+            "description": "passwordRetryCount",
+            "format": "int64",
+            "type": "integer"
+          },
+          "graceLoginsUsed": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "hasPassword": {
+            "type": "boolean"
+          },
+          "lastLogin": {
+            "description": "lastLoginTime (Account Policy plug-in)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lockedByRoleOrCoS": {
+            "description": "Unlocking here is not possible; change the role or CoS",
+            "type": "boolean"
+          },
+          "lockedOutUntil": {
+            "description": "Absent with locked-out: until an administrator unlocks",
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "description": "uid or cn",
+            "type": "string"
+          },
+          "passwordChanged": {
+            "description": "pwdUpdateTime (if tracked)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "passwordExpires": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "policy": {
+            "type": "string"
+          },
+          "states": {
+            "description": "active, or any of locked, locked-role, locked-out, expired, must-change",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "dn",
+          "states",
+          "hasPassword",
+          "lockedByRoleOrCoS"
+        ],
+        "type": "object"
+      },
       "AccountStatus": {
         "additionalProperties": false,
         "properties": {
@@ -4201,6 +4303,73 @@
           }
         },
         "summary": "Lock an account (nsAccountLock)",
+        "tags": [
+          "accounts"
+        ]
+      }
+    },
+    "/api/v1/accounts/report": {
+      "get": {
+        "operationId": "accountReport",
+        "parameters": [
+          {
+            "description": "Subtree to report",
+            "explode": false,
+            "in": "query",
+            "name": "base",
+            "required": true,
+            "schema": {
+              "description": "Subtree to report",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Which entries are accounts; default persons and POSIX accounts",
+            "explode": false,
+            "in": "query",
+            "name": "filter",
+            "schema": {
+              "description": "Which entries are accounts; default persons and POSIX accounts",
+              "type": "string"
+            }
+          },
+          {
+            "description": "At most this many accounts (default and maximum 5000)",
+            "explode": false,
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "description": "At most this many accounts (default and maximum 5000)",
+              "format": "int64",
+              "maximum": 5000,
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountReport"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "State of the accounts under a subtree (locks, lockouts, expired passwords)",
         "tags": [
           "accounts"
         ]

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"net/url"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/go-ldap/ldap/v3"
@@ -63,6 +64,23 @@ func TestAccounts(t *testing.T) {
 	}
 	if code := bindAs(t, user, "Secret123"); code == 0 {
 		t.Error("locked account could bind")
+	}
+	// The report sees the lock among the people.
+	rec := serve(h, httptestRequest("GET", "/api/v1/accounts/report?base="+url.QueryEscape("ou=People,"+suffix), ""))
+	var rep ds.AccountReport
+	if rec.Code != 200 || json.Unmarshal(rec.Body.Bytes(), &rep) != nil || rep.Truncated || rep.Counts[ds.AccountLocked] != 1 || len(rep.Accounts) < 2 {
+		t.Errorf("report: %d %s", rec.Code, rec.Body)
+	}
+	for _, a := range rep.Accounts {
+		if strings.EqualFold(a.DN, user) && (a.Name != "bjones" || !slices.Contains(a.States, ds.AccountLocked)) {
+			t.Errorf("report row: %+v", a)
+		}
+	}
+	if rec := serve(h, httptestRequest("GET", "/api/v1/accounts/report?base="+url.QueryEscape("ou=People,"+suffix)+"&limit=1", "")); !strings.Contains(rec.Body.String(), `"truncated":true`) {
+		t.Errorf("limited report: %s", rec.Body)
+	}
+	if rec := serve(h, httptestRequest("GET", "/api/v1/accounts/report?base="+url.QueryEscape(suffix)+"&filter=bad", "")); rec.Code != 422 {
+		t.Errorf("bad filter: %d", rec.Code)
 	}
 	if st := status("POST", "/api/v1/accounts/unlock"); !slices.Equal(st.States, []string{ds.AccountActive}) {
 		t.Errorf("after unlock: %+v", st)

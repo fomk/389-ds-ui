@@ -2255,5 +2255,19 @@
     "delete": "Delete rule set",
     "deleteConfirm": "Delete the plug-in instance {name}?",
     "disableFirst": "Disable it first"
+  },
+  "accountReport": {
+    "title": "Account report",
+    "hint": "locks, lockouts, expired passwords",
+    "description": "State of every account under the subtree, as in the account card of the LDAP browser: locked, locked by a role, locked out after failed logins, password expired or to be changed.",
+    "base": "Subtree",
+    "filter": "Accounts filter",
+    "filterDefault": "persons and POSIX accounts",
+    "run": "Build report",
+    "account": "Account",
+    "state": "State",
+    "all": "All: {n}",
+    "truncated": "Only the first {n} accounts are shown; narrow the subtree or the filter.",
+    "none": "No accounts"
   }
 }

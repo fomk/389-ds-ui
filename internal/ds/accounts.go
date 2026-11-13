@@ -80,6 +80,21 @@ func GetAccountStatus(c *ldap.Conn, dn string, now time.Time) (*AccountStatus, e
 	if err != nil {
 		return nil, err
 	}
+	realLock := false
+	if strings.EqualFold(e.GetAttributeValue("nsAccountLock"), "true") {
+		real, err := readAccount(c, dn, true)
+		if err != nil {
+			return nil, err
+		}
+		realLock = strings.EqualFold(real.GetAttributeValue("nsAccountLock"), "true")
+	}
+	return accountStatus(e, realLock, now), nil
+}
+
+// accountStatus computes the state from an entry read with accountAttrs;
+// realLock tells whether nsAccountLock is stored in the entry itself (not
+// computed by a role or CoS).
+func accountStatus(e *ldap.Entry, realLock bool, now time.Time) *AccountStatus {
 	st := &AccountStatus{
 		DN:              e.DN,
 		States:          []string{},
@@ -93,11 +108,7 @@ func GetAccountStatus(c *ldap.Conn, dn string, now time.Time) (*AccountStatus, e
 	st.FailedBinds, _ = strconv.Atoi(e.GetAttributeValue("passwordRetryCount"))
 
 	if strings.EqualFold(e.GetAttributeValue("nsAccountLock"), "true") {
-		real, err := readAccount(c, dn, true)
-		if err != nil {
-			return nil, err
-		}
-		if strings.EqualFold(real.GetAttributeValue("nsAccountLock"), "true") {
+		if realLock {
 			st.States = append(st.States, AccountLocked)
 		} else {
 			st.States = append(st.States, AccountLockedRole)
@@ -123,7 +134,7 @@ func GetAccountStatus(c *ldap.Conn, dn string, now time.Time) (*AccountStatus, e
 	if len(st.States) == 0 {
 		st.States = append(st.States, AccountActive)
 	}
-	return st, nil
+	return st
 }
 
 // LockAccount sets nsAccountLock in the entry.

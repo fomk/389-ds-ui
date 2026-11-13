@@ -15,6 +15,12 @@ type accountDNInput struct {
 	DN string `query:"dn" required:"true"`
 }
 type accountStatusOutput struct{ Body *ds.AccountStatus }
+type accountReportInput struct {
+	Base   string `query:"base" required:"true" doc:"Subtree to report"`
+	Filter string `query:"filter" doc:"Which entries are accounts; default persons and POSIX accounts"`
+	Limit  int    `query:"limit" minimum:"0" maximum:"5000" doc:"At most this many accounts (default and maximum 5000)"`
+}
+type accountReportOutput struct{ Body *ds.AccountReport }
 
 func registerAccounts(api huma.API, d Deps) {
 	tags := []string{"accounts"}
@@ -54,5 +60,19 @@ func registerAccounts(api huma.API, d Deps) {
 		Summary: "Unlock an account and reset a lockout after failed binds", Tags: tags},
 		func(ctx context.Context, in *accountDNInput) (*accountStatusOutput, error) {
 			return status(ctx, in.DN, ds.UnlockAccount, ds.OpUnlockAccount)
+		})
+
+	huma.Register(api, huma.Operation{OperationID: "accountReport", Method: http.MethodGet, Path: apiPrefix + "/accounts/report",
+		Summary: "State of the accounts under a subtree (locks, lockouts, expired passwords)", Tags: tags},
+		func(ctx context.Context, in *accountReportInput) (*accountReportOutput, error) {
+			var rep *ds.AccountReport
+			err := conn(ctx, func(c *ldap.Conn) (err error) {
+				rep, err = ds.ReportAccounts(c, in.Base, in.Filter, in.Limit, time.Now())
+				return err
+			})
+			if err != nil {
+				return nil, toHTTPError(err)
+			}
+			return &accountReportOutput{Body: rep}, nil
 		})
 }

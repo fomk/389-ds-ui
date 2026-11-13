@@ -28,15 +28,17 @@ import {
   useMessage,
   useThemeVars,
 } from 'naive-ui'
-import { FolderTree, Globe, Plus, Trash2, User } from '@lucide/vue'
+import { FolderTree, Globe, Plus, Trash2, User, UsersRound } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { useServerStore } from '@/stores/server'
 import SettingsPage from '@/components/settings/SettingsPage.vue'
+import AccountReport from '@/components/AccountReport.vue'
 
 type Policy = Schemas['LocalPolicy']
 
 const GLOBAL = 'global'
+const REPORT = 'report'
 
 const { t } = useI18n()
 const vars = useThemeVars()
@@ -70,7 +72,7 @@ const selected = computed(() => (typeof route.query.policy === 'string' ? route.
 const selectedPolicy = computed(() => policies.value?.find((p) => p.dn === selected.value))
 // A policy deleted elsewhere: back to the global one.
 watch([policies, selected], () => {
-  if (policies.value && selected.value !== GLOBAL && !selectedPolicy.value) select(GLOBAL)
+  if (policies.value && selected.value !== GLOBAL && selected.value !== REPORT && !selectedPolicy.value) select(GLOBAL)
 })
 
 function select(id: string) {
@@ -181,6 +183,13 @@ onBeforeRouteLeave(confirmLeave)
               <span class="muted">{{ t('policies.globalHint') }}</span>
             </span>
           </button>
+          <button type="button" class="item" :class="{ active: selected === REPORT }" @click="select(REPORT)">
+            <NIcon :size="17"><UsersRound /></NIcon>
+            <span class="item-text">
+              <span>{{ t('accountReport.title') }}</span>
+              <span class="muted">{{ t('accountReport.hint') }}</span>
+            </span>
+          </button>
           <div class="local-head">
             <span class="local-title">{{ t('policies.local') }}</span>
             <NButton size="small" type="primary" :title="t('policies.new')" @click="openCreate">
@@ -225,6 +234,7 @@ onBeforeRouteLeave(confirmLeave)
           </NCard>
           <SettingsPage id="password-policy-local" :key="selectedPolicy.dn" v-model:dirty="dirty" :dn="selectedPolicy.dn" />
         </template>
+        <AccountReport v-else-if="selected === REPORT" />
         <SettingsPage v-else-if="policies" id="password-policy" key="global" v-model:dirty="dirty" />
       </NGridItem>
     </NGrid>
