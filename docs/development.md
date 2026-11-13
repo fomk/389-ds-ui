@@ -100,3 +100,12 @@ After changing API types in Go: run `make gen` and commit `api/openapi.json` and
 2. Add its texts (`pages.<id>.*`) to `web/src/i18n/locales/en.json` and `ru.json`.
 3. Run `go test ./internal/pages` (definitions and texts) and `make itest` (every attribute exists on a real server).
 4. The page appears under "Server settings" automatically.
+
+## Releases
+
+1. Rename the `## Unreleased` section of `CHANGELOG.md` to `## X.Y.Z - YYYY-MM-DD` (start a new empty `## Unreleased` above it) and commit.
+2. Tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+3. The `release` workflow checks that the changelog has the section, builds both images, checks that they report `X.Y.Z`, pushes them to `ghcr.io/<owner>/389-ds-ui` (`X.Y.Z`, `X.Y`, `latest`, and `-static` variants) and creates the GitHub release with the changelog section as notes. Tags with a suffix (`v1.1.0-rc.1`) make a pre-release without `latest`.
+
+Every push to `master` publishes `edge` images.
+

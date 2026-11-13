@@ -29,7 +29,8 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s CMD ["/usr/local/bin/ds-ui", "healthcheck"]
 ENTRYPOINT ["/usr/local/bin/ds-ui"]
 
-# Sidecar mode: shares /data with the ds container. Runs as dirsrv (uid 389),
+# Sidecar mode: shares /data with the ds container. certutil/pk12util and
+# openssl manage the server's NSS database. Runs as dirsrv (uid 389),
 # which 389-ds maps to cn=Directory Manager on LDAPI autobind.
 FROM debian:trixie-slim AS sidecar
 ARG DS_UID=389
@@ -38,7 +39,7 @@ RUN groupadd --system --gid "${DS_GID}" dirsrv \
  && useradd --system --uid "${DS_UID}" --gid dirsrv --no-create-home --home-dir /nonexistent \
       --shell /usr/sbin/nologin dirsrv \
  && apt-get update \
- && apt-get install -y --no-install-recommends libnss3-tools ca-certificates \
+ && apt-get install -y --no-install-recommends libnss3-tools openssl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 COPY --from=go /out/ds-ui /usr/local/bin/ds-ui
 USER dirsrv

@@ -7,8 +7,18 @@
 | Image | Dockerfile | Base | Contents | Size |
 |---|---|---|---|---|
 | `ds` | [389-ds-base-docker](https://github.com/fomk/389-ds-base-docker) project, `ghcr.io/fomk/389-ds-base-docker:3.3.1` | `debian:trixie-slim` | 389-ds-base 3.3.1 built from the release tarball, tini, `dscontainer` + `ds-entrypoint` wrapper; `compose.yaml` uses it (`DS_IMAGE` overrides) | ~468 MB |
-| `ui` (sidecar) | `deploy/ui/Dockerfile`, target `sidecar` | `debian:trixie-slim` | ds-ui + `libnss3-tools` (certutil), user 389 | ~152 MB |
-| `ui` (static) | `deploy/ui/Dockerfile`, target `static` | `distroless/static:nonroot` | ds-ui only (mode B) | ~20 MB |
+| `ui` (sidecar) | `deploy/ui/Dockerfile`, target `sidecar`; published as `ghcr.io/fomk/389-ds-ui` | `debian:trixie-slim` | ds-ui + `libnss3-tools` (certutil, pk12util), `openssl`, user 389 | ~152 MB |
+| `ui` (static) | `deploy/ui/Dockerfile`, target `static`; published as `ghcr.io/fomk/389-ds-ui:*-static` | `distroless/static:nonroot` | ds-ui only (mode B) | ~20 MB |
+
+**Published ds-ui images** (workflow `release`):
+
+| Tag | Built from |
+|---|---|
+| `X.Y.Z`, `X.Y`, `latest` (and `X.Y.Z-static`, `X.Y-static`, `latest-static`) | a release tag `vX.Y.Z` |
+| `edge`, `edge-static` | every push to `master` |
+| `sha-<commit>` (and `sha-<commit>-static`) | every build |
+
+Pin a version (`1.0.0`) or a minor line (`1.0`) in production. `ds-ui version` prints the version inside an image. The compose files build from the checkout by default; `DSUI_IMAGE=ghcr.io/fomk/389-ds-ui:1.0 docker compose up -d --no-build` runs a published release instead (`…:1.0-static` for `compose.remote.yaml`).
 
 The DS image comes from the separate 389-ds-base-docker project (built from the upstream release tarball); it keeps the same layout — state in `/data`, LDAPI socket `/data/run/slapd-localhost.socket`, uid/gid 389, `DS_DM_PASSWORD_FILE` / `DS_SUFFIX` — so ds-ui works with it unchanged. There is no all-in-one image (ADR-012).
 

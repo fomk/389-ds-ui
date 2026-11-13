@@ -8,7 +8,8 @@ services:
       context: .
       dockerfile: deploy/ui/Dockerfile
       target: static
-    image: 389-ds-ui/ui:dev-static
+    # Published release: DSUI_IMAGE=ghcr.io/fomk/389-ds-ui:1-static ... up -d --no-build
+    image: ${DSUI_IMAGE:-389-ds-ui/ui:dev-static}
     environment:
       DSUI_MODE: remote
       DSUI_LDAP_URL: ${DSUI_LDAP_URL:?set DSUI_LDAP_URL, e.g. ldaps://ds1.example.com:636}

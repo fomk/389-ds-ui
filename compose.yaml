@@ -26,7 +26,9 @@ services:
       context: .
       dockerfile: deploy/ui/Dockerfile
       target: sidecar
-    image: 389-ds-ui/ui:dev
+    # Built from this checkout; to run a published release instead:
+    #   DSUI_IMAGE=ghcr.io/fomk/389-ds-ui:1 docker compose up -d --no-build
+    image: ${DSUI_IMAGE:-389-ds-ui/ui:dev}
     environment:
       DSUI_MODE: sidecar
       DSUI_INSTANCE: localhost

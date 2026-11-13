@@ -1,0 +1,142 @@
+name: release
+
+# Container images on ghcr.io/<owner>/389-ds-ui:
+#   tag vX.Y.Z      -> X.Y.Z, X.Y, latest   (+ the same with -static)
+#   push to master  -> edge                 (+ edge-static)
+# every build also gets sha-<commit>. A version tag also creates a GitHub
+# release with that version's section of CHANGELOG.md.
+on:
+  push:
+    branches: [master]
+    tags: ['v[0-9]+.[0-9]+.[0-9]+', 'v[0-9]+.[0-9]+.[0-9]+-*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  changelog:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: v
+        name: The version has a CHANGELOG section
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          awk -v v="$version" '
+            /^## / { inside = ($2 == v || $2 == "[" v "]") ; next }
+            inside { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::CHANGELOG.md has no section '## $version'"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-notes
+          path: release-notes.md
+
+  image:
+    needs: [changelog]
+    # Branch builds have no changelog job; run when it succeeded or was skipped.
+    if: always() && (needs.changelog.result == 'success' || needs.changelog.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - target: sidecar
+            suffix: ''
+          - target: static
+            suffix: '-static'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Image name
+        id: image
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "name=ghcr.io/${OWNER,,}/389-ds-ui" >> "$GITHUB_OUTPUT"
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ${{ steps.image.outputs.name }}
+          flavor: |
+            latest=false
+            suffix=${{ matrix.suffix }},onlatest=true
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ !contains(github.ref_name, '-') }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
+            type=edge,branch=master
+            type=sha,format=long
+          labels: |
+            org.opencontainers.image.title=389 DS Admin (ds-ui)
+            org.opencontainers.image.description=Web UI for administering 389 Directory Server (${{ matrix.target }})
+            org.opencontainers.image.licenses=MIT
+      - name: Version inside the binary
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then v="${GITHUB_REF_NAME#v}"; else v="edge-${GITHUB_SHA::12}"; fi
+          echo "value=$v" >> "$GITHUB_OUTPUT"
+      - name: Build for the check
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: deploy/ui/Dockerfile
+          target: ${{ matrix.target }}
+          build-args: VERSION=${{ steps.version.outputs.value }}
+          load: true
+          tags: ds-ui-check:${{ matrix.target }}
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}
+      - name: The image reports its version
+        run: |
+          got="$(docker run --rm ds-ui-check:${{ matrix.target }} version)"
+          test "$got" = "${{ steps.version.outputs.value }}" || { echo "::error::version $got"; exit 1; }
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: deploy/ui/Dockerfile
+          target: ${{ matrix.target }}
+          build-args: VERSION=${{ steps.version.outputs.value }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.target }}
+
+  github-release:
+    needs: [changelog, image]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          name: release-notes
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          prerelease=""
+          [[ "$TAG" == *-* ]] && prerelease="--prerelease"
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG" --notes-file release-notes.md $prerelease
