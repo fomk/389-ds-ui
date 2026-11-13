@@ -168,7 +168,8 @@ Work items:
 - ✅ Health check: a set of checks over LDAP and the NSS database, "Health" page.
 - ~~Mode A (all-in-one)~~ — dropped (ADR-012): the DS image is built in the separate 389-ds-base-docker repository, ds-ui runs next to it (modes C and B).
 - ✅ e2e tests (Playwright) for key scenarios, in CI; they found a race in the entry view (a slower answer for the previous entry overwrote the new one) and unlabelled inputs.
-- User documentation, CHANGELOG, image versioning, publishing to a registry.
+- ✅ User documentation ([user-guide.md](user-guide.md)), [CHANGELOG](../CHANGELOG.md).
+- Image versioning, publishing to a registry.
 - ✅ Server certificate from files of an external ACME client (certbot, lego, cert-manager), ADR-013.
 - ✅ Sign-in (moved ahead of stage 7, ADR-011): directory accounts, administrator/operator roles from groups, directory data with Proxied Authorization.
 

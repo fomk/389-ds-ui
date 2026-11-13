@@ -20,6 +20,8 @@ shipped as a lightweight Docker service next to the DS container.
 
 | Document | Contents |
 |---|---|
+| [docs/user-guide.md](docs/user-guide.md) | User guide: signing in, every section of the interface, troubleshooting |
+| [CHANGELOG.md](CHANGELOG.md) | What changed in each release |
 | [docs/roadmap.md](docs/roadmap.md) | Stages, scope, definitions of done, estimates, risks |
 | [docs/architecture.md](docs/architecture.md) | Components, providers, modes, data flows, security |
 | [docs/features.md](docs/features.md) | Feature matrix: implementation mechanism, availability per mode, stage |
