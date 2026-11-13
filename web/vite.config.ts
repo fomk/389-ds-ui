@@ -1,4 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
@@ -23,6 +24,10 @@ export default defineConfig({
     emptyOutDir: true,
     // Admin UI on a local network: one ~160 KB gzip bundle is fine.
     chunkSizeWarningLimit: 800,
+  },
+  // Unit tests only; the browser tests in e2e/ run with Playwright.
+  test: {
+    include: ['src/**/*.{test,spec}.ts'],
   },
   server: {
     proxy: {
