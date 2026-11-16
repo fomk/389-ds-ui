@@ -26,6 +26,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/pages"
 	"github.com/fomk/389-ds-ui/internal/providers"
 	"github.com/fomk/389-ds-ui/internal/templates"
+	"github.com/fomk/389-ds-ui/internal/topology"
 )
 
 // LDAP is the subset of ldapx.Client the API needs.
@@ -49,6 +50,8 @@ type Deps struct {
 	CertSource     *certsource.Watcher // nil unless DSUI_CERT_FILE is set
 	Auth           *auth.Service       // nil: no authentication (DSUI_AUTH=none)
 	TLSHost        string              // host of the LDAPS port, for the handshake check
+	LDAPCAFile     string              // CA for the other servers of the replication topology
+	TopologyDial   topology.Dialer     // nil: topology.DefaultDialer (tests connect through mapped ports)
 	Lifecycle      providers.Lifecycle
 	Capabilities   providers.Capabilities
 	Instance       string

@@ -2044,7 +2044,8 @@
       "replica": "Replica",
       "changelog": "Changelog",
       "ruv": "RUV",
-      "conflicts": "Conflicts"
+      "conflicts": "Conflicts",
+      "topology": "Topology"
     },
     "newAgreement": "New agreement",
     "editAgreement": "Edit agreement",
@@ -2454,5 +2455,38 @@
         "fix": "Set the level back to 16384 when done."
       }
     }
+  },
+  "topology": {
+    "title": "Topology",
+    "description": "Follows the agreements of this server to the other servers, and theirs further on, and compares what each server has received from each supplier. The other servers are reached as the agreements name them.",
+    "bindDN": "Bind DN on the other servers",
+    "password": "Password",
+    "build": "Build report",
+    "insecure": "Do not verify the certificates of the other servers",
+    "notStored": "The credentials are sent with this request only and are not stored.",
+    "server": "Server",
+    "self": "this server",
+    "alsoAs": "also as {names}",
+    "fromSupplier": "Changes of {rid}",
+    "inSync": "in sync",
+    "behind": "{time} behind",
+    "missing": "none received",
+    "seconds": "{n} s",
+    "minutes": "{n} min",
+    "hours": "{n} h",
+    "plain": "Reached over plain LDAP — the password crossed the network unencrypted: {servers}",
+    "truncated": "Only the first 20 servers are shown.",
+    "ownCredentials": "These servers refused the credentials; enter their own and build again:",
+    "retry": "Build again",
+    "links": "Agreements",
+    "disabled": "disabled",
+    "errors": {
+      "connect": "not reachable",
+      "tls": "certificate not trusted",
+      "auth": "credentials refused",
+      "not-replicated": "not replicated",
+      "other": "error"
+    },
+    "noLinks": "No agreements: this server sends changes nowhere."
   }
 }

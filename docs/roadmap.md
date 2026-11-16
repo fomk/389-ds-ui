@@ -164,7 +164,8 @@ Work items:
 ## Stage 7. Stabilization and 1.0 release (2–3 wk)
 
 Work items:
-- Multi-server: registry of remote servers (mode B), context switching in the UI; replication lag monitoring across the topology (comparing RUVs between nodes).
+- Replication topology report: follow the agreements to the other servers (credentials entered for the report, not stored), compare their RUVs and show how far each server is behind each supplier — what Cockpit's synchronization report (`dsconf replication monitor`) gives.
+- ~~Multi-server registry and context switching~~ — dropped: the 389-ds Cockpit console manages the instances of one host too; run one ds-ui per server.
 - ✅ Health check: a set of checks over LDAP and the NSS database, "Health" page.
 - ~~Mode A (all-in-one)~~ — dropped (ADR-012): the DS image is built in the separate 389-ds-base-docker repository, ds-ui runs next to it (modes C and B).
 - ✅ e2e tests (Playwright) for key scenarios, in CI; they found a race in the entry view (a slower answer for the previous entry overwrote the new one) and unlabelled inputs.

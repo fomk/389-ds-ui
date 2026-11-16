@@ -734,6 +734,22 @@
         },
         "type": "object"
       },
+      "BindCredentials": {
+        "additionalProperties": false,
+        "properties": {
+          "bindDN": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "bindDN",
+          "password"
+        ],
+        "type": "object"
+      },
       "CSR": {
         "additionalProperties": false,
         "properties": {
@@ -1857,6 +1873,27 @@
         "required": [
           "intervalSeconds",
           "samples"
+        ],
+        "type": "object"
+      },
+      "HostCredentials": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "description": "host:port as the agreements name it",
+            "type": "string"
+          },
+          "bindDN": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "address",
+          "bindDN",
+          "password"
         ],
         "type": "object"
       },
@@ -4010,6 +4047,24 @@
         ],
         "type": "object"
       },
+      "SupplierLag": {
+        "additionalProperties": false,
+        "properties": {
+          "replicaId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "seconds": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "replicaId",
+          "seconds"
+        ],
+        "type": "object"
+      },
       "Syntax": {
         "additionalProperties": false,
         "properties": {
@@ -4254,6 +4309,192 @@
         },
         "required": [
           "values"
+        ],
+        "type": "object"
+      },
+      "TopologyLink": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "lastUpdate": {
+            "type": "string"
+          },
+          "lastUpdateEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "target": {
+            "description": "host:port",
+            "type": "string"
+          },
+          "transport": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "target",
+          "transport",
+          "enabled",
+          "state"
+        ],
+        "type": "object"
+      },
+      "TopologyNode": {
+        "additionalProperties": false,
+        "properties": {
+          "address": {
+            "description": "host:port it was reached at; the local server: its own name",
+            "type": "string"
+          },
+          "agreements": {
+            "items": {
+              "$ref": "#/components/schemas/TopologyLink"
+            },
+            "type": "array"
+          },
+          "aliases": {
+            "description": "Other addresses agreements use for it",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "behind": {
+            "description": "Per supplier",
+            "items": {
+              "$ref": "#/components/schemas/SupplierLag"
+            },
+            "type": "array"
+          },
+          "error": {
+            "type": "string"
+          },
+          "errorKind": {
+            "enum": [
+              "connect",
+              "tls",
+              "auth",
+              "not-replicated",
+              "other"
+            ],
+            "type": "string"
+          },
+          "maxBehind": {
+            "description": "Seconds; -1 when some supplier's changes are missing entirely",
+            "format": "int64",
+            "type": "integer"
+          },
+          "reachable": {
+            "type": "boolean"
+          },
+          "replicaId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "role": {
+            "type": "string"
+          },
+          "ruv": {
+            "items": {
+              "$ref": "#/components/schemas/RUVElement"
+            },
+            "type": "array"
+          },
+          "self": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "address",
+          "aliases",
+          "self",
+          "reachable",
+          "agreements",
+          "ruv",
+          "behind",
+          "maxBehind"
+        ],
+        "type": "object"
+      },
+      "TopologyReport": {
+        "additionalProperties": false,
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/TopologyNode"
+            },
+            "type": "array"
+          },
+          "plain": {
+            "description": "Servers reached over plain LDAP: the password crossed the network unencrypted",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "started": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "suffix": {
+            "type": "string"
+          },
+          "suppliers": {
+            "description": "Replica IDs that originated changes",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "suffix",
+          "nodes",
+          "suppliers",
+          "plain",
+          "truncated",
+          "started"
+        ],
+        "type": "object"
+      },
+      "TopologyRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "default": {
+            "$ref": "#/components/schemas/BindCredentials",
+            "description": "Used for every server without its own credentials"
+          },
+          "hosts": {
+            "items": {
+              "$ref": "#/components/schemas/HostCredentials"
+            },
+            "type": "array"
+          },
+          "insecureTLS": {
+            "description": "Do not verify the certificates of the other servers",
+            "type": "boolean"
+          },
+          "suffix": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "suffix",
+          "default"
         ],
         "type": "object"
       },
@@ -8786,6 +9027,47 @@
           }
         },
         "summary": "Replica update vector of a suffix",
+        "tags": [
+          "replication"
+        ]
+      }
+    },
+    "/api/v1/replication/topology": {
+      "post": {
+        "operationId": "replicationTopology",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TopologyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopologyReport"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Follow the agreements to the other servers and compare their RUVs (credentials are used for this report only)",
         "tags": [
           "replication"
         ]

@@ -110,7 +110,7 @@ All plugins are LDAP-based and available in all modes.
 | Agreement status, RUV — done | LDAP | 5 | ✅ | ✅ |
 | CleanAllRUV — done | Task | 5 | ✅ | ✅ |
 | Replication conflicts (list, delete, keep under a new RDN) — done | LDAP | 5 | ✅ | ✅ |
-| Topology lag (RUV comparison) | LDAP to multiple nodes | 7 | ✅ | ✅ |
+| Topology report: servers reached through the agreements, lag per supplier (RUV comparison), agreements between them — done | LDAP to the other servers (credentials per report) | 7 | ✅ | ✅ |
 
 ## TLS (stage 6)
 

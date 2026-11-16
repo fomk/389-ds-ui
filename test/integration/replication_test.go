@@ -5,6 +5,7 @@ package integration
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,6 +25,7 @@ import (
 	"github.com/fomk/389-ds-ui/internal/health"
 	"github.com/fomk/389-ds-ui/internal/ldapx"
 	"github.com/fomk/389-ds-ui/internal/providers"
+	"github.com/fomk/389-ds-ui/internal/topology"
 )
 
 // node is one DS container with a ds-ui API handler talking to it.
@@ -281,6 +283,51 @@ func TestTwoSupplierReplication(t *testing.T) {
 	if conflicts[0].Reason == "" || !strings.Contains(strings.ToLower(conflicts[0].DN), "uid=twin") {
 		t.Errorf("conflict = %+v", conflicts[0])
 	}
+	// The topology report reaches ds2 through ds1's agreement (and ds1 again
+	// through ds2's, as an alias) and compares their RUVs.
+	dial := func(ctx context.Context, host string, port int, transport string, insecure bool) (*ldap.Conn, error) {
+		for _, n := range []*node{ds1, ds2} {
+			if host == n.name && port == 3389 {
+				return ldap.DialURL(n.url)
+			}
+		}
+		return nil, fmt.Errorf("unknown host %s:%d", host, port)
+	}
+	h := api.NewHandler(api.Deps{LDAP: ds1.c, Lifecycle: providers.NoLifecycle{}, TopologyDial: dial})
+	topo := func(password string) topology.TopologyReport {
+		t.Helper()
+		body := `{"suffix":"` + suffix + `","default":{"bindDN":"` + dmDN + `","password":"` + password + `"}}`
+		rec := serve(h, httptestRequest("POST", "/api/v1/replication/topology", body))
+		var r topology.TopologyReport
+		if rec.Code != 200 || json.Unmarshal(rec.Body.Bytes(), &r) != nil {
+			t.Fatalf("topology: %d %s", rec.Code, rec.Body)
+		}
+		return r
+	}
+	var topoRep topology.TopologyReport
+	waitFor(t, "topology in sync", 90*time.Second, func() bool {
+		topoRep = topo(dmPassword)
+		if len(topoRep.Nodes) != 2 || len(topoRep.Suppliers) != 2 {
+			return false
+		}
+		for _, n := range topoRep.Nodes {
+			if !n.Reachable || n.MaxBehind != 0 {
+				return false
+			}
+		}
+		return true
+	})
+	if !topoRep.Nodes[0].Self || len(topoRep.Nodes[0].Aliases) != 1 || topoRep.Nodes[0].Aliases[0] != "ds1:3389" || topoRep.Nodes[1].Address != "ds2:3389" {
+		t.Errorf("nodes: %+v", topoRep.Nodes)
+	}
+	if len(topoRep.Plain) == 0 {
+		t.Error("plain LDAP connections not reported")
+	}
+	topoRep = topo("wrong password")
+	if len(topoRep.Nodes) != 2 || topoRep.Nodes[1].Reachable || topoRep.Nodes[1].ErrorKind != "auth" {
+		t.Errorf("wrong password: %+v", topoRep.Nodes)
+	}
+
 	// The health check sees the conflicts of a replicated suffix.
 	found := false
 	for _, n := range []*node{ds1, ds2} {

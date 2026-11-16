@@ -3,11 +3,13 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/go-ldap/ldap/v3"
 
 	"github.com/fomk/389-ds-ui/internal/ds"
+	"github.com/fomk/389-ds-ui/internal/topology"
 )
 
 type suffixQuery struct {
@@ -70,6 +72,9 @@ type conflictConvertInput struct {
 	}
 }
 
+type topologyInput struct{ Body topology.TopologyRequest }
+type topologyOutput struct{ Body *topology.TopologyReport }
+
 func registerReplication(api huma.API, d Deps) {
 	tags := []string{"replication"}
 	conn := func(ctx context.Context, fn func(*ldap.Conn) error) error { return d.LDAP.Do(ctx, fn) }
@@ -99,6 +104,21 @@ func registerReplication(api huma.API, d Deps) {
 		return huma.Operation{OperationID: id, Method: method, Path: apiPrefix + path, Summary: summary, Tags: tags, DefaultStatus: status}
 	}
 
+	huma.Register(api, op("replicationTopology", http.MethodPost, "/replication/topology",
+		"Follow the agreements to the other servers and compare their RUVs (credentials are used for this report only)", 0),
+		func(ctx context.Context, in *topologyInput) (*topologyOutput, error) {
+			dial := d.TopologyDial
+			if dial == nil {
+				dial = topology.DefaultDialer(d.LDAPCAFile)
+			}
+			ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+			defer cancel()
+			rep, err := topology.Build(ctx, d.LDAP, in.Body, dial)
+			if err != nil {
+				return nil, toHTTPError(err)
+			}
+			return &topologyOutput{Body: rep}, nil
+		})
 	huma.Register(api, op("getReplica", http.MethodGet, "/replication", "Replication configuration of a suffix", 0),
 		func(ctx context.Context, in *suffixQuery) (*replicaOutput, error) {
 			return replica(ctx, func(c *ldap.Conn) (*ds.Replica, error) { return ds.GetReplica(c, in.Suffix) })

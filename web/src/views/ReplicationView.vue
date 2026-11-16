@@ -10,8 +10,9 @@ import AgreementsPanel from '@/components/replication/AgreementsPanel.vue'
 import EnableReplication from '@/components/replication/EnableReplication.vue'
 import ReplicaSettings from '@/components/replication/ReplicaSettings.vue'
 import ReplicationExtras from '@/components/replication/ReplicationExtras.vue'
+import TopologyPanel from '@/components/replication/TopologyPanel.vue'
 
-type Section = 'replica' | 'agreements' | 'changelog' | 'ruv' | 'conflicts'
+type Section = 'replica' | 'agreements' | 'changelog' | 'ruv' | 'conflicts' | 'topology'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -32,7 +33,7 @@ onMounted(async () => {
 const suffix = computed(() => (typeof route.query.suffix === 'string' ? route.query.suffix : backends.value?.[0]?.suffix))
 const section = computed<Section>(() => {
   const s = route.query.section
-  return s === 'replica' || s === 'changelog' || s === 'ruv' || s === 'conflicts' ? s : 'agreements'
+  return s === 'replica' || s === 'changelog' || s === 'ruv' || s === 'conflicts' || s === 'topology' ? s : 'agreements'
 })
 function go(query: { suffix?: string; section?: Section }) {
   router.replace({ path: '/replication', query: { suffix: query.suffix ?? suffix.value, section: query.section ?? section.value } })
@@ -73,9 +74,11 @@ watch(suffix, loadReplica, { immediate: true })
         <NRadioButton value="changelog">{{ t('replication.tabs.changelog') }}</NRadioButton>
         <NRadioButton value="ruv">{{ t('replication.tabs.ruv') }}</NRadioButton>
         <NRadioButton value="conflicts">{{ t('replication.tabs.conflicts') }}</NRadioButton>
+        <NRadioButton value="topology">{{ t('replication.tabs.topology') }}</NRadioButton>
       </NRadioGroup>
       <AgreementsPanel v-if="section === 'agreements'" :suffix="replica.suffix" :role="replica.role" />
       <ReplicaSettings v-else-if="section === 'replica'" :replica="replica" @changed="loadReplica" @disabled="loadReplica" />
+      <TopologyPanel v-else-if="section === 'topology'" :key="replica.suffix" :suffix="replica.suffix" />
       <ReplicationExtras v-else :suffix="replica.suffix" :section="section" :replica-id="replica.replicaId" :role="replica.role" />
     </template>
   </template>

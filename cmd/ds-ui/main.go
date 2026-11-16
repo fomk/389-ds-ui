@@ -187,6 +187,7 @@ func serve() error {
 		CertSource:     certWatcher,
 		Auth:           authService,
 		TLSHost:        cfg.TLSHost,
+		LDAPCAFile:     cfg.LDAPCAFile,
 		Lifecycle:      lifecycle,
 		Capabilities:   caps,
 		Instance:       cfg.Instance,

@@ -156,6 +156,7 @@ Pick a suffix. If it is not replicated, choose the role of this server — **sup
 - **Replica** — role, bind accounts, how long deleted entries are kept.
 - **Changelog** — maximum age and number of entries; set at least one, or the changelog grows without limit.
 - **RUV** — the replica update vector: the latest change this server has seen from each replica. **CleanAllRUV** removes a replica that no longer exists from all servers.
+- **Topology** — the state of the whole topology, like Cockpit's synchronization report. Enter a bind DN and password that work on the other servers (Directory Manager, or an account that can read `cn=config`) and **Build report**: ds-ui follows this server's agreements to the other servers, and theirs further on (up to 20 servers), reaching them by the names and transports in the agreements. For every server it shows its role and replica ID and, per supplier, whether it is in sync or how far behind it is (to the second); then the agreements between them and their state. Servers that refuse the credentials get their own fields — enter theirs and build again. The credentials go with that request only and are not stored. Certificates of the other servers are verified (against the system CAs and `DSUI_LDAP_CA_FILE`) unless you tick *Do not verify*; agreements over plain LDAP send the password unencrypted, and the report says so.
 - **Conflicts** — entries both servers created or changed at the same time. Delete a conflict entry, or keep it under a new name.
 
 ## TLS and certificates

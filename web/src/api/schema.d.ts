@@ -1181,6 +1181,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/replication/topology": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Follow the agreements to the other servers and compare their RUVs (credentials are used for this report only) */
+        post: operations["replicationTopology"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/roles": {
         parameters: {
             query?: never;
@@ -1946,6 +1963,10 @@ export interface components {
             /** @enum {string} */
             state?: "backend" | "disabled" | "referral" | "referral on update";
         };
+        BindCredentials: {
+            bindDN: string;
+            password: string;
+        };
         CSR: {
             pem: string;
         };
@@ -2341,6 +2362,12 @@ export interface components {
             /** Format: int64 */
             intervalSeconds: number;
             samples: components["schemas"]["Sample"][];
+        };
+        HostCredentials: {
+            /** @description host:port as the agreements name it */
+            address: string;
+            bindDN: string;
+            password: string;
         };
         ImportTaskInputBody: {
             /** @description File name in the LDIF directory. The backend's current content is replaced. */
@@ -2986,6 +3013,12 @@ export interface components {
             /** @description Server-internal tree such as cn=config */
             system?: boolean;
         };
+        SupplierLag: {
+            /** Format: int64 */
+            replicaId: number;
+            /** Format: int64 */
+            seconds: number;
+        };
         Syntax: {
             desc?: string;
             oid: string;
@@ -3063,6 +3096,59 @@ export interface components {
             values: {
                 [key: string]: string[];
             };
+        };
+        TopologyLink: {
+            enabled: boolean;
+            lastUpdate?: string;
+            /** Format: date-time */
+            lastUpdateEnd?: string;
+            name: string;
+            state: string;
+            /** @description host:port */
+            target: string;
+            transport: string;
+        };
+        TopologyNode: {
+            /** @description host:port it was reached at; the local server: its own name */
+            address: string;
+            agreements: components["schemas"]["TopologyLink"][];
+            /** @description Other addresses agreements use for it */
+            aliases: string[];
+            /** @description Per supplier */
+            behind: components["schemas"]["SupplierLag"][];
+            error?: string;
+            /** @enum {string} */
+            errorKind?: "connect" | "tls" | "auth" | "not-replicated" | "other";
+            /**
+             * Format: int64
+             * @description Seconds; -1 when some supplier's changes are missing entirely
+             */
+            maxBehind: number;
+            reachable: boolean;
+            /** Format: int64 */
+            replicaId?: number;
+            role?: string;
+            ruv: components["schemas"]["RUVElement"][];
+            self: boolean;
+        };
+        TopologyReport: {
+            nodes: components["schemas"]["TopologyNode"][];
+            /** @description Servers reached over plain LDAP: the password crossed the network unencrypted */
+            plain: string[];
+            /** Format: date-time */
+            started: string;
+            suffix: string;
+            /** @description Replica IDs that originated changes */
+            suppliers: number[];
+            truncated: boolean;
+        };
+        TopologyRequest: {
+            /** @description Used for every server without its own credentials */
+            default: components["schemas"]["BindCredentials"];
+            hosts?: components["schemas"]["HostCredentials"][];
+            /** @description Do not verify the certificates of the other servers */
+            insecureTLS?: boolean;
+            suffix: string;
         };
         TrustInputBody: {
             /** @description e.g. CT,, (trusted CA) or ,, (none) */
@@ -6286,6 +6372,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RUV"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    replicationTopology: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TopologyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopologyReport"];
                 };
             };
             /** @description Error */
