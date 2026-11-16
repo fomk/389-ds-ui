@@ -4,6 +4,10 @@ All notable changes to 389 DS Admin (ds-ui) are recorded here. The format follow
 
 ## Unreleased
 
+## 1.0.0 - 2026-11-16
+
+The first stable release. Images: `ghcr.io/fomk/389-ds-ui:1.0.0` (sidecar) and `ghcr.io/fomk/389-ds-ui:1.0.0-static` (remote). Tested against 389 Directory Server 3.3.1 (`ghcr.io/fomk/389-ds-base-docker:3.3.1`). Everything listed under 0.9.0 is included.
+
 ### Added
 
 - Replication topology report (Replication → Topology): follows the agreements to the other servers, with credentials entered for the report and not stored, and shows for every server how far it is behind each supplier, the agreements between them, and which servers were reached over plain LDAP.
@@ -14,7 +18,14 @@ All notable changes to 389 DS Admin (ds-ui) are recorded here. The format follow
 
 ### Changed
 
-- The plan for 1.0 no longer includes managing several servers in one interface (the 389-ds Cockpit console manages the instances of one host, too); run one ds-ui per server.
+- One ds-ui manages one server: managing several servers in one interface is not planned (the 389-ds Cockpit console manages the instances of one host, too). Run one ds-ui per server; the topology report shows the whole replication topology.
+
+### Known limitations
+
+- Chaining (database links), Windows synchronisation, a built-in ACME client, sign-in through OIDC or a reverse proxy, a visual ACI builder and access-log statistics are not available.
+- Without access to the server's files (remote mode), logs, backup and LDIF file listings and certificates are not available.
+- Sessions are kept in memory: restarting ds-ui signs everyone out.
+- 389-ds records ds-ui's own account in `modifiersName`; the user who made a change is in ds-ui's request log and task history.
 
 ## 0.9.0 - 2026-11-13
 

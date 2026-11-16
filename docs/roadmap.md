@@ -13,7 +13,7 @@ Estimates assume **one full-time developer**. Total to 1.0: **~19–26 weeks (�
 | 4 | Complex screens (schema, policies, plugins, ACI) | 3–4 wk | v0.3 |
 | 5 | Replication | 3–4 wk | v0.4 |
 | 6 | TLS and certificates | 1.5–2 wk | v0.5 |
-| 7 | Stabilization, multi-server, release | 2–3 wk | **v1.0** |
+| 7 | Stabilization, topology report, release | 2–3 wk | **v1.0** ✅ (2026-11-16) |
 | — | After 1.0 | — | OIDC / proxy sign-in, visual ACI editor, log statistics |
 
 Dependencies: `0 → 1 → 2 → {3, 4, 5, 6} → 7`. After M2, stages 3–6 can be reordered by priority.
@@ -161,10 +161,10 @@ Work items:
 
 **Done when:** the server certificate can be replaced and LDAPS enabled entirely through the UI.
 
-## Stage 7. Stabilization and 1.0 release (2–3 wk)
+## Stage 7. Stabilization and 1.0 release (2–3 wk) — ✅ done, 1.0.0 released on 2026-11-16 (0.9.0 on 2026-11-13)
 
 Work items:
-- Replication topology report: follow the agreements to the other servers (credentials entered for the report, not stored), compare their RUVs and show how far each server is behind each supplier — what Cockpit's synchronization report (`dsconf replication monitor`) gives.
+- ✅ Replication topology report: follow the agreements to the other servers (credentials entered for the report, not stored), compare their RUVs and show how far each server is behind each supplier — what Cockpit's synchronization report (`dsconf replication monitor`) gives.
 - ~~Multi-server registry and context switching~~ — dropped: the 389-ds Cockpit console manages the instances of one host too; run one ds-ui per server.
 - ✅ Health check: a set of checks over LDAP and the NSS database, "Health" page.
 - ~~Mode A (all-in-one)~~ — dropped (ADR-012): the DS image is built in the separate 389-ds-base-docker repository, ds-ui runs next to it (modes C and B).
@@ -192,7 +192,7 @@ Work items:
 |---|---|---|---|
 | `cn=config` differences between 389 versions (BDB→LMDB, changelog, etc.) | High | Medium | Detect version and `nsslapd-backend-implement`; conditions in YAML pages; CI on two versions |
 | No ready-made library (an equivalent of lib389) | Certain | High (volume) | 389 documentation and experiments on a live server → `ds-reference.md`; declarative forms; integration tests against a real DS |
-| Replication complexity (roles, RUV, conflicts) | Medium | High | Separate stage, setup of 2–3 DS instances in CI; topology lag moved to stage 7 |
+| Replication complexity (roles, RUV, conflicts) | Medium | High | Separate stage, setup of 2–3 DS instances in CI; topology report done in stage 7 |
 | Debian build of 389 differs in paths / availability of `dscontainer` | Medium | Low | Check in stage 0, custom entrypoint |
 | UI reachable from outside | Medium | Critical | Sign-in on by default; with `DSUI_AUTH=none` publish only on 127.0.0.1, explicit warning in the UI and docs |
 | Dependency licenses (as with PrimeVue 5) | Medium | Medium | Check dependency licenses before adding and in CI (ADR-004); no third-party code is borrowed (ADR-008) |
