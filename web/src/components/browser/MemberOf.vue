@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { NCard, NIcon, NSpin, NTag, useThemeVars } from 'naive-ui'
 import { Users } from '@lucide/vue'
 import { api, call } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { ancestorsUnder } from '@/ldap/dn'
 import { escapeFilterValue } from '@/ldap/filter'
 import { useServerStore } from '@/stores/server'
@@ -21,19 +22,25 @@ const groups = ref<string[]>()
 
 const suffix = computed(() => server.info?.server.namingContexts.find((nc) => ancestorsUnder(props.dn, nc) !== null))
 
+const latest = useLatest()
 async function load() {
   if (!suffix.value) {
     groups.value = []
     return
   }
   const v = escapeFilterValue(props.dn)
+  const base = suffix.value
   try {
-    const res = await call(
-      api.POST('/api/v1/search', {
-        body: { base: suffix.value, scope: 'sub', filter: `(|(member=${v})(uniqueMember=${v}))`, attrs: ['1.1'], limit: 500 },
-      }),
+    const r = await latest.run((signal) =>
+      call(
+        api.POST('/api/v1/search', {
+          body: { base, scope: 'sub', filter: `(|(member=${v})(uniqueMember=${v}))`, attrs: ['1.1'], limit: 500 },
+          signal,
+        }),
+      ),
     )
-    groups.value = res.entries.map((e) => e.dn)
+    if (r.stale) return
+    groups.value = r.value.entries.map((e) => e.dn)
   } catch {
     groups.value = []
   }

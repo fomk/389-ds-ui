@@ -24,6 +24,7 @@ import {
 } from 'naive-ui'
 import { Pencil, Plus, ShieldCheck, Trash2 } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { ACI_TEMPLATE, check } from '@/ldap/aci'
 import AciText from './AciText.vue'
@@ -40,12 +41,17 @@ const dialog = useDialog()
 const own = ref<string[]>([])
 const inherited = ref<EntryACIs[]>([])
 
+const latest = useLatest()
 async function load() {
   try {
-    const [mine, up] = await Promise.all([
-      call(api.GET('/api/v1/aci', { params: { query: { dn: props.dn } } })),
-      call(api.GET('/api/v1/aci/inherited', { params: { query: { dn: props.dn } } })),
-    ])
+    const r = await latest.run((signal) =>
+      Promise.all([
+        call(api.GET('/api/v1/aci', { params: { query: { dn: props.dn } }, signal })),
+        call(api.GET('/api/v1/aci/inherited', { params: { query: { dn: props.dn } }, signal })),
+      ]),
+    )
+    if (r.stale) return
+    const [mine, up] = r.value
     own.value = mine[0]?.acis ?? []
     inherited.value = up
   } catch {

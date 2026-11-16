@@ -8,6 +8,10 @@ All notable changes to 389 DS Admin (ds-ui) are recorded here. The format follow
 
 - Replication topology report (Replication → Topology): follows the agreements to the other servers, with credentials entered for the report and not stored, and shows for every server how far it is behind each supplier, the agreements between them, and which servers were reached over plain LDAP.
 
+### Fixed
+
+- Switching quickly between entries, suffixes, roles, log files or replication suffixes could show data of the previously selected one when its answer arrived late (the entry's groups, account state and ACIs, indexes, VLV and encryption lists, agreements, changelog, RUV, conflicts, role members, plug-in definitions). Every such load now applies only the latest answer and cancels the outdated request.
+
 ### Changed
 
 - The plan for 1.0 no longer includes managing several servers in one interface (the 389-ds Cockpit console manages the instances of one host, too); run one ds-ui per server.

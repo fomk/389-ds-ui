@@ -31,3 +31,19 @@ test('create, edit and delete an entry in the LDAP browser', async ({ page }) =>
   await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click()
   await expect(page.getByText('Deleted 1 entry')).toBeVisible()
 })
+
+test('quick clicks through the tree end on the last entry clicked', async ({ page }) => {
+  // Opening an entry inside the branch expands its ancestors in the tree.
+  await signIn(page, '/browser?dn=' + encodeURIComponent(`uid=bjones,${people}`))
+  const tree = page.locator('.pane')
+  await expect(tree.getByText('uid=jdoe', { exact: true })).toBeVisible()
+  // No waiting between clicks: answers for earlier entries arrive late.
+  for (const uid of ['jdoe', 'asmith', 'bjones', 'cmiller', 'jdoe', 'asmith']) {
+    await tree.getByText(`uid=${uid}`, { exact: true }).click()
+  }
+  const dn = `uid=asmith,${people}`
+  await expect.poll(() => new URL(page.url()).searchParams.get('dn')).toBe(dn)
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByRole('cell', { name: 'asmith', exact: true })).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'jdoe', exact: true })).toHaveCount(0)
+})

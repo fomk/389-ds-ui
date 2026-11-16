@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { NButton, NCard, NIcon, NSpace, NTag, useMessage, useThemeVars } from 'naive-ui'
 import { Lock, LockOpen } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { currentLocale } from '@/i18n'
 import { localizeError } from '@/i18n/errors'
 
@@ -18,9 +19,11 @@ const message = useMessage()
 const status = ref<Status>()
 const busy = ref(false)
 
+const latest = useLatest()
 async function load() {
   try {
-    status.value = await call(api.GET('/api/v1/accounts/status', { params: { query: { dn: props.dn } } }))
+    const r = await latest.run((signal) => call(api.GET('/api/v1/accounts/status', { params: { query: { dn: props.dn } }, signal })))
+    if (!r.stale) status.value = r.value
   } catch {
     status.value = undefined
   }

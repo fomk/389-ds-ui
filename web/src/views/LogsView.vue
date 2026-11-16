@@ -18,6 +18,7 @@ import {
 } from 'naive-ui'
 import { RefreshCw, Search } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { currentLocale } from '@/i18n'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { formatBytes } from '@/ldap/values'
@@ -73,33 +74,36 @@ async function loadLogs() {
   }
 }
 
-let seq = 0
+// Only the latest request may update the view (switching logs or files
+// quickly must not show the previous one's lines).
+const latest = useLatest()
 
 async function load() {
   if (!canSeeFiles.value) return
   stopFollow()
-  const my = ++seq // only the latest request may update the view
   loading.value = true
   error.value = undefined
   try {
-    const res = await call(
-      api.GET('/api/v1/logs/{kind}', {
-        params: {
-          path: { kind: kind.value as Log['kind'] },
-          query: { file: file.value || undefined, lines: count.value, filter: filter.value.trim() || undefined },
-        },
-      }),
+    const r = await latest.run((signal) =>
+      call(
+        api.GET('/api/v1/logs/{kind}', {
+          params: {
+            path: { kind: kind.value as Log['kind'] },
+            query: { file: file.value || undefined, lines: count.value, filter: filter.value.trim() || undefined },
+          },
+          signal,
+        }),
+      ),
     )
-    if (my !== seq) return
-    lines.value = res.lines
-    truncated.value = res.truncated
+    if (r.stale) return
+    lines.value = r.value.lines
+    truncated.value = r.value.truncated
+    loading.value = false
     await scrollToEnd(true)
   } catch (e) {
-    if (my !== seq) return
     lines.value = []
     error.value = localizeError(e)
-  } finally {
-    if (my === seq) loading.value = false
+    loading.value = false
   }
   if (follow.value && !file.value) startFollow()
 }

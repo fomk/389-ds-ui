@@ -21,6 +21,7 @@ import {
 } from 'naive-ui'
 import { Hammer, Plus, Trash2 } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { localizeError } from '@/i18n/errors'
 import { useTasksStore } from '@/stores/tasks'
 
@@ -36,14 +37,17 @@ const tasks = useTasksStore()
 const list = ref<VLV[]>([])
 const loading = ref(false)
 
+const latest = useLatest()
 async function load() {
   loading.value = true
   try {
-    list.value = await call(api.GET('/api/v1/backends/{name}/vlv', { params: { path: { name: props.backend } } }))
-  } catch (e) {
-    fail(e)
-  } finally {
+    const r = await latest.run((signal) => call(api.GET('/api/v1/backends/{name}/vlv', { params: { path: { name: props.backend } }, signal })))
+    if (r.stale) return
+    list.value = r.value
     loading.value = false
+  } catch (e) {
+    loading.value = false
+    fail(e)
   }
 }
 watch(() => props.backend, load, { immediate: true })

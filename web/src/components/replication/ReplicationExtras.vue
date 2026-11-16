@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NAlert, NButton, NCard, NEmpty, NForm, NFormItem, NInput, NInputNumber, NSpace, NTable, NTag, useDialog, useMessage, useThemeVars } from 'naive-ui'
 import { api, call, type Schemas } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { currentLocale } from '@/i18n'
 import { localizeError } from '@/i18n/errors'
 import { useTasksStore } from '@/stores/tasks'
@@ -24,9 +25,15 @@ const fmt = (iso?: string) => (iso ? new Date(iso).toLocaleString(currentLocale.
 // --- changelog --------------------------------------------------------------------
 const changelog = ref<Schemas['Changelog']>()
 const cl = ref({ maxAge: '', maxEntries: null as number | null, trimInterval: null as number | null })
+// One guard per kind: the sections load independently.
+const latestChangelog = useLatest()
+const latestRUV = useLatest()
+const latestConflicts = useLatest()
 async function loadChangelog() {
   try {
-    changelog.value = await call(api.GET('/api/v1/replication/changelog', { params: { query: q.value } }))
+    const r = await latestChangelog.run((signal) => call(api.GET('/api/v1/replication/changelog', { params: { query: q.value }, signal })))
+    if (r.stale) return
+    changelog.value = r.value
     cl.value = { maxAge: changelog.value.maxAge ?? '', maxEntries: changelog.value.maxEntries ?? null, trimInterval: changelog.value.trimInterval ?? null }
   } catch (e) {
     fail(e)
@@ -48,7 +55,8 @@ async function saveChangelog() {
 const ruv = ref<Schemas['RUV']>()
 async function loadRUV() {
   try {
-    ruv.value = await call(api.GET('/api/v1/replication/ruv', { params: { query: q.value } }))
+    const r = await latestRUV.run((signal) => call(api.GET('/api/v1/replication/ruv', { params: { query: q.value }, signal })))
+    if (!r.stale) ruv.value = r.value
   } catch (e) {
     fail(e)
   }
@@ -76,7 +84,8 @@ const conflicts = ref<Schemas['Conflict'][]>()
 const converting = ref<{ dn: string; rdn: string }>()
 async function loadConflicts() {
   try {
-    conflicts.value = await call(api.GET('/api/v1/replication/conflicts', { params: { query: q.value } }))
+    const r = await latestConflicts.run((signal) => call(api.GET('/api/v1/replication/conflicts', { params: { query: q.value }, signal })))
+    if (!r.stale) conflicts.value = r.value
   } catch (e) {
     fail(e)
   }

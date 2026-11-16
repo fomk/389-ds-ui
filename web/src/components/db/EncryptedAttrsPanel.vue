@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { NAlert, NButton, NDataTable, NEmpty, NIcon, NSelect, NSpace, useDialog, useMessage, type DataTableColumns } from 'naive-ui'
 import { Plus, Trash2 } from '@lucide/vue'
 import { ApiError, api, call, type Schemas } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { localizeError } from '@/i18n/errors'
 import { useAuthStore } from '@/stores/auth'
 import { useSchemaStore } from '@/stores/schema'
@@ -24,9 +25,13 @@ const list = ref<Encrypted[]>()
 const adding = ref<string | null>(null)
 const busy = ref(false)
 
+const latest = useLatest()
 async function load() {
   try {
-    list.value = await call(api.GET('/api/v1/backends/{name}/encrypted-attrs', { params: { path: { name: props.backend } } }))
+    const r = await latest.run((signal) =>
+      call(api.GET('/api/v1/backends/{name}/encrypted-attrs', { params: { path: { name: props.backend } }, signal })),
+    )
+    if (!r.stale) list.value = r.value
   } catch (e) {
     message.error(localizeError(e).summary)
   }

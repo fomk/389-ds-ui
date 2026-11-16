@@ -16,7 +16,8 @@ export async function signIn(page: Page, path = '/') {
     await page.getByLabel('Password').fill(dmPassword())
     await page.getByRole('button', { name: 'Sign in' }).click()
   }
-  await expect(page.getByRole('button', { name: /Directory Manager/ })).toBeVisible()
+  // The user menu shows the name and the role.
+  await expect(page.getByRole('button', { name: /^Directory Manager (administrator|operator)$/ })).toBeVisible()
 }
 
 /** Unique suffix for names the tests create. */

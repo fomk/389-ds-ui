@@ -21,6 +21,7 @@ import {
 } from 'naive-ui'
 import { ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { changedAttrs, clean, fieldKey } from '@/settings/fields'
 import SettingsField from './SettingsField.vue'
@@ -39,12 +40,14 @@ const state = ref<State>()
 const error = ref<LocalizedError>()
 const open = ref<Set<string>>(new Set())
 
+const latest = useLatest()
 async function load() {
   error.value = undefined
   try {
-    state.value = await call(
-      api.GET('/api/v1/collections/{id}', { params: { path: { id: props.id }, query: props.parent ? { parent: props.parent } : {} } }),
+    const r = await latest.run((signal) =>
+      call(api.GET('/api/v1/collections/{id}', { params: { path: { id: props.id }, query: props.parent ? { parent: props.parent } : {} }, signal })),
     )
+    if (!r.stale) state.value = r.value
   } catch (e) {
     error.value = localizeError(e)
   }

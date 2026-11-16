@@ -14,7 +14,7 @@ test('wrong password is refused, then sign in and out', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page).toHaveURL(/\/monitor$/)
 
-  await page.getByRole('button', { name: /Directory Manager/ }).click()
+  await page.getByRole('button', { name: /^Directory Manager (administrator|operator)$/ }).click()
   await page.getByText('Sign out').click()
   await expect(page).toHaveURL(/\/login/)
 })

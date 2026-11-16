@@ -27,6 +27,7 @@ import {
 } from 'naive-ui'
 import { Pencil, Plus, RefreshCcw, Trash2 } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { currentLocale } from '@/i18n'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 
@@ -39,9 +40,12 @@ const dialog = useDialog()
 
 const list = ref<Agreement[]>()
 const error = ref<LocalizedError>()
+const latest = useLatest()
 async function load() {
   try {
-    list.value = await call(api.GET('/api/v1/replication/agreements', { params: { query: { suffix: props.suffix } } }))
+    const r = await latest.run((signal) => call(api.GET('/api/v1/replication/agreements', { params: { query: { suffix: props.suffix } }, signal })))
+    if (r.stale) return
+    list.value = r.value
     error.value = undefined
   } catch (e) {
     error.value = localizeError(e)

@@ -19,6 +19,7 @@ import {
 } from 'naive-ui'
 import { Pencil, Plus, RefreshCw, Trash2 } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { localizeError } from '@/i18n/errors'
 import { useSchemaStore } from '@/stores/schema'
 import { useTasksStore } from '@/stores/tasks'
@@ -40,16 +41,22 @@ const tasks = useTasksStore()
 const list = ref<Index[]>([])
 const loading = ref(false)
 
+const latest = useLatest()
 async function load() {
   loading.value = true
+  const backend = props.backend
   try {
-    list.value = props.backend
-      ? await call(api.GET('/api/v1/backends/{name}/indexes', { params: { path: { name: props.backend } } }))
-      : await call(api.GET('/api/v1/default-indexes'))
-  } catch (e) {
-    message.error(`${t('indexes.error')}: ${localizeError(e).summary}`)
-  } finally {
+    const r = await latest.run((signal) =>
+      backend
+        ? call(api.GET('/api/v1/backends/{name}/indexes', { params: { path: { name: backend } }, signal }))
+        : call(api.GET('/api/v1/default-indexes', { signal })),
+    )
+    if (r.stale) return
+    list.value = r.value
     loading.value = false
+  } catch (e) {
+    loading.value = false
+    message.error(`${t('indexes.error')}: ${localizeError(e).summary}`)
   }
 }
 onMounted(() => {

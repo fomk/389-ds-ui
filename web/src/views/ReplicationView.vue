@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NAlert, NH1, NRadioButton, NRadioGroup, NSelect, NSkeleton, NTag } from 'naive-ui'
 import { api, call, type Schemas } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import AgreementsPanel from '@/components/replication/AgreementsPanel.vue'
 import EnableReplication from '@/components/replication/EnableReplication.vue'
@@ -40,11 +41,14 @@ function go(query: { suffix?: string; section?: Section }) {
 }
 const suffixOptions = computed(() => (backends.value ?? []).map((b) => ({ label: b.suffix, value: b.suffix })))
 
+const latest = useLatest()
 async function loadReplica() {
   replica.value = undefined
   if (!suffix.value) return
+  const s = suffix.value
   try {
-    replica.value = await call(api.GET('/api/v1/replication', { params: { query: { suffix: suffix.value } } }))
+    const r = await latest.run((signal) => call(api.GET('/api/v1/replication', { params: { query: { suffix: s } }, signal })))
+    if (!r.stale) replica.value = r.value
   } catch (e) {
     error.value = localizeError(e)
   }

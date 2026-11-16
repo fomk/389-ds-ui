@@ -26,6 +26,7 @@ import {
 } from 'naive-ui'
 import { Plus, Trash2, UserMinus } from '@lucide/vue'
 import { api, call, type Schemas } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { useServerStore } from '@/stores/server'
 
@@ -116,11 +117,14 @@ function remove() {
 // --- members -------------------------------------------------------------------
 
 const members = ref<Schemas['RoleMembers']>()
+const latestMembers = useLatest()
 async function loadMembers() {
   members.value = undefined
   if (!role.value) return
+  const dn = role.value.dn
   try {
-    members.value = await call(api.GET('/api/v1/roles/members', { params: { query: { dn: role.value.dn } } }))
+    const r = await latestMembers.run((signal) => call(api.GET('/api/v1/roles/members', { params: { query: { dn } }, signal })))
+    if (!r.stale) members.value = r.value
   } catch {
     members.value = { members: [], truncated: false }
   }

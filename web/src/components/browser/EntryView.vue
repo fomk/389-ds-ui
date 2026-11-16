@@ -20,6 +20,7 @@ import {
 } from 'naive-ui'
 import { Copy, EllipsisVertical, Pencil, Plus, RefreshCw } from '@lucide/vue'
 import { api, call, exportUrl, type Entry, type EntryAttribute } from '@/api/client'
+import { useLatest } from '@/composables/latest'
 import { localizeError, type LocalizedError } from '@/i18n/errors'
 import { useSchemaStore } from '@/stores/schema'
 import AttributeValue from './AttributeValue.vue'
@@ -56,23 +57,21 @@ const dialog = ref<'rename' | 'password' | 'delete' | null>(null)
 
 /** Only the answer for the latest request counts: an earlier, slower one
  * (e.g. the previous entry while switching quickly) must not overwrite it. */
-let latest = 0
+const latest = useLatest()
 async function load() {
-  const seq = ++latest
   loading.value = true
   error.value = undefined
   try {
-    const [e] = await Promise.all([
-      call(api.GET('/api/v1/entries', { params: { query: { dn: props.dn } } })),
-      schema.load(),
-    ])
-    if (seq === latest) entry.value = e
+    const r = await latest.run((signal) =>
+      Promise.all([call(api.GET('/api/v1/entries', { params: { query: { dn: props.dn } }, signal })), schema.load()]),
+    )
+    if (r.stale) return
+    entry.value = r.value[0]
+    loading.value = false
   } catch (e) {
-    if (seq !== latest) return
     entry.value = undefined
     error.value = localizeError(e)
-  } finally {
-    if (seq === latest) loading.value = false
+    loading.value = false
   }
 }
 
